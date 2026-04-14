@@ -17,10 +17,12 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import ActivityHeatmap from "@/components/ActivityHeatmap";
+import BadgeShowcase from "@/components/BadgeShowcase";
+import { useStudentBadges } from "@/hooks/use-student-badges";
 
 interface EnrollmentWithCohort {
   id: string;
@@ -168,6 +170,13 @@ const StudentDashboard = () => {
       .channel("brief-submissions-graph")
       .on("postgres_changes", { event: "*", schema: "public", table: "brief_submissions", filter: `user_id=eq.${user.id}` }, () => {
         fetchSubs();
+        if (cohort) {
+          checkBadgesRef.current({
+            cohortId: cohort.id,
+            cohortStartDate: cohort.start_date,
+            cohortStatus: cohort.status,
+          });
+        }
       })
       .subscribe();
 
@@ -184,6 +193,24 @@ const StudentDashboard = () => {
   };
 
   const unseenCount = announcements.filter(a => !seenAnnouncements.has(a.id)).length;
+
+  // ── Badges ──────────────────────────────────────────────────────────────────
+  const { badges: studentBadges, newBadge, isLoading: badgesLoading, checkAndAwardBadges } = useStudentBadges();
+
+  // Keep a stable ref so the realtime callback always uses the latest version
+  const checkBadgesRef = useRef(checkAndAwardBadges);
+  useEffect(() => { checkBadgesRef.current = checkAndAwardBadges; }, [checkAndAwardBadges]);
+
+  // Run badge check on initial cohort load
+  useEffect(() => {
+    if (!cohort) return;
+    checkBadgesRef.current({
+      cohortId: cohort.id,
+      cohortStartDate: cohort.start_date,
+      cohortStatus: cohort.status,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cohort?.id]);
 
   if (loading) {
     return (
@@ -325,6 +352,15 @@ const StudentDashboard = () => {
                     <p className="mt-1 text-right text-xs opacity-60">{progress}%</p>
                   </div>
                 </div>
+              </div>
+
+              {/* Badge showcase */}
+              <div className="mb-8">
+                <BadgeShowcase
+                  badges={studentBadges}
+                  newBadge={newBadge}
+                  isLoading={badgesLoading}
+                />
               </div>
 
               <div className="grid gap-8 lg:grid-cols-3">
