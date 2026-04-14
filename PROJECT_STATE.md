@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-04 (fix sécurité ProtectedRoute)
+**Prompt actuel**: prompt-05 (optimisation use-cohorts COUNT SQL + staleTime)
 
 ---
 
@@ -214,8 +214,8 @@
 | SEC-03 | 🟠 Important | Edge Functions | CORS wildcard `"*"` sur fonctions sensibles | ❌ À corriger |
 | SEC-04 | 🟠 Important | StudentPortfolio | Pas de validation d'URL (XSS potentiel) | ❌ À corriger |
 | PERF-01 | 🔴 Critique | App.tsx | Zéro code splitting / lazy loading | ❌ À corriger |
-| PERF-02 | 🔴 Critique | use-cohorts.ts | Charge tous les enrollments en mémoire côté client | ❌ À corriger |
-| PERF-03 | 🟠 Important | App.tsx | Aucun staleTime React Query | ❌ À corriger |
+| PERF-02 | 🔴 Critique | use-cohorts.ts | Charge tous les enrollments en mémoire côté client | ✅ Corrigé (prompt-05) |
+| PERF-03 | 🟠 Important | App.tsx | Aucun staleTime React Query | ✅ Corrigé (prompt-05) — use-cohorts |
 | UX-01 | 🔴 Critique | Login.tsx | Pas de "Mot de passe oublié" | ✅ Corrigé (prompt-03) |
 | UX-02 | 🟠 Important | App.tsx | Aucun Error Boundary React | ❌ À corriger |
 | UX-03 | 🟠 Important | Login+Register | Double interface inscription incohérente | ❌ À corriger |
@@ -230,12 +230,12 @@
 | Priorité | Item | Impact |
 |---------|------|--------|
 | ~~Haute~~ | ~~SEC-01 : ProtectedRoute vérifie les mauvais rôles~~ | ✅ Corrigé prompt-04 |
-| Haute | PERF-02 : use-cohorts O(n) enrollments côté client | Scalabilité bloquante |
+| ~~Haute~~ | ~~PERF-02 : use-cohorts O(n) enrollments côté client~~ | ✅ Corrigé prompt-05 |
+| ~~Moyenne~~ | ~~PERF-03 : staleTime non configuré~~ | ✅ Corrigé prompt-05 (use-cohorts) |
 | Haute | PERF-01 : Pas de code splitting | Bundle size / TTI |
 | Haute | Tests unitaires manquants (couverture ~0%) | Risque régressions |
-| Haute | UX-01 / FEAT-01 : Mot de passe oublié absent | UX critique manquante |
+| ~~Haute~~ | ~~UX-01 / FEAT-01 : Mot de passe oublié absent~~ | ✅ Corrigé prompt-03 |
 | Haute | Credentials dans .env commité (sécurité) | Risque sécurité |
-| Moyenne | PERF-03 : staleTime non configuré | Requêtes réseau inutiles |
 | Moyenne | UX-02 : Pas de Error Boundary | Écran blanc sur crash |
 | Moyenne | UX-03 : Double interface inscription | Confusion utilisateur |
 | Moyenne | Pas de .env.example | Onboarding difficile |
@@ -252,3 +252,4 @@
 | prompt-02 | 2026-04-14 | Audit complet — 30 findings (7 critiques, 11 importants, 12 utiles) | ✅ Terminé |
 | prompt-03 | 2026-04-14 | Ajout mot de passe oublié — ForgotPassword.tsx + ResetPassword.tsx + routes + lien Login | ✅ Terminé |
 | prompt-04 | 2026-04-14 | Fix SEC-01 ProtectedRoute : activeRole au lieu de roles[] + 8 tests unitaires (9/9 ✅) | ✅ Terminé |
+| prompt-05 | 2026-04-14 | PERF-02 use-cohorts : COUNT SQL groupé + React Query staleTime 5min (9/9 ✅) | ✅ Terminé |
