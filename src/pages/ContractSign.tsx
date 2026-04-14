@@ -218,7 +218,7 @@ const ContractSign = () => {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Contrat signé ✅", description: "Votre inscription est confirmée. Bienvenue !" });
-      navigate("/student");
+      navigate(`/student?from_cohort=${cohortId}`);
     }
   };
 
@@ -238,7 +238,7 @@ const ContractSign = () => {
           <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
           <h2 className="font-display text-xl font-bold text-foreground mb-2">Contrat déjà signé</h2>
           <p className="text-muted-foreground mb-6">Vous avez déjà signé votre contrat pour cette cohorte.</p>
-          <Button onClick={() => navigate("/student")}>Accéder à mon espace</Button>
+          <Button onClick={() => navigate(`/student?from_cohort=${cohortId}`)}>Accéder à mon espace</Button>
         </div>
       </div>
     );

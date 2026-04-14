@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Award, Download, Lock, CheckCircle2, Loader2 } from "lucide-react";
+import { Award, Download, Lock, CheckCircle2, Loader2, XCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AttestationPreview } from "@/components/AttestationTemplateEditor";
 import html2canvas from "html2canvas";
@@ -141,44 +141,80 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg bg-secondary p-4 space-y-3">
-          <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-            <Lock className="h-4 w-4 shrink-0" /> Complétez les étapes pour débloquer votre attestation.
-          </p>
-          <div className="flex items-start gap-0">
-            {/* Step 1: Portfolio */}
-            <div className="flex flex-col items-center flex-1">
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border-2 ${portfolioValidated ? "bg-green-100 border-green-400 text-green-700 dark:bg-green-950/40 dark:border-green-600 dark:text-green-400" : "bg-card border-border text-muted-foreground"}`}>
-                {portfolioValidated ? <CheckCircle2 className="h-4 w-4" /> : "1"}
-              </div>
-              <p className={`mt-1 text-center text-[10px] font-semibold ${portfolioValidated ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>Portfolio</p>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Lock className="h-4 w-4 shrink-0 text-amber-500" />
+            <span>3 étapes pour débloquer votre attestation</span>
+          </div>
+
+          {/* Step 1: Portfolio */}
+          <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
+            portfolioValidated
+              ? "border-green-200 bg-green-50/60 dark:border-green-800/40 dark:bg-green-950/20"
+              : "border-border bg-secondary/40"
+          }`}>
+            {portfolioValidated
+              ? <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
+              : <XCircle className="h-5 w-5 shrink-0 text-muted-foreground/40" />}
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-medium ${portfolioValidated ? "text-green-700 dark:text-green-400" : "text-foreground"}`}>
+                Portfolio soumis et validé
+              </p>
               {!portfolioValidated && (
-                <a href="/student?tab=portfolio" className="mt-0.5 text-[10px] text-accent hover:underline">Soumettre →</a>
+                <p className="text-xs text-muted-foreground">Envoyez l'URL de votre portfolio au formateur</p>
               )}
             </div>
-            {/* Connector 1-2 */}
-            <div className={`flex-1 max-w-[28px] h-0.5 mt-4 ${portfolioValidated ? "bg-green-400 dark:bg-green-600" : "bg-border"}`} />
-            {/* Step 2: Paiement */}
-            <div className="flex flex-col items-center flex-1">
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border-2 ${paymentsComplete ? "bg-green-100 border-green-400 text-green-700 dark:bg-green-950/40 dark:border-green-600 dark:text-green-400" : portfolioValidated ? "bg-card border-border text-muted-foreground" : "bg-card border-border/40 text-muted-foreground/40"}`}>
-                {paymentsComplete ? <CheckCircle2 className="h-4 w-4" /> : "2"}
-              </div>
-              <p className={`mt-1 text-center text-[10px] font-semibold ${paymentsComplete ? "text-green-600 dark:text-green-400" : portfolioValidated ? "text-muted-foreground" : "text-muted-foreground/40"}`}>Paiement</p>
+            {!portfolioValidated && (
+              <a href="/student?tab=portfolio" className="shrink-0 text-xs font-medium text-accent hover:underline">
+                Soumettre →
+              </a>
+            )}
+          </div>
+
+          {/* Step 2: Paiements */}
+          <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
+            paymentsComplete
+              ? "border-green-200 bg-green-50/60 dark:border-green-800/40 dark:bg-green-950/20"
+              : portfolioValidated
+                ? "border-border bg-secondary/40"
+                : "border-border/40 bg-secondary/20 opacity-50"
+          }`}>
+            {paymentsComplete
+              ? <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
+              : <XCircle className="h-5 w-5 shrink-0 text-muted-foreground/40" />}
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-medium ${paymentsComplete ? "text-green-700 dark:text-green-400" : "text-foreground"}`}>
+                Formation entièrement réglée
+              </p>
               {!paymentsComplete && portfolioValidated && (
-                <a href="/student?tab=payments" className="mt-0.5 text-[10px] text-accent hover:underline">Payer →</a>
+                <p className="text-xs text-muted-foreground">Solde de formation en attente de validation</p>
               )}
             </div>
-            {/* Connector 2-3 */}
-            <div className={`flex-1 max-w-[28px] h-0.5 mt-4 ${paymentsComplete && portfolioValidated ? "bg-green-400 dark:bg-green-600" : "bg-border"}`} />
-            {/* Step 3: Admin */}
-            <div className="flex flex-col items-center flex-1">
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border-2 ${portfolioValidated && paymentsComplete ? "bg-card border-border text-muted-foreground" : "bg-card border-border/40 text-muted-foreground/40"}`}>
-                3
-              </div>
-              <p className={`mt-1 text-center text-[10px] font-semibold ${portfolioValidated && paymentsComplete ? "text-muted-foreground" : "text-muted-foreground/40"}`}>Admin</p>
-              {portfolioValidated && paymentsComplete && (
-                <p className="mt-0.5 text-[10px] text-yellow-600 dark:text-yellow-400">En attente…</p>
-              )}
+            {!paymentsComplete && portfolioValidated && (
+              <a href="/student?tab=payments" className="shrink-0 text-xs font-medium text-accent hover:underline">
+                Paiements →
+              </a>
+            )}
+          </div>
+
+          {/* Step 3: Génération admin */}
+          <div className={`flex items-center gap-3 rounded-xl border px-4 py-3 transition-colors ${
+            portfolioValidated && paymentsComplete
+              ? "border-amber-200 bg-amber-50/60 dark:border-amber-800/40 dark:bg-amber-950/20"
+              : "border-border/40 bg-secondary/20 opacity-50"
+          }`}>
+            {portfolioValidated && paymentsComplete
+              ? <Clock className="h-5 w-5 shrink-0 text-amber-500 animate-pulse" />
+              : <Clock className="h-5 w-5 shrink-0 text-muted-foreground/30" />}
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-medium ${portfolioValidated && paymentsComplete ? "text-amber-700 dark:text-amber-400" : "text-foreground"}`}>
+                Génération par l'équipe
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {portfolioValidated && paymentsComplete
+                  ? "Votre dossier est complet — l'attestation sera générée prochainement"
+                  : "Complétez les étapes précédentes"}
+              </p>
             </div>
           </div>
         </div>

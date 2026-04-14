@@ -49,6 +49,12 @@ interface EnrollmentWithCohort {
 
 const COHORT_STATUS_PRIORITY: Record<string, number> = { active: 0, upcoming: 1, completed: 2, archived: 3 };
 
+const FILIERE_COLORS: Record<string, string> = {
+  graphisme: "#8B5CF6",
+  motion: "#F97316",
+  vibecoding: "#06B6D4",
+};
+
 const RESOURCE_TYPE_CONFIG: Record<string, { Icon: React.ElementType; className: string; label: string }> = {
   pdf: { Icon: FileText, className: "bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400", label: "PDF" },
   video: { Icon: Play, className: "bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400", label: "Vidéo" },
@@ -86,18 +92,23 @@ const StudentDashboard = () => {
 
       // Fetch formation names for each cohort
       const formationIds = [...new Set(enrollments.map((e: any) => e.cohorts?.formation_id).filter(Boolean))];
-      let formationMap = new Map<string, { name: string; color: string | null; duration_days: number }>();
+      let formationMap = new Map<string, { name: string; color: string | null; slug: string | null; duration_days: number }>();
       if (formationIds.length > 0) {
-        const { data: formations } = await supabase.from("formations").select("id, name, attestation_color, duration_days").in("id", formationIds);
-        if (formations) formationMap = new Map(formations.map(f => [f.id, { name: f.name, color: f.attestation_color, duration_days: f.duration_days }]));
+        const { data: formations } = await supabase.from("formations").select("id, name, slug, attestation_color, duration_days").in("id", formationIds);
+        if (formations) formationMap = new Map(formations.map(f => [f.id, { name: f.name, slug: f.slug, color: f.attestation_color, duration_days: f.duration_days }]));
       }
 
-      const enriched = enrollments.map((e: any) => ({
-        ...e,
-        formation_name: e.cohorts?.formation_id ? formationMap.get(e.cohorts.formation_id)?.name : undefined,
-        formation_color: e.cohorts?.formation_id ? formationMap.get(e.cohorts.formation_id)?.color : undefined,
-        formation_duration_days: e.cohorts?.formation_id ? formationMap.get(e.cohorts.formation_id)?.duration_days : undefined,
-      })) as EnrollmentWithCohort[];
+      const enriched = enrollments.map((e: any) => {
+        const fid = e.cohorts?.formation_id;
+        const fm = fid ? formationMap.get(fid) : undefined;
+        const slug = fm?.slug ?? null;
+        return {
+          ...e,
+          formation_name: fm?.name,
+          formation_color: (slug && FILIERE_COLORS[slug]) ?? fm?.color,
+          formation_duration_days: fm?.duration_days,
+        };
+      }) as EnrollmentWithCohort[];
 
       // Sort: active first, then upcoming, then completed
       enriched.sort((a, b) => {
@@ -109,10 +120,14 @@ const StudentDashboard = () => {
 
       setAllEnrollments(enriched);
 
-      // Auto-select: restore from storage or pick the first active
+      // Auto-select: from_cohort param (post-contract-sign) > localStorage > first active
+      const fromCohort = new URLSearchParams(window.location.search).get("from_cohort");
+      const fromCohortMatch = fromCohort ? enriched.find(e => e.cohort_id === fromCohort) : null;
       const stored = localStorage.getItem("90jours-active-enrollment");
-      const valid = enriched.find(e => e.id === stored);
-      setSelectedEnrollmentId(valid ? valid.id : enriched[0].id);
+      const storedValid = enriched.find(e => e.id === stored);
+      const selected = fromCohortMatch ?? storedValid ?? enriched[0];
+      setSelectedEnrollmentId(selected.id);
+      localStorage.setItem("90jours-active-enrollment", selected.id);
     };
     fetchEnrollments();
   }, [user]);
@@ -290,8 +305,16 @@ const StudentDashboard = () => {
               <h1 className="font-display text-lg md:text-xl font-bold text-foreground">
                 {greeting()}, {profile?.first_name || "Étudiant"} !
               </h1>
-              <p className="text-xs md:text-sm text-muted-foreground">
-                {enrollment.formation_name && <span className="font-medium">{enrollment.formation_name} — </span>}
+              <p className="text-xs md:text-sm text-muted-foreground flex items-center gap-1.5">
+                {enrollment.formation_color && (
+                  <span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: enrollment.formation_color }} />
+                )}
+                {enrollment.formation_name && (
+                  <span className="font-semibold" style={enrollment.formation_color ? { color: enrollment.formation_color } : undefined}>
+                    {enrollment.formation_name}
+                  </span>
+                )}
+                {enrollment.formation_name && <span className="text-muted-foreground/50">—</span>}
                 Cohorte {cohort.name}
               </p>
               </div>
@@ -314,20 +337,25 @@ const StudentDashboard = () => {
             <div className="flex items-center gap-2 flex-wrap">
               {allEnrollments.map(e => {
                 const isActive = e.id === selectedEnrollmentId;
+                const color = e.formation_color;
                 const statusLabel = e.cohorts.status === "active" ? "En cours" : e.cohorts.status === "upcoming" ? "À venir" : "Terminée";
                 const statusColor = e.cohorts.status === "active" ? "default" : e.cohorts.status === "upcoming" ? "secondary" : "outline";
                 return (
                   <button
                     key={e.id}
-                    onClick={() => { setSelectedEnrollmentId(e.id); setLoading(true); }}
+                    onClick={() => { setSelectedEnrollmentId(e.id); localStorage.setItem("90jours-active-enrollment", e.id); setLoading(true); }}
+                    style={isActive && color ? { borderColor: color, backgroundColor: `${color}18` } : undefined}
                     className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-left text-xs transition-all ${
                       isActive
-                        ? "border-accent bg-accent/10 ring-1 ring-accent/30"
+                        ? "ring-1"
                         : "border-border bg-card hover:bg-secondary/50"
                     }`}
                   >
+                    {color && (
+                      <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                    )}
                     <div>
-                      <p className={`font-medium ${isActive ? "text-accent" : "text-foreground"}`}>
+                      <p className="font-medium text-foreground">
                         {e.formation_name || "Formation"} — {e.cohorts.name}
                       </p>
                     </div>

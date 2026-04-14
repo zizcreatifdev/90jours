@@ -299,7 +299,9 @@ const SidebarNav = ({
 
 const DashboardSidebar = ({ role, mobileOpen, onMobileOpenChange }: DashboardSidebarProps) => {
   const links = role === "admin" ? adminLinks : role === "staff" ? staffLinks : studentLinks;
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(
+    () => localStorage.getItem("90jours-sidebar-expanded") === "true"
+  );
   const [focusMode, setFocusMode] = useState(
     () => localStorage.getItem("90jours-focus-mode") === "true"
   );
@@ -348,7 +350,11 @@ const DashboardSidebar = ({ role, mobileOpen, onMobileOpenChange }: DashboardSid
 
         {/* Expand/Collapse toggle */}
         <button
-          onClick={() => setExpanded(!expanded)}
+          onClick={() => {
+            const next = !expanded;
+            setExpanded(next);
+            localStorage.setItem("90jours-sidebar-expanded", String(next));
+          }}
           aria-label={expanded ? "Réduire le menu" : "Développer le menu"}
           className="flex h-10 items-center justify-center border-t border-border text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
         >
