@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Bell, CheckCheck, Info, PartyPopper, AlertTriangle, Megaphone, Loader2 } from "lucide-react";
+import EmptyState from "@/components/ui/EmptyState";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -155,10 +156,12 @@ const NotificationPanel = () => {
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <Bell className="h-10 w-10 mb-3 opacity-30" />
-              <p className="text-sm">Aucune notification</p>
-            </div>
+            <EmptyState
+              icon={Bell}
+              title="Aucune notification"
+              description="Vous êtes à jour ! Vos notifications apparaîtront ici."
+              className="border-0 bg-transparent shadow-none py-16"
+            />
           ) : (
             <div className="divide-y divide-border">
               {notifications.map(notif => {

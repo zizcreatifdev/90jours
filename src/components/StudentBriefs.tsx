@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ClipboardList, CheckCircle2, Clock, AlertTriangle, Loader2, Tag, Send } from "lucide-react";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface Brief {
   id: string;
@@ -159,7 +160,11 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
 
       {/* Briefs list */}
       {briefs.length === 0 ? (
-        <p className="text-center text-sm text-muted-foreground py-8">Aucun brief pour le moment.</p>
+        <EmptyState
+          icon={ClipboardList}
+          title="Aucun brief pour l'instant"
+          description="Vos briefs apparaîtront ici dès qu'ils seront publiés par votre formateur."
+        />
       ) : (
         <div className="space-y-3">
           {briefs.map(brief => {

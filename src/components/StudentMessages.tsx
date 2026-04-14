@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MessageSquare, Send, Loader2, User, ChevronDown, ChevronUp } from "lucide-react";
+import EmptyState from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -174,10 +175,11 @@ const StudentMessages = ({ cohortId }: StudentMessagesProps) => {
       </div>
 
       {messages.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-card p-12 text-center">
-          <MessageSquare className="mx-auto h-10 w-10 text-muted-foreground/30 mb-3" />
-          <p className="text-sm text-muted-foreground">Aucun message pour le moment</p>
-        </div>
+        <EmptyState
+          icon={MessageSquare}
+          title="Aucun message pour l'instant"
+          description="Les messages et annonces de vos formateurs apparaîtront ici."
+        />
       ) : (
         <div className="space-y-4">
           {messages.map(msg => {

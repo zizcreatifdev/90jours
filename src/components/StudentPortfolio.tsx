@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Briefcase, CheckCircle2, XCircle, Clock, Loader2, ExternalLink } from "lucide-react";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface StudentPortfolioProps {
   cohortId: string;
@@ -123,17 +124,24 @@ const StudentPortfolio = ({ cohortId, formationName, formationColor }: StudentPo
           )}
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <p className="text-sm text-muted-foreground">Soumettez le lien de votre portfolio pour valider votre formation.</p>
-          <div>
-            <Label>URL du portfolio</Label>
-            <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://monportfolio.com" required type="url" />
-          </div>
-          <Button type="submit" disabled={saving} className="w-full">
-            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Briefcase className="mr-2 h-4 w-4" />}
-            Soumettre mon portfolio
-          </Button>
-        </form>
+        <div className="space-y-4">
+          <EmptyState
+            icon={Briefcase}
+            title="Aucun projet dans ton portfolio"
+            description="Soumettez le lien de votre portfolio pour valider votre formation."
+            className="border-0 bg-transparent py-4 shadow-none"
+          />
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div>
+              <Label>URL du portfolio</Label>
+              <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://monportfolio.com" required type="url" />
+            </div>
+            <Button type="submit" disabled={saving} className="w-full">
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Briefcase className="mr-2 h-4 w-4" />}
+              Soumettre mon portfolio
+            </Button>
+          </form>
+        </div>
       )}
     </div>
   );

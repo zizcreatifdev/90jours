@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-12 (SEC-05 indicateur force mot de passe)
+**Prompt actuel**: prompt-13 (UX-04 empty states listes vides)
 
 ---
 
@@ -10,14 +10,14 @@
 
 | Métrique | Valeur |
 |---------|--------|
-| Composants React | 94 |
+| Composants React | 96 |
 | Pages | 9 |
 | Hooks custom | 9 |
 | Tables Supabase | 31 |
 | Migrations SQL | 37 |
 | Edge Functions | 5 |
-| Tests | 54 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator) |
-| Couverture tests | ~22% (ProtectedRoute + validate-url + AuthContext + export-csv + PasswordStrengthIndicator) |
+| Tests | 63 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator + 9 EmptyState) |
+| Couverture tests | ~25% (ProtectedRoute + validate-url + AuthContext + export-csv + PasswordStrengthIndicator + EmptyState) |
 
 ---
 
@@ -242,6 +242,7 @@
 | ~~Moyenne~~ | ~~PERF-05 : Pagination grandes listes côté Supabase~~ | ✅ Corrigé prompt-11 |
 | ~~Moyenne~~ | ~~UX-05 : Debounce sur les recherches~~ | ✅ Corrigé prompt-11 |
 | ~~Haute~~ | ~~SEC-05 : Pas d'indicateur de force mot de passe~~ | ✅ Corrigé prompt-12 |
+| ~~Moyenne~~ | ~~UX-04 : Empty states absents sur listes vides~~ | ✅ Corrigé prompt-13 |
 | Moyenne | Pas de .env.example | Onboarding difficile |
 | Basse | mock-data.ts non utilisé en prod | Dead code |
 | Basse | 29+ `any` types dans les pages | Type safety dégradée |
@@ -264,3 +265,4 @@
 | prompt-10 | 2026-04-14 | FEAT-02 use-unread-notifications.ts (COUNT SQL + real-time) + badge Bell dans DashboardSidebar (rouge, 99+, tooltip) (38/38 ✅) | ✅ Terminé |
 | prompt-11 | 2026-04-14 | PERF-05 pagination Supabase .range() AuditLogPanel + AdminMessages (20/page) + composant Pagination réutilisable — UX-05 use-debounce.ts + debounce dans AccountingPanel, AdminDashboard, PaymentManager + pagination client-side historique (38/38 ✅) | ✅ Terminé |
 | prompt-12 | 2026-04-14 | SEC-05 PasswordStrengthIndicator.tsx (barre 3 niveaux, 4 critères) + Register + ResetPassword + SetupAccount (indicateur + blocage si faible + minLength 8) — 16 tests (54/54 ✅) | ✅ Terminé |
+| prompt-13 | 2026-04-14 | UX-04 EmptyState.tsx réutilisable (icon, title, description, action, className) + StudentBriefs + StudentMessages + NotificationPanel + StudentPortfolio — 9 tests (63/63 ✅) | ✅ Terminé |
