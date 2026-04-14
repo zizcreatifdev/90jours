@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-16 (FEAT-07 export PDF batch attestations cohorte)
+**Prompt actuel**: prompt-17 (Audit UX Expert — 12 quick wins + 3 redesigns + 7 nice-to-have)
 
 ---
 
@@ -190,6 +190,47 @@
 
 ---
 
+## Audit UX Expert (prompt-17)
+
+**Status**: ✅ 100% — Audit réalisé le 14 avril 2026
+
+### Quick Wins UX (12 items)
+| ID | Description | Impact | Effort | Fichiers |
+|----|-------------|--------|--------|---------|
+| QW-01 | Deadline urgency badge sur les briefs (< 24h / < 4h) | 🔴 Fort | petit | StudentBriefs.tsx |
+| QW-02 | Icônes contextuelles selon type ressource (PDF/vidéo/lien) | 🟠 Moyen | petit | StudentDashboard.tsx |
+| QW-03 | StatsCard : supprimer checkmark inutile (ou remplacer par trend) | 🟠 Moyen | petit | StatsCard.tsx |
+| QW-04 | Sidebar admin : grouper 17 items en sections (Pédagogie / Finance / Admin) | 🔴 Fort | petit | DashboardSidebar.tsx |
+| QW-05 | Badge notifs pulsant (animate-pulse) si non lues | 🟡 Subtil | petit | DashboardSidebar.tsx |
+| QW-06 | Progress bar: transition CSS duration-700 ease-out | 🟡 Subtil | petit | progress.tsx |
+| QW-07 | Brief descriptions expandables (line-clamp-2 + "Lire plus") | 🟠 Moyen | petit | StudentBriefs.tsx |
+| QW-08 | Attestation: checklist → stepper horizontal avec CTA contextuels | 🔴 Fort | petit | StudentAttestation.tsx |
+| QW-09 | Skeletons manquants dans composants internes (briefs, messages, paiements) | 🟠 Moyen | moyen | StudentBriefs.tsx + 4 autres |
+| QW-10 | CohortCard: "⚡ 2 places restantes" si spotsLeft <= 3 | 🟠 Moyen | petit | CohortCard.tsx |
+| QW-11 | Annonces: badge "non lu" navigue vers onglet annonces | 🟠 Moyen | petit | StudentDashboard.tsx |
+| QW-12 | Input search: spinner micro pendant debounce (search !== debouncedSearch) | 🟡 Subtil | petit | AdminDashboard.tsx + 2 autres |
+
+### Redesigns Suggérés
+| Dashboard | Problème principal | Proposition |
+|-----------|-------------------|-------------|
+| Étudiant | Double progression + BarChart peu engageant | Hero cohorte full-width + 3 mini-cards + ActivityHeatmap |
+| Staff | Liste étudiants plate, pas d'alerte santé cohorte | Vue radar étudiants avec code couleur 🟢🟠🔴 auto-calculé |
+| Admin | 17 tabs non groupés, overview sans KPIs financiers ni alertes | Sidebar groupée + AdminAlertBanner + feed activité récente |
+| Landing | Carousel sans indicateurs, CTA inscrit si connecté | Dots carousel + smart CTA selon auth |
+
+### Nice to Have (7 items)
+| ID | Description | Impact | Effort |
+|----|-------------|--------|--------|
+| NH-01 | Streak soumission + badges achievements (DB légère) | 🔴 Fort | moyen |
+| NH-02 | Galerie portfolio cohorte (opt-in, vue mosaïque) | 🔴 Fort | moyen |
+| NH-03 | Feedback formateur inline sur briefs (migration + notif push) | 🔴 Fort | grand |
+| NH-04 | Mode Focus (sidebar masquée, plein écran, localStorage) | 🟠 Moyen | petit |
+| NH-05 | ActivityHeatmap style GitHub (remplace BarChart étudiant) | 🟠 Moyen | moyen |
+| NH-06 | Replay masterclass iframe YouTube/Vimeo intégré | 🟠 Moyen | petit |
+| NH-07 | Edge Function payment-reminders (cron hebdo, pattern brief-reminders) | 🔴 Fort | moyen |
+
+---
+
 ## Audit Complet (prompt-02)
 
 **Status**: ✅ 100% — Rapport d'audit généré le 14 avril 2026
@@ -274,3 +315,4 @@
 | prompt-14 | 2026-04-14 | FEAT-06 pages/StudentProfilePage.tsx (infos, briefs, portfolio, paiements, messages) + route /student/:id + StaffDashboard lignes cliquables — 63/63 ✅ | ✅ Terminé |
 | prompt-15 | 2026-04-14 | FEAT-04 supabase/functions/brief-reminders/index.ts (cron 24h@8h UTC) + config.toml schedule — notifications in-app + push via send-push-notification — 63/63 ✅ | ✅ Terminé |
 | prompt-16 | 2026-04-14 | FEAT-07 export ZIP batch attestations cohorte — AttestationIssuer.tsx : bouton "Exporter toute la cohorte (ZIP)" + html2canvas par étudiant + JSZip + barre de progression — 63/63 ✅ | ✅ Terminé |
+| prompt-17 | 2026-04-14 | Audit UX Expert — 12 quick wins (deadline urgency, resource icons, sidebar grouping, StatsCard checkmark, brief expand, attestation stepper…) + redesign 3 dashboards + 7 nice-to-have (heatmap, galerie, feedback, streak…) — Rapport uniquement, aucun code modifié | ✅ Terminé |
