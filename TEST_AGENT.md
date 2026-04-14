@@ -50,20 +50,32 @@ describe("example", () => {
 ```
 **Status**: ✅ Passe | **Utilité**: Placeholder (aucune valeur réelle)
 
+### src/test/ProtectedRoute.test.tsx — 8 tests ✅
+Tests du composant `src/components/ProtectedRoute.tsx` :
+| # | Description | Vérifie |
+|---|-------------|---------|
+| 1 | Utilisateur non authentifié | Redirect → /login |
+| 2 | activeRole=student sur route staff | Redirect → /student (fix SEC-01) |
+| 3 | activeRole=super_admin sur route staff | Redirect → /admin |
+| 4 | activeRole=null (aucun rôle) | Redirect → /login (fallback) |
+| 5 | activeRole=staff sur route staff | Affiche le contenu protégé |
+| 6 | activeRole=super_admin sur route super_admin | Affiche le contenu protégé |
+| 7 | Sans requiredRole (route authentifiée) | Affiche le contenu protégé |
+| 8 | loading=true | Spinner affiché, pas de redirection |
+
 ---
 
 ## Couverture Actuelle
 
 | Module | Tests | Couverture |
 |--------|-------|-----------|
-| Composants | 0 | 0% |
+| ProtectedRoute | 8 | ~90% |
+| Composants (autres) | 0 | 0% |
 | Hooks | 0 | 0% |
 | Utilitaires | 0 | 0% |
 | Pages | 0 | 0% |
 | AuthContext | 0 | 0% |
-| **TOTAL** | **1 (placeholder)** | **~0%** |
-
-**Note**: La couverture réelle est nulle. Le seul test existant est un placeholder.
+| **TOTAL** | **9** | **~5%** |
 
 ---
 
@@ -71,7 +83,7 @@ describe("example", () => {
 
 ### Priorité Haute
 - [ ] `src/contexts/AuthContext.tsx` — logique de rôles, redirections
-- [ ] `src/components/ProtectedRoute.tsx` — protection des routes
+- [x] `src/components/ProtectedRoute.tsx` — ✅ 8 tests (prompt-04)
 - [ ] `src/lib/export-csv.ts` — export des données
 - [ ] `src/lib/utils.ts` — fonction cn()
 
@@ -155,9 +167,9 @@ describe("useMonHook", () => {
 ## Rapport de Test Actuel (au 14 avril 2026)
 
 ```
-Test Files  1 passed (1)
-Tests       1 passed (1)
-Duration    ~200ms
+Test Files  2 passed (2)
+Tests       9 passed (9)
+Duration    ~5.67s
 
 Couverture : NON configurée (pas de --coverage dans les scripts)
 ```

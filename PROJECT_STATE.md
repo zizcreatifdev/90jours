@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-03 (mot de passe oublié)
+**Prompt actuel**: prompt-04 (fix sécurité ProtectedRoute)
 
 ---
 
@@ -16,8 +16,8 @@
 | Tables Supabase | 31 |
 | Migrations SQL | 37 |
 | Edge Functions | 5 |
-| Tests | 1 (placeholder) |
-| Couverture tests | ~0% |
+| Tests | 9 (1 placeholder + 8 ProtectedRoute) |
+| Couverture tests | ~5% (ProtectedRoute) |
 
 ---
 
@@ -209,7 +209,7 @@
 
 | ID | Sévérité | Module | Description | Status |
 |----|---------|--------|-------------|--------|
-| SEC-01 | 🔴 Critique | ProtectedRoute | Vérifie `roles.includes()` au lieu de `activeRole` — bypass possible pour utilisateurs multi-rôles | ❌ À corriger |
+| SEC-01 | 🔴 Critique | ProtectedRoute | Vérifie `roles.includes()` au lieu de `activeRole` — bypass possible pour utilisateurs multi-rôles | ✅ Corrigé (prompt-04) |
 | SEC-02 | 🟠 Important | .gitignore | `.env` non exclu du repo git | ❌ À corriger |
 | SEC-03 | 🟠 Important | Edge Functions | CORS wildcard `"*"` sur fonctions sensibles | ❌ À corriger |
 | SEC-04 | 🟠 Important | StudentPortfolio | Pas de validation d'URL (XSS potentiel) | ❌ À corriger |
@@ -220,7 +220,7 @@
 | UX-02 | 🟠 Important | App.tsx | Aucun Error Boundary React | ❌ À corriger |
 | UX-03 | 🟠 Important | Login+Register | Double interface inscription incohérente | ❌ À corriger |
 | TEST-01 | 🔴 Critique | AuthContext.tsx | Zéro test sur logique de rôles | ❌ À corriger |
-| TEST-02 | 🔴 Critique | ProtectedRoute.tsx | Zéro test sur protection des routes | ❌ À corriger |
+| TEST-02 | 🔴 Critique | ProtectedRoute.tsx | Zéro test sur protection des routes | ✅ Corrigé (prompt-04) — 8 tests |
 | FEAT-01 | 🔴 Critique | Login.tsx | Reset de mot de passe absent | ✅ Corrigé (prompt-03) |
 
 ---
@@ -229,7 +229,7 @@
 
 | Priorité | Item | Impact |
 |---------|------|--------|
-| Haute | SEC-01 : ProtectedRoute vérifie les mauvais rôles | Faille accès non autorisé |
+| ~~Haute~~ | ~~SEC-01 : ProtectedRoute vérifie les mauvais rôles~~ | ✅ Corrigé prompt-04 |
 | Haute | PERF-02 : use-cohorts O(n) enrollments côté client | Scalabilité bloquante |
 | Haute | PERF-01 : Pas de code splitting | Bundle size / TTI |
 | Haute | Tests unitaires manquants (couverture ~0%) | Risque régressions |
@@ -251,3 +251,4 @@
 | prompt-01 | 2026-04-14 | Création fichiers mémoire (ARCHITECTURE.md, CLAUDE.md, TEST_AGENT.md, PROJECT_STATE.md) | ✅ Terminé |
 | prompt-02 | 2026-04-14 | Audit complet — 30 findings (7 critiques, 11 importants, 12 utiles) | ✅ Terminé |
 | prompt-03 | 2026-04-14 | Ajout mot de passe oublié — ForgotPassword.tsx + ResetPassword.tsx + routes + lien Login | ✅ Terminé |
+| prompt-04 | 2026-04-14 | Fix SEC-01 ProtectedRoute : activeRole au lieu de roles[] + 8 tests unitaires (9/9 ✅) | ✅ Terminé |

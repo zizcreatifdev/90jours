@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
-  const { user, loading, roles, activeRole } = useAuth();
+  const { user, loading, activeRole } = useAuth();
 
   if (loading) {
     return (
@@ -20,11 +20,13 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
 
   if (!user) return <Navigate to="/login" replace />;
 
-  if (requiredRole && !roles.includes(requiredRole)) {
-    // Redirect to appropriate dashboard based on active role
+  if (requiredRole && activeRole !== requiredRole) {
+    // Redirect to the dashboard matching the current active role
     if (activeRole === "super_admin") return <Navigate to="/admin" replace />;
     if (activeRole === "staff") return <Navigate to="/staff" replace />;
-    return <Navigate to="/student" replace />;
+    if (activeRole === "student") return <Navigate to="/student" replace />;
+    // Fallback: no active role assigned → back to login
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;
