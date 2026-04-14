@@ -99,7 +99,15 @@ const Login = () => {
                   <Input id="login-email" type="email" required value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="votre@email.com" />
                 </div>
                 <div>
-                  <Label htmlFor="login-password">Mot de passe</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="login-password">Mot de passe</Label>
+                    <Link
+                      to="/forgot-password"
+                      className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                    >
+                      Mot de passe oublié ?
+                    </Link>
+                  </div>
                   <Input id="login-password" type="password" required value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} placeholder="••••••••" />
                 </div>
                 <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">

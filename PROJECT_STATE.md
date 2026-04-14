@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-02 (audit complet)
+**Prompt actuel**: prompt-03 (mot de passe oublié)
 
 ---
 
@@ -34,6 +34,7 @@
 | Switch de rôle | ✅ Complet | 100% |
 | Setup post-invitation | ✅ Complet | 100% |
 | Persistance rôle actif | ✅ Complet | 100% |
+| **Mot de passe oublié** | ✅ Complet | 100% |
 
 **Complétion globale**: 100%
 **Bugs connus**: Aucun identifié
@@ -215,12 +216,12 @@
 | PERF-01 | 🔴 Critique | App.tsx | Zéro code splitting / lazy loading | ❌ À corriger |
 | PERF-02 | 🔴 Critique | use-cohorts.ts | Charge tous les enrollments en mémoire côté client | ❌ À corriger |
 | PERF-03 | 🟠 Important | App.tsx | Aucun staleTime React Query | ❌ À corriger |
-| UX-01 | 🔴 Critique | Login.tsx | Pas de "Mot de passe oublié" | ❌ À corriger |
+| UX-01 | 🔴 Critique | Login.tsx | Pas de "Mot de passe oublié" | ✅ Corrigé (prompt-03) |
 | UX-02 | 🟠 Important | App.tsx | Aucun Error Boundary React | ❌ À corriger |
 | UX-03 | 🟠 Important | Login+Register | Double interface inscription incohérente | ❌ À corriger |
 | TEST-01 | 🔴 Critique | AuthContext.tsx | Zéro test sur logique de rôles | ❌ À corriger |
 | TEST-02 | 🔴 Critique | ProtectedRoute.tsx | Zéro test sur protection des routes | ❌ À corriger |
-| FEAT-01 | 🔴 Critique | Login.tsx | Reset de mot de passe absent | ❌ À ajouter |
+| FEAT-01 | 🔴 Critique | Login.tsx | Reset de mot de passe absent | ✅ Corrigé (prompt-03) |
 
 ---
 
@@ -249,3 +250,4 @@
 |--------|------|-------------|--------|
 | prompt-01 | 2026-04-14 | Création fichiers mémoire (ARCHITECTURE.md, CLAUDE.md, TEST_AGENT.md, PROJECT_STATE.md) | ✅ Terminé |
 | prompt-02 | 2026-04-14 | Audit complet — 30 findings (7 critiques, 11 importants, 12 utiles) | ✅ Terminé |
+| prompt-03 | 2026-04-14 | Ajout mot de passe oublié — ForgotPassword.tsx + ResetPassword.tsx + routes + lien Login | ✅ Terminé |
