@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowRight, ChevronDown, Loader2, Palette, Film, Code2, CheckCircle, Star, Quote } from "lucide-react";
+import { ArrowRight, ChevronDown, Loader2, Palette, Film, CheckCircle, Star, Quote } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useCohorts } from "@/hooks/use-cohorts";
@@ -383,7 +383,7 @@ const Index = () => {
             )}
           </div>
 
-          {/* Cohort cards — immersive grid */}
+          {/* Cohort cards — editorial grid */}
           {loading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-accent" />
@@ -391,115 +391,106 @@ const Index = () => {
           ) : activeCohorts.length === 0 ? (
             <p className="py-16 text-center text-muted-foreground">Aucune cohorte disponible pour le moment.</p>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {activeCohorts.map((cohort, i) => {
                 const key = getFiliereKey(cohort.formation?.name);
                 const colors = FILIERE_COLORS[key];
                 const enrolled = cohort.enrollment_count ?? 0;
                 const spotsLeft = cohort.capacity - enrolled;
-                const pct = Math.round((enrolled / cohort.capacity) * 100);
-
-                // Icon per filière
-                const Icon = key === "motion" ? Film : key === "vibecoding" ? Code2 : Palette;
+                const isFull = spotsLeft === 0;
+                const isAlmostFull = spotsLeft > 0 && spotsLeft <= 3;
 
                 return (
                   <div
                     key={cohort.id}
                     className={cn(
-                      "group relative overflow-hidden rounded-2xl border border-border bg-white dark:bg-[#111111] transition-all duration-500",
-                      "hover:-translate-y-1.5",
+                      "group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-white dark:bg-[#111111] transition-all duration-500 hover:-translate-y-1",
                       formationsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
                     )}
-                    style={{
-                      transitionDelay: formationsVisible ? `${i * 80}ms` : "0ms",
-                      boxShadow: `0 0 0 0 ${colors.glow}`,
-                    }}
-                    onMouseEnter={(e) => {
-                      (e.currentTarget as HTMLDivElement).style.boxShadow = `0 8px 32px 0 ${colors.glow}`;
-                    }}
-                    onMouseLeave={(e) => {
-                      (e.currentTarget as HTMLDivElement).style.boxShadow = `0 0 0 0 ${colors.glow}`;
-                    }}
+                    style={{ transitionDelay: formationsVisible ? `${i * 80}ms` : "0ms" }}
                   >
-                    {/* Coloured top bar */}
-                    <div className="h-1.5 w-full" style={{ backgroundColor: colors.accent }} />
+                    {/* Bold left accent bar */}
+                    <div
+                      className="absolute left-0 top-0 bottom-0 w-[3px]"
+                      style={{ backgroundColor: colors.accent }}
+                    />
 
-                    <div className="p-6">
-                      {/* Header */}
-                      <div className="mb-4 flex items-start justify-between gap-3">
-                        <div
-                          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-                          style={{ backgroundColor: `${colors.accent}20` }}
+                    <div className="flex flex-1 flex-col pl-7 pr-6 pt-6 pb-6">
+                      {/* Formation label — no pill, just colored small-caps text */}
+                      {cohort.formation && (
+                        <p
+                          className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em]"
+                          style={{ color: colors.accent }}
                         >
-                          <Icon className="h-6 w-6" style={{ color: colors.accent }} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          {cohort.formation && (
-                            <span
-                              className="mb-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                              style={{ backgroundColor: `${colors.accent}20`, color: colors.accent }}
-                            >
-                              {cohort.formation.name}
-                            </span>
-                          )}
-                          <h3 className="font-display font-bold text-foreground leading-tight">
-                            Cohorte {cohort.name}
-                          </h3>
-                        </div>
-                      </div>
-
-                      {/* Dates */}
-                      <p className="mb-4 text-sm text-muted-foreground">
-                        {new Date(cohort.start_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
-                        {" → "}
-                        {new Date(cohort.end_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
-                      </p>
-
-                      {/* Level badge if available */}
-                      {cohort.level && (
-                        <span className="mb-4 inline-block rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                          {cohort.level}
-                        </span>
-                      )}
-
-                      {/* Enrollment progress */}
-                      <div className="mb-4">
-                        <div className="mb-1.5 flex items-center justify-between text-xs">
-                          <span className="text-muted-foreground">{enrolled} / {cohort.capacity} étudiants</span>
-                          {spotsLeft <= 3 && spotsLeft > 0 && (
-                            <span className="font-semibold text-amber-500">⚡ {spotsLeft} place{spotsLeft > 1 ? "s" : ""}</span>
-                          )}
-                          {spotsLeft === 0 && (
-                            <span className="font-semibold text-destructive">Complète</span>
-                          )}
-                        </div>
-                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-                          <div
-                            className="h-full rounded-full transition-all duration-700"
-                            style={{ width: `${pct}%`, backgroundColor: colors.accent }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Price */}
-                      {cohort.total_price != null && (
-                        <p className="mb-5 text-xl font-bold text-foreground">
-                          {cohort.total_price.toLocaleString("fr-FR")}
-                          <span className="ml-1 text-sm font-normal text-muted-foreground">FCFA</span>
+                          {cohort.formation.name}
                         </p>
                       )}
 
-                      <Link to={spotsLeft === 0 ? "#" : `/register?cohort=${cohort.id}`}>
-                        <Button
-                          size="sm"
-                          disabled={spotsLeft === 0}
-                          className="w-full rounded-xl font-semibold"
-                          style={spotsLeft > 0 ? { backgroundColor: colors.accent, color: "#fff" } : {}}
+                      {/* Cohort name — big, typographic */}
+                      <h3 className="font-display text-2xl font-black leading-tight text-foreground">
+                        {cohort.name}
+                      </h3>
+
+                      {/* Thin separator */}
+                      <div className="my-4 h-px w-10" style={{ backgroundColor: colors.accent }} />
+
+                      {/* Dates */}
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(cohort.start_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                        <span className="mx-1.5 text-border">→</span>
+                        {new Date(cohort.end_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                      </p>
+
+                      {/* Spots + level */}
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        {isFull ? (
+                          <span className="font-semibold text-destructive">Complet</span>
+                        ) : isAlmostFull ? (
+                          <span className="font-semibold text-amber-500">⚡ {spotsLeft} place{spotsLeft > 1 ? "s" : ""} restante{spotsLeft > 1 ? "s" : ""}</span>
+                        ) : (
+                          <span>{spotsLeft} places disponibles</span>
+                        )}
+                        {cohort.level && (
+                          <>
+                            <span className="text-border">·</span>
+                            <span>{cohort.level}</span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Spacer */}
+                      <div className="flex-1" />
+
+                      {/* Price + CTA row */}
+                      <div className="mt-6 flex items-end justify-between gap-2">
+                        {cohort.total_price != null ? (
+                          <div>
+                            <p className="text-xl font-black text-foreground">
+                              {cohort.total_price.toLocaleString("fr-FR")}
+                            </p>
+                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">FCFA</p>
+                          </div>
+                        ) : <div />}
+
+                        <Link
+                          to={isFull ? "#" : `/register?cohort=${cohort.id}`}
+                          aria-disabled={isFull}
+                          tabIndex={isFull ? -1 : undefined}
                         >
-                          {spotsLeft === 0 ? "Complet" : "S'inscrire"}
-                          {spotsLeft > 0 && <ArrowRight className="ml-2 h-4 w-4" />}
-                        </Button>
-                      </Link>
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold transition-all",
+                              isFull
+                                ? "cursor-not-allowed text-muted-foreground"
+                                : "hover:gap-2.5"
+                            )}
+                            style={isFull ? {} : { color: colors.accent }}
+                          >
+                            {isFull ? "Complet" : "S'inscrire"}
+                            {!isFull && <ArrowRight className="h-4 w-4" />}
+                          </span>
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 );
