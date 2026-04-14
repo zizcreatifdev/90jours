@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-05 (optimisation use-cohorts COUNT SQL + staleTime)
+**Prompt actuel**: prompt-06 (sécurité : .env gitignore + CORS whitelist + validation URL portfolio)
 
 ---
 
@@ -16,8 +16,8 @@
 | Tables Supabase | 31 |
 | Migrations SQL | 37 |
 | Edge Functions | 5 |
-| Tests | 9 (1 placeholder + 8 ProtectedRoute) |
-| Couverture tests | ~5% (ProtectedRoute) |
+| Tests | 19 (1 placeholder + 8 ProtectedRoute + 10 validate-url) |
+| Couverture tests | ~7% (ProtectedRoute + validate-url) |
 
 ---
 
@@ -210,9 +210,9 @@
 | ID | Sévérité | Module | Description | Status |
 |----|---------|--------|-------------|--------|
 | SEC-01 | 🔴 Critique | ProtectedRoute | Vérifie `roles.includes()` au lieu de `activeRole` — bypass possible pour utilisateurs multi-rôles | ✅ Corrigé (prompt-04) |
-| SEC-02 | 🟠 Important | .gitignore | `.env` non exclu du repo git | ❌ À corriger |
-| SEC-03 | 🟠 Important | Edge Functions | CORS wildcard `"*"` sur fonctions sensibles | ❌ À corriger |
-| SEC-04 | 🟠 Important | StudentPortfolio | Pas de validation d'URL (XSS potentiel) | ❌ À corriger |
+| SEC-02 | 🟠 Important | .gitignore | `.env` non exclu du repo git | ✅ Corrigé (prompt-06) |
+| SEC-03 | 🟠 Important | Edge Functions | CORS wildcard `"*"` sur fonctions sensibles | ✅ Corrigé (prompt-06) |
+| SEC-04 | 🟠 Important | StudentPortfolio | Pas de validation d'URL (XSS potentiel) | ✅ Corrigé (prompt-06) |
 | PERF-01 | 🔴 Critique | App.tsx | Zéro code splitting / lazy loading | ❌ À corriger |
 | PERF-02 | 🔴 Critique | use-cohorts.ts | Charge tous les enrollments en mémoire côté client | ✅ Corrigé (prompt-05) |
 | PERF-03 | 🟠 Important | App.tsx | Aucun staleTime React Query | ✅ Corrigé (prompt-05) — use-cohorts |
@@ -235,7 +235,7 @@
 | Haute | PERF-01 : Pas de code splitting | Bundle size / TTI |
 | Haute | Tests unitaires manquants (couverture ~0%) | Risque régressions |
 | ~~Haute~~ | ~~UX-01 / FEAT-01 : Mot de passe oublié absent~~ | ✅ Corrigé prompt-03 |
-| Haute | Credentials dans .env commité (sécurité) | Risque sécurité |
+| ~~Haute~~ | ~~Credentials dans .env commité (sécurité)~~ | ✅ Corrigé prompt-06 |
 | Moyenne | UX-02 : Pas de Error Boundary | Écran blanc sur crash |
 | Moyenne | UX-03 : Double interface inscription | Confusion utilisateur |
 | Moyenne | Pas de .env.example | Onboarding difficile |
@@ -253,3 +253,4 @@
 | prompt-03 | 2026-04-14 | Ajout mot de passe oublié — ForgotPassword.tsx + ResetPassword.tsx + routes + lien Login | ✅ Terminé |
 | prompt-04 | 2026-04-14 | Fix SEC-01 ProtectedRoute : activeRole au lieu de roles[] + 8 tests unitaires (9/9 ✅) | ✅ Terminé |
 | prompt-05 | 2026-04-14 | PERF-02 use-cohorts : COUNT SQL groupé + React Query staleTime 5min (9/9 ✅) | ✅ Terminé |
+| prompt-06 | 2026-04-14 | SEC-02 .env gitignore + .env.example — SEC-03 CORS whitelist 3 Edge Functions — SEC-04 isValidUrl() + StudentPortfolio (19/19 ✅) | ✅ Terminé |

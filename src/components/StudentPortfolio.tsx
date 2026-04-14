@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { isValidUrl } from "@/lib/validate-url";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +41,12 @@ const StudentPortfolio = ({ cohortId, formationName, formationColor }: StudentPo
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !cohortId) return;
+
+    if (!isValidUrl(url)) {
+      toast({ title: "URL invalide", description: "Veuillez entrer une URL valide commençant par http:// ou https://", variant: "destructive" });
+      return;
+    }
+
     setSaving(true);
 
     if (portfolio) {
