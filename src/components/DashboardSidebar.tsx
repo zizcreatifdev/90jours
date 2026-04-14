@@ -263,9 +263,9 @@ const SidebarNav = ({
                 expanded ? "h-10 px-3 w-full" : "h-10 w-10 justify-center"
               )}
             >
-              <Avatar className="h-7 w-7 shrink-0">
+              <Avatar className="h-5 w-5 shrink-0">
                 <AvatarImage src={profile?.avatar_url || undefined} alt="Profil" className="object-cover" />
-                <AvatarFallback className="bg-accent text-accent-foreground text-xs font-bold">
+                <AvatarFallback className="bg-accent text-accent-foreground text-[9px] font-bold">
                   {(profile?.first_name?.[0] || "U").toUpperCase()}
                 </AvatarFallback>
               </Avatar>
