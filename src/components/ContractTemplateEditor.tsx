@@ -12,6 +12,7 @@ import { Loader2, Plus, Pencil, Trash2, Eye, FileSignature, ToggleLeft, ToggleRi
 interface ContractTemplate {
   id: string;
   name: string;
+  description: string | null;
   content: string;
   formation_id: string | null;
   is_active: boolean;
@@ -61,6 +62,7 @@ const ContractTemplateEditor = () => {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formName, setFormName] = useState("");
+  const [formDescription, setFormDescription] = useState("");
   const [formContent, setFormContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
@@ -76,11 +78,12 @@ const ContractTemplateEditor = () => {
 
   useEffect(() => { fetchTemplates(); }, []);
 
-  const resetForm = () => { setEditingId(null); setFormName(""); setFormContent(""); };
+  const resetForm = () => { setEditingId(null); setFormName(""); setFormDescription(""); setFormContent(""); };
 
   const handleEdit = (t: ContractTemplate) => {
     setEditingId(t.id);
     setFormName(t.name);
+    setFormDescription(t.description || "");
     setFormContent(t.content);
   };
 
@@ -94,7 +97,7 @@ const ContractTemplateEditor = () => {
     if (editingId) {
       const { error } = await supabase
         .from("contract_templates")
-        .update({ name: formName.trim(), content: formContent.trim() })
+        .update({ name: formName.trim(), description: formDescription.trim() || null, content: formContent.trim() })
         .eq("id", editingId);
       if (error) {
         toast({ title: "Erreur", description: error.message, variant: "destructive" });
@@ -106,7 +109,7 @@ const ContractTemplateEditor = () => {
     } else {
       const { error } = await supabase
         .from("contract_templates")
-        .insert({ name: formName.trim(), content: formContent.trim(), is_active: true });
+        .insert({ name: formName.trim(), description: formDescription.trim() || null, content: formContent.trim(), is_active: true });
       if (error) {
         toast({ title: "Erreur", description: error.message, variant: "destructive" });
       } else {
@@ -168,7 +171,10 @@ const ContractTemplateEditor = () => {
                       {t.is_active ? "Actif" : "Inactif"}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  {t.description && (
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{t.description}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground/60 mt-0.5">
                     {t.formation_id ? "Formation spécifique" : "Générique"} — Mis à jour le {new Date(t.updated_at).toLocaleDateString("fr-FR")}
                   </p>
                 </div>
@@ -228,6 +234,17 @@ const ContractTemplateEditor = () => {
                   onChange={e => setFormName(e.target.value)}
                   placeholder="Ex: Contrat standard 90 jours"
                 />
+              </div>
+              <div>
+                <Label>Description <span className="text-muted-foreground font-normal">(usage interne)</span></Label>
+                <Textarea
+                  value={formDescription}
+                  onChange={e => setFormDescription(e.target.value)}
+                  rows={2}
+                  maxLength={300}
+                  placeholder="Ex: Engagement bilatéral étudiant / organisme de formation. Couvre le règlement intérieur, les modalités pédagogiques et les conditions d'abandon."
+                />
+                <p className="mt-1 text-xs text-muted-foreground">{formDescription.length}/300</p>
               </div>
               <div>
                 <Label>Contenu HTML</Label>

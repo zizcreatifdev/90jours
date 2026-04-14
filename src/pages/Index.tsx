@@ -434,6 +434,13 @@ const Index = () => {
                       {/* Thin separator */}
                       <div className="my-4 h-px w-10" style={{ backgroundColor: colors.accent }} />
 
+                      {/* Formation description */}
+                      {cohort.formation?.description && (
+                        <p className="mb-4 text-sm leading-relaxed text-muted-foreground line-clamp-2">
+                          {cohort.formation.description}
+                        </p>
+                      )}
+
                       {/* Dates */}
                       <p className="text-sm text-muted-foreground">
                         {new Date(cohort.start_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
