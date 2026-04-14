@@ -14,3 +14,10 @@ verify_jwt = false
 
 [functions.get-vapid-key]
 verify_jwt = false
+
+# ── Scheduled function : brief deadline reminders ─────────────────────────────
+# Runs every day at 08:00 UTC.
+# Finds briefs due within 48 h and notifies students who haven't submitted.
+[functions.brief-reminders]
+verify_jwt = false
+schedule = "0 8 * * *"

@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-14 (FEAT-06 profil étudiant vue staff/admin)
+**Prompt actuel**: prompt-15 (FEAT-04 rappels automatiques deadlines briefs)
 
 ---
 
@@ -15,7 +15,7 @@
 | Hooks custom | 9 |
 | Tables Supabase | 31 |
 | Migrations SQL | 37 |
-| Edge Functions | 5 |
+| Edge Functions | 6 |
 | Tests | 63 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator + 9 EmptyState) |
 | Couverture tests | ~25% (ProtectedRoute + validate-url + AuthContext + export-csv + PasswordStrengthIndicator + EmptyState) |
 
@@ -135,6 +135,7 @@
 | Chiffrement RFC 8291/8292 | ✅ Complet | 100% |
 | Nettoyage souscriptions mortes | ✅ Complet | 100% |
 | Clé VAPID | ✅ Complet | 100% |
+| **Rappels automatiques deadlines (cron 24h)** | ✅ Complet | 100% |
 
 **Complétion globale**: 100%
 **Bugs connus**: Aucun identifié
@@ -244,6 +245,7 @@
 | ~~Haute~~ | ~~SEC-05 : Pas d'indicateur de force mot de passe~~ | ✅ Corrigé prompt-12 |
 | ~~Moyenne~~ | ~~UX-04 : Empty states absents sur listes vides~~ | ✅ Corrigé prompt-13 |
 | ~~Haute~~ | ~~FEAT-06 : Pas de vue profil étudiant pour le formateur~~ | ✅ Corrigé prompt-14 |
+| ~~Haute~~ | ~~FEAT-04 : Pas de rappels automatiques pour les deadlines briefs~~ | ✅ Corrigé prompt-15 |
 | Moyenne | Pas de .env.example | Onboarding difficile |
 | Basse | mock-data.ts non utilisé en prod | Dead code |
 | Basse | 29+ `any` types dans les pages | Type safety dégradée |
@@ -268,3 +270,4 @@
 | prompt-12 | 2026-04-14 | SEC-05 PasswordStrengthIndicator.tsx (barre 3 niveaux, 4 critères) + Register + ResetPassword + SetupAccount (indicateur + blocage si faible + minLength 8) — 16 tests (54/54 ✅) | ✅ Terminé |
 | prompt-13 | 2026-04-14 | UX-04 EmptyState.tsx réutilisable (icon, title, description, action, className) + StudentBriefs + StudentMessages + NotificationPanel + StudentPortfolio — 9 tests (63/63 ✅) | ✅ Terminé |
 | prompt-14 | 2026-04-14 | FEAT-06 pages/StudentProfilePage.tsx (infos, briefs, portfolio, paiements, messages) + route /student/:id + StaffDashboard lignes cliquables — 63/63 ✅ | ✅ Terminé |
+| prompt-15 | 2026-04-14 | FEAT-04 supabase/functions/brief-reminders/index.ts (cron 24h@8h UTC) + config.toml schedule — notifications in-app + push via send-push-notification — 63/63 ✅ | ✅ Terminé |
