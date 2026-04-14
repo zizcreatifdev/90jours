@@ -38,7 +38,7 @@ interface TemplateRow {
 const ContractSign = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, activeRole } = useAuth();
   const { toast } = useToast();
 
   const cohortId = searchParams.get("cohort_id") ?? "";
@@ -218,7 +218,13 @@ const ContractSign = () => {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Contrat signé ✅", description: "Votre inscription est confirmée. Bienvenue !" });
-      navigate(`/student?from_cohort=${cohortId}`);
+      if (activeRole === "super_admin") {
+        navigate("/admin");
+      } else if (activeRole === "staff") {
+        navigate("/staff");
+      } else {
+        navigate(`/student?from_cohort=${cohortId}`);
+      }
     }
   };
 
@@ -238,7 +244,11 @@ const ContractSign = () => {
           <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
           <h2 className="font-display text-xl font-bold text-foreground mb-2">Contrat déjà signé</h2>
           <p className="text-muted-foreground mb-6">Vous avez déjà signé votre contrat pour cette cohorte.</p>
-          <Button onClick={() => navigate(`/student?from_cohort=${cohortId}`)}>Accéder à mon espace</Button>
+          <Button onClick={() => {
+            if (activeRole === "super_admin") navigate("/admin");
+            else if (activeRole === "staff") navigate("/staff");
+            else navigate(`/student?from_cohort=${cohortId}`);
+          }}>Accéder à mon espace</Button>
         </div>
       </div>
     );

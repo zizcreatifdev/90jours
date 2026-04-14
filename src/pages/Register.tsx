@@ -17,22 +17,32 @@ const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { cohorts, loading: cohortsLoading } = useCohorts();
-  const { user } = useAuth();
+  const { user, activeRole } = useAuth();
   const [searchParams] = useSearchParams();
   const cohortFromUrl = searchParams.get("cohort");
   const [selectedCohort, setSelectedCohort] = useState(cohortFromUrl || "");
   const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", phone: "", password: "", motivation: "" });
   const [submitting, setSubmitting] = useState(false);
   const [staffFormationIds, setStaffFormationIds] = useState<string[]>([]);
+  const [enrolledFormationIds, setEnrolledFormationIds] = useState<string[]>([]);
 
-  // Fetch formations where current user is staff
+  // Fetch formations where current user is staff OR already enrolled
   useEffect(() => {
     if (!user) return;
-    const fetchStaffFormations = async () => {
-      const { data } = await supabase.from("staff_formations" as any).select("formation_id").eq("user_id", user.id);
-      if (data) setStaffFormationIds((data as any[]).map(d => d.formation_id));
+    const fetchUserFormations = async () => {
+      const [staffRes, enrollRes] = await Promise.all([
+        supabase.from("staff_formations" as any).select("formation_id").eq("user_id", user.id),
+        supabase.from("enrollments").select("cohorts:cohort_id(formation_id)").eq("user_id", user.id),
+      ]);
+      if (staffRes.data) setStaffFormationIds((staffRes.data as any[]).map(d => d.formation_id));
+      if (enrollRes.data) {
+        const fids = (enrollRes.data as any[])
+          .map(e => e.cohorts?.formation_id)
+          .filter(Boolean);
+        setEnrolledFormationIds(fids);
+      }
     };
-    fetchStaffFormations();
+    fetchUserFormations();
   }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -81,12 +91,31 @@ const Register = () => {
         await supabase.from("profiles").update({ phone: formData.phone }).eq("user_id", userId);
       }
 
+      // Check if user is already enrolled in another cohort of the same formation
+      const selectedCohortData = cohorts.find(c => c.id === selectedCohort);
+      if (selectedCohortData?.formation_id && enrolledFormationIds.includes(selectedCohortData.formation_id)) {
+        toast({ title: "Déjà inscrit", description: "Vous êtes déjà inscrit à une cohorte de cette formation.", variant: "destructive" });
+        setSubmitting(false);
+        return;
+      }
+
       const { error: enrollError } = await supabase.from("enrollments").insert({
         user_id: userId,
         cohort_id: selectedCohort,
         motivation: formData.motivation || null,
       });
-      if (enrollError) throw enrollError;
+      if (enrollError) {
+        if (enrollError.code === "23505") {
+          toast({ title: "Déjà inscrit", description: "Vous êtes déjà inscrit à cette cohorte.", variant: "destructive" });
+        } else {
+          throw enrollError;
+        }
+        setSubmitting(false);
+        return;
+      }
+
+      // Determine redirect based on role
+      const isAdminOrStaff = activeRole === "super_admin" || activeRole === "staff";
 
       // Check if an active contract template exists → redirect to signing step
       const { data: template } = await supabase
@@ -99,6 +128,9 @@ const Register = () => {
       if (template) {
         toast({ title: "Inscription enregistrée !", description: "Veuillez lire et signer votre contrat de formation." });
         setTimeout(() => navigate(`/contract-sign?cohort_id=${selectedCohort}`), 1200);
+      } else if (isAdminOrStaff) {
+        toast({ title: "Inscription enregistrée ! ✅", description: "Votre inscription a bien été prise en compte." });
+        setTimeout(() => navigate(activeRole === "super_admin" ? "/admin" : "/staff"), 2000);
       } else {
         toast({ title: "Inscription réussie ! 🎉", description: "Bienvenue dans votre espace étudiant." });
         setTimeout(() => navigate("/student"), 2000);
@@ -134,7 +166,8 @@ const Register = () => {
                     const enrolled = cohort.enrollment_count ?? 0;
                     const isFull = enrolled >= cohort.capacity;
                     const isStaffOnFormation = !!cohort.formation_id && staffFormationIds.includes(cohort.formation_id);
-                    const isDisabled = isFull || isStaffOnFormation;
+                    const isAlreadyEnrolled = !!cohort.formation_id && enrolledFormationIds.includes(cohort.formation_id);
+                    const isDisabled = isFull || isStaffOnFormation || isAlreadyEnrolled;
                     const spotsLeft = cohort.capacity - enrolled;
                     const isSelected = selectedCohort === cohort.id;
                     return (
@@ -168,6 +201,8 @@ const Register = () => {
                         <div className="flex items-center gap-2 flex-shrink-0">
                           {isStaffOnFormation ? (
                             <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Vous êtes formateur</span>
+                          ) : isAlreadyEnrolled ? (
+                            <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700 dark:bg-green-950/40 dark:text-green-400">Déjà inscrit</span>
                           ) : isFull ? (
                             <span className="rounded-full bg-destructive/10 px-3 py-1 text-xs font-semibold text-destructive">Complète</span>
                           ) : (
