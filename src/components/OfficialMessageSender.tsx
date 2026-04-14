@@ -1,0 +1,140 @@
+import { useState } from "react";
+import { sendPushToUsers } from "@/hooks/use-push-notifications";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { useCohorts } from "@/hooks/use-cohorts";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Send, Loader2, MessageSquarePlus, PartyPopper, Info, AlertTriangle } from "lucide-react";
+
+const MESSAGE_TYPES = [
+  { value: "official", label: "📢 Message officiel", icon: Info },
+  { value: "celebration", label: "🎉 Célébration / Fête", icon: PartyPopper },
+  { value: "urgent", label: "⚠️ Urgent", icon: AlertTriangle },
+  { value: "info", label: "ℹ️ Information", icon: Info },
+];
+
+const OfficialMessageSender = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { cohorts } = useCohorts();
+  const [open, setOpen] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [type, setType] = useState("official");
+  const [cohortId, setCohortId] = useState("all");
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setSending(true);
+
+    try {
+      // Get target students
+      let studentIds: string[] = [];
+      if (cohortId === "all") {
+        const { data } = await supabase.from("enrollments").select("user_id");
+        studentIds = [...new Set((data || []).map((e: any) => e.user_id))];
+      } else {
+        const { data } = await supabase.from("enrollments").select("user_id").eq("cohort_id", cohortId);
+        studentIds = (data || []).map((e: any) => e.user_id);
+      }
+
+      if (studentIds.length === 0) {
+        toast({ title: "Aucun étudiant trouvé", variant: "destructive" });
+        setSending(false);
+        return;
+      }
+
+      // Insert notifications for all students
+      const notifications = studentIds.map(uid => ({
+        user_id: uid,
+        cohort_id: cohortId === "all" ? null : cohortId,
+        type,
+        title,
+        message,
+        created_by: user.id,
+      }));
+
+      const { error } = await supabase.from("notifications").insert(notifications);
+      if (error) throw error;
+
+      // Send push notifications
+      sendPushToUsers(studentIds, title, message);
+
+      toast({ title: `Message envoyé à ${studentIds.length} étudiant(s) ! 🎉` });
+      setTitle("");
+      setMessage("");
+      setType("official");
+      setCohortId("all");
+      setOpen(false);
+    } catch (err: any) {
+      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    }
+    setSending(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="gap-2">
+          <MessageSquarePlus className="h-4 w-4" /> Message officiel
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="font-display flex items-center gap-2">
+            <Send className="h-5 w-5" /> Envoyer un message officiel
+          </DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSend} className="space-y-4 pt-2">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Type de message</Label>
+              <Select value={type} onValueChange={setType}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {MESSAGE_TYPES.map(t => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Destinataires</Label>
+              <Select value={cohortId} onValueChange={setCohortId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">🌐 Toutes les cohortes</SelectItem>
+                  {cohorts.map(c => (
+                    <SelectItem key={c.id} value={c.id}>Cohorte {c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="msg-title">Titre</Label>
+            <Input id="msg-title" required maxLength={200} value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Joyeuse fête de Tabaski ! 🐏" />
+          </div>
+          <div>
+            <Label htmlFor="msg-content">Message</Label>
+            <Textarea id="msg-content" required maxLength={2000} rows={4} value={message} onChange={e => setMessage(e.target.value)} placeholder="Rédigez votre message..." />
+          </div>
+          <Button type="submit" disabled={sending} className="w-full">
+            {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+            Envoyer à {cohortId === "all" ? "tous les étudiants" : "la cohorte"}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default OfficialMessageSender;

@@ -1,0 +1,1 @@
+ALTER TABLE public.site_settings ADD COLUMN IF NOT EXISTS hero_subtitle TEXT DEFAULT 'Des formations intensives qui transforment votre créativité en 90 jours.';

@@ -1,0 +1,1 @@
+ALTER TABLE public.formations ADD COLUMN level TEXT NOT NULL DEFAULT 'debutant';

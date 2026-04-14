@@ -1,0 +1,1 @@
+ALTER TABLE public.formations ADD COLUMN duration_days integer NOT NULL DEFAULT 90;

@@ -1,0 +1,16 @@
+project_id = "vlfugigvqfqflfenuwkb"
+
+[functions.list-user-emails]
+verify_jwt = false
+
+[functions.delete-user]
+verify_jwt = false
+
+[functions.invite-staff]
+verify_jwt = false
+
+[functions.send-push-notification]
+verify_jwt = false
+
+[functions.get-vapid-key]
+verify_jwt = false
