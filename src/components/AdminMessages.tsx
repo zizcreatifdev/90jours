@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCohorts } from "@/hooks/use-cohorts";
@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import Pagination from "@/components/ui/Pagination";
 
 interface Message {
   id: string;
@@ -19,6 +20,8 @@ interface Message {
   content: string;
   created_at: string;
 }
+
+const PAGE_SIZE = 20;
 
 const AdminMessages = () => {
   const { user } = useAuth();
@@ -33,20 +36,28 @@ const AdminMessages = () => {
   const [replyContent, setReplyContent] = useState("");
   const [sending, setSending] = useState(false);
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
+    setLoading(true);
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
     let query = supabase
       .from("messages")
-      .select("*")
+      .select("*", { count: "exact" })
       .is("parent_id", null)
       .order("created_at", { ascending: false })
-      .limit(100);
+      .range(from, to);
 
     if (filterCohort !== "all") {
       query = query.eq("cohort_id", filterCohort);
     }
 
-    const { data } = await query;
+    const { data, count } = await query;
+    if (count !== null) setTotalCount(count);
+
     if (data) {
       setMessages(data as Message[]);
 
@@ -68,8 +79,6 @@ const AdminMessages = () => {
         }
       }
 
-      // Fetch all sender profiles
-      const allMsgs = [...data, ...Object.values(replies).flat()];
       const senderIds = [...new Set(data.map((m: any) => m.sender_id))];
       if (senderIds.length > 0) {
         const { data: profilesData } = await supabase
@@ -84,9 +93,15 @@ const AdminMessages = () => {
       }
     }
     setLoading(false);
-  };
+  }, [filterCohort, page]);
 
-  useEffect(() => { fetchMessages(); }, [filterCohort]);
+  useEffect(() => { fetchMessages(); }, [fetchMessages]);
+
+  // Reset to page 0 when filter changes
+  const handleFilterChange = (value: string) => {
+    setFilterCohort(value);
+    setPage(0);
+  };
 
   useEffect(() => {
     const channel = supabase
@@ -94,7 +109,7 @@ const AdminMessages = () => {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => fetchMessages())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [filterCohort]);
+  }, [fetchMessages]);
 
   const handleReply = async (parentId: string) => {
     if (!user || !replyContent.trim()) return;
@@ -148,6 +163,8 @@ const AdminMessages = () => {
     return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
   };
 
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -162,7 +179,7 @@ const AdminMessages = () => {
         </div>
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
-          <Select value={filterCohort} onValueChange={setFilterCohort}>
+          <Select value={filterCohort} onValueChange={handleFilterChange}>
             <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Toutes les cohortes</SelectItem>
@@ -184,101 +201,105 @@ const AdminMessages = () => {
           <p className="text-sm text-muted-foreground">Aucun message</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {messages.map(msg => {
-            const msgReplies = replies[msg.id] || [];
-            const isExpanded = expandedReplies.has(msg.id);
-            const cohortName = getCohortName(msg.cohort_id);
+        <>
+          <div className="space-y-4">
+            {messages.map(msg => {
+              const msgReplies = replies[msg.id] || [];
+              const isExpanded = expandedReplies.has(msg.id);
+              const cohortName = getCohortName(msg.cohort_id);
 
-            return (
-              <div key={msg.id} className="rounded-2xl border border-border bg-card shadow-card overflow-hidden">
-                <div className="p-5">
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-9 w-9 flex-shrink-0">
-                      <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
-                        {getName(msg.sender_id)[0]?.toUpperCase() || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-foreground">{getName(msg.sender_id)}</span>
-                        {cohortName && (
-                          <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">{cohortName}</span>
-                        )}
-                        {msg.recipient_id ? (
-                          <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent">→ {getName(msg.recipient_id)}</span>
-                        ) : (
-                          <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">Cohorte</span>
-                        )}
-                        <span className="text-xs text-muted-foreground/60">{formatDate(msg.created_at)}</span>
+              return (
+                <div key={msg.id} className="rounded-2xl border border-border bg-card shadow-card overflow-hidden">
+                  <div className="p-5">
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-9 w-9 flex-shrink-0">
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+                          {getName(msg.sender_id)[0]?.toUpperCase() || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold text-foreground">{getName(msg.sender_id)}</span>
+                          {cohortName && (
+                            <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">{cohortName}</span>
+                          )}
+                          {msg.recipient_id ? (
+                            <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent">→ {getName(msg.recipient_id)}</span>
+                          ) : (
+                            <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">Cohorte</span>
+                          )}
+                          <span className="text-xs text-muted-foreground/60">{formatDate(msg.created_at)}</span>
+                        </div>
+                        {msg.title && <h3 className="mt-1 text-sm font-semibold text-foreground">{msg.title}</h3>}
+                        <p className="mt-1.5 text-sm text-muted-foreground whitespace-pre-wrap">{msg.content}</p>
                       </div>
-                      {msg.title && <h3 className="mt-1 text-sm font-semibold text-foreground">{msg.title}</h3>}
-                      <p className="mt-1.5 text-sm text-muted-foreground whitespace-pre-wrap">{msg.content}</p>
                     </div>
                   </div>
-                </div>
 
-                <div className="border-t border-border bg-secondary/30">
-                  {msgReplies.length > 0 && (
-                    <button
-                      onClick={() => toggleReplies(msg.id)}
-                      className="flex w-full items-center gap-1.5 px-5 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                      {msgReplies.length} réponse{msgReplies.length > 1 ? "s" : ""}
-                    </button>
-                  )}
+                  <div className="border-t border-border bg-secondary/30">
+                    {msgReplies.length > 0 && (
+                      <button
+                        onClick={() => toggleReplies(msg.id)}
+                        className="flex w-full items-center gap-1.5 px-5 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                        {msgReplies.length} réponse{msgReplies.length > 1 ? "s" : ""}
+                      </button>
+                    )}
 
-                  {isExpanded && msgReplies.map(reply => (
-                    <div key={reply.id} className="px-5 py-3 border-t border-border/50">
-                      <div className="flex items-start gap-2.5 pl-4">
-                        <Avatar className="h-7 w-7 flex-shrink-0">
-                          <AvatarFallback className="text-[10px] font-bold bg-muted text-muted-foreground">
-                            {getName(reply.sender_id)[0]?.toUpperCase() || "U"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium text-foreground">{getName(reply.sender_id)}</span>
-                            <span className="text-[10px] text-muted-foreground/60">{formatDate(reply.created_at)}</span>
+                    {isExpanded && msgReplies.map(reply => (
+                      <div key={reply.id} className="px-5 py-3 border-t border-border/50">
+                        <div className="flex items-start gap-2.5 pl-4">
+                          <Avatar className="h-7 w-7 flex-shrink-0">
+                            <AvatarFallback className="text-[10px] font-bold bg-muted text-muted-foreground">
+                              {getName(reply.sender_id)[0]?.toUpperCase() || "U"}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-foreground">{getName(reply.sender_id)}</span>
+                              <span className="text-[10px] text-muted-foreground/60">{formatDate(reply.created_at)}</span>
+                            </div>
+                            <p className="mt-0.5 text-xs text-muted-foreground whitespace-pre-wrap">{reply.content}</p>
                           </div>
-                          <p className="mt-0.5 text-xs text-muted-foreground whitespace-pre-wrap">{reply.content}</p>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
 
-                  {replyingTo === msg.id ? (
-                    <div className="px-5 py-3 border-t border-border/50">
-                      <div className="flex gap-2">
-                        <Textarea
-                          placeholder="Écrire une réponse..."
-                          value={replyContent}
-                          onChange={e => setReplyContent(e.target.value)}
-                          className="min-h-[60px] text-sm bg-background"
-                          rows={2}
-                        />
-                        <div className="flex flex-col gap-1">
-                          <Button size="sm" onClick={() => handleReply(msg.id)} disabled={sending || !replyContent.trim()}>
-                            {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyContent(""); }}>✕</Button>
+                    {replyingTo === msg.id ? (
+                      <div className="px-5 py-3 border-t border-border/50">
+                        <div className="flex gap-2">
+                          <Textarea
+                            placeholder="Écrire une réponse..."
+                            value={replyContent}
+                            onChange={e => setReplyContent(e.target.value)}
+                            className="min-h-[60px] text-sm bg-background"
+                            rows={2}
+                          />
+                          <div className="flex flex-col gap-1">
+                            <Button size="sm" onClick={() => handleReply(msg.id)} disabled={sending || !replyContent.trim()}>
+                              {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyContent(""); }}>✕</Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => { setReplyingTo(msg.id); setExpandedReplies(prev => new Set([...prev, msg.id])); }}
-                      className="flex w-full items-center gap-1.5 px-5 py-2.5 text-xs font-medium text-accent hover:text-accent/80 transition-colors border-t border-border/50"
-                    >
-                      <MessageSquare className="h-3.5 w-3.5" /> Répondre
-                    </button>
-                  )}
+                    ) : (
+                      <button
+                        onClick={() => { setReplyingTo(msg.id); setExpandedReplies(prev => new Set([...prev, msg.id])); }}
+                        className="flex w-full items-center gap-1.5 px-5 py-2.5 text-xs font-medium text-accent hover:text-accent/80 transition-colors border-t border-border/50"
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" /> Répondre
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </>
       )}
     </div>
   );

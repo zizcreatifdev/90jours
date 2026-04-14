@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCohorts } from "@/hooks/use-cohorts";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -59,6 +60,8 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState<UserRow[]>([]);
   const [search, setSearch] = useState("");
   const [userSearch, setUserSearch] = useState("");
+  const debouncedSearch = useDebounce(search);
+  const debouncedUserSearch = useDebounce(userSearch);
   const [statusFilter, setStatusFilter] = useState("all");
   const [formationFilter, setFormationFilter] = useState("all");
   const [archiving, setArchiving] = useState<string | null>(null);
@@ -217,17 +220,17 @@ const AdminDashboard = () => {
   );
 
   const filteredCohorts = cohorts.filter(c => {
-    const matchesSearch = !search || c.name.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = !debouncedSearch || c.name.toLowerCase().includes(debouncedSearch.toLowerCase());
     const matchesStatus = statusFilter === "all" || c.status === statusFilter;
     const matchesFormation = formationFilter === "all" || c.formation_id === formationFilter;
     return matchesSearch && matchesStatus && matchesFormation;
   });
 
   const filteredUsers = users.filter(u =>
-    !userSearch ||
-    u.first_name.toLowerCase().includes(userSearch.toLowerCase()) ||
-    u.last_name.toLowerCase().includes(userSearch.toLowerCase()) ||
-    u.email.toLowerCase().includes(userSearch.toLowerCase())
+    !debouncedUserSearch ||
+    u.first_name.toLowerCase().includes(debouncedUserSearch.toLowerCase()) ||
+    u.last_name.toLowerCase().includes(debouncedUserSearch.toLowerCase()) ||
+    u.email.toLowerCase().includes(debouncedUserSearch.toLowerCase())
   );
 
 

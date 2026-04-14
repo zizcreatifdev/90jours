@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, History, UserPlus, UserMinus, Trash2, Link2Off } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import Pagination from "@/components/ui/Pagination";
 
 interface AuditLog {
   id: string;
@@ -13,6 +14,8 @@ interface AuditLog {
   created_at: string;
   performer_name?: string;
 }
+
+const PAGE_SIZE = 20;
 
 const actionConfig: Record<string, { label: string; icon: typeof UserPlus; color: string }> = {
   staff_invited: { label: "Invitation staff", icon: UserPlus, color: "text-accent" },
@@ -25,18 +28,25 @@ const actionConfig: Record<string, { label: string; icon: typeof UserPlus; color
 const AuditLogPanel = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     const fetchLogs = async () => {
       setLoading(true);
-      const { data } = await supabase
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+
+      const { data, count } = await supabase
         .from("audit_logs" as any)
-        .select("*")
+        .select("*", { count: "exact" })
         .order("created_at", { ascending: false })
-        .limit(50);
+        .range(from, to);
+
+      if (count !== null) setTotalCount(count);
 
       if (data) {
-        // Fetch performer names
+        // Fetch performer names only for this page's logs
         const performerIds = [...new Set((data as any[]).map((l) => l.performed_by))];
         const { data: profiles } = await supabase
           .from("profiles")
@@ -58,7 +68,7 @@ const AuditLogPanel = () => {
       setLoading(false);
     };
     fetchLogs();
-  }, []);
+  }, [page]);
 
   const getDescription = (log: AuditLog) => {
     const d = log.details || {};
@@ -78,6 +88,8 @@ const AuditLogPanel = () => {
     }
   };
 
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
   if (loading) {
     return (
       <div className="flex justify-center py-12">
@@ -95,34 +107,38 @@ const AuditLogPanel = () => {
       {logs.length === 0 ? (
         <p className="text-center text-muted-foreground py-8">Aucune action enregistrée pour le moment.</p>
       ) : (
-        <div className="space-y-1">
-          {logs.map((log) => {
-            const config = actionConfig[log.action] || { label: log.action, icon: History, color: "text-muted-foreground" };
-            const Icon = config.icon;
-            return (
-              <div
-                key={log.id}
-                className="flex items-start gap-3 rounded-xl px-4 py-3 hover:bg-secondary/50 transition-colors"
-              >
-                <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary ${config.color}`}>
-                  <Icon className="h-4 w-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-foreground">
-                    <span className="font-semibold">{log.performer_name}</span>{" "}
-                    {getDescription(log)}
-                  </p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className={`text-xs font-medium ${config.color}`}>{config.label}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(log.created_at), "dd MMM yyyy 'à' HH:mm", { locale: fr })}
-                    </span>
+        <>
+          <div className="space-y-1">
+            {logs.map((log) => {
+              const config = actionConfig[log.action] || { label: log.action, icon: History, color: "text-muted-foreground" };
+              const Icon = config.icon;
+              return (
+                <div
+                  key={log.id}
+                  className="flex items-start gap-3 rounded-xl px-4 py-3 hover:bg-secondary/50 transition-colors"
+                >
+                  <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary ${config.color}`}>
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-foreground">
+                      <span className="font-semibold">{log.performer_name}</span>{" "}
+                      {getDescription(log)}
+                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={`text-xs font-medium ${config.color}`}>{config.label}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(log.created_at), "dd MMM yyyy 'à' HH:mm", { locale: fr })}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </>
       )}
     </div>
   );

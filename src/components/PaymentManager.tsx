@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
 import { sendPushToUsers } from "@/hooks/use-push-notifications";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -60,6 +61,7 @@ const PaymentManager = () => {
   const [trashedPayments, setTrashedPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search);
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -250,7 +252,7 @@ const PaymentManager = () => {
 
   const filteredPayments = payments.filter(p => {
     const name = `${p.profile?.first_name || ""} ${p.profile?.last_name || ""}`.toLowerCase();
-    const matchesSearch = !search || name.includes(search.toLowerCase()) || (p.reference || "").toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = !debouncedSearch || name.includes(debouncedSearch.toLowerCase()) || (p.reference || "").toLowerCase().includes(debouncedSearch.toLowerCase());
     const matchesStatus = statusFilter === "all" || p.status === statusFilter;
     const matchesType = typeFilter === "all" || p.payment_type === typeFilter;
     return matchesSearch && matchesStatus && matchesType;

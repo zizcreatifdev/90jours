@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { exportToCsv } from "@/lib/export-csv";
+import { useDebounce } from "@/hooks/use-debounce";
+import Pagination from "@/components/ui/Pagination";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,8 +94,13 @@ const AccountingPanel = () => {
   const [loading, setLoading] = useState(true);
   const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("month");
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery);
   const [typeFilter, setTypeFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [historyPage, setHistoryPage] = useState(0);
+
+  // Reset history page when search/filters change
+  useEffect(() => { setHistoryPage(0); }, [debouncedSearch, typeFilter, categoryFilter, periodFilter]);
 
   // Fetch data
   useEffect(() => {
@@ -245,13 +252,18 @@ const AccountingPanel = () => {
     return [...revs, ...exps, ...sps].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [payments, expenses, staffPayments]);
 
-  const filteredTransactions = allTransactions.filter(t => {
+  const filteredTransactions = useMemo(() => allTransactions.filter(t => {
     if (!inRange(t.date)) return false;
     if (typeFilter !== "all" && t.type !== typeFilter) return false;
     if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
-    if (searchQuery && !t.description.toLowerCase().includes(searchQuery.toLowerCase()) && !t.category.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (debouncedSearch && !t.description.toLowerCase().includes(debouncedSearch.toLowerCase()) && !t.category.toLowerCase().includes(debouncedSearch.toLowerCase())) return false;
     return true;
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [allTransactions, typeFilter, categoryFilter, debouncedSearch, periodFilter]);
+
+  const HISTORY_PAGE_SIZE = 20;
+  const historyTotalPages = Math.ceil(filteredTransactions.length / HISTORY_PAGE_SIZE);
+  const pagedTransactions = filteredTransactions.slice(historyPage * HISTORY_PAGE_SIZE, (historyPage + 1) * HISTORY_PAGE_SIZE);
 
   const handleExport = () => {
     exportToCsv("comptabilite.csv", filteredTransactions.map(t => ({
@@ -436,7 +448,7 @@ const AccountingPanel = () => {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Rechercher..." className="pl-9 bg-secondary border-0" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
             </div>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <Select value={typeFilter} onValueChange={v => { setTypeFilter(v); setHistoryPage(0); }}>
               <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tous les types</SelectItem>
@@ -444,7 +456,7 @@ const AccountingPanel = () => {
                 <SelectItem value="depense">Dépenses</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <Select value={categoryFilter} onValueChange={v => { setCategoryFilter(v); setHistoryPage(0); }}>
               <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Toutes catégories</SelectItem>
@@ -468,7 +480,7 @@ const AccountingPanel = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredTransactions.map((t, i) => (
+                {pagedTransactions.map((t, i) => (
                   <tr key={i} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
                     <td className="px-5 py-3 text-sm text-muted-foreground">{format(new Date(t.date), "dd/MM/yyyy")}</td>
                     <td className="px-5 py-3">
@@ -492,6 +504,7 @@ const AccountingPanel = () => {
               </tbody>
             </table>
           </div>
+          <Pagination page={historyPage} totalPages={historyTotalPages} onPageChange={setHistoryPage} />
         </TabsContent>
       </Tabs>
 

@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-10 (FEAT-02 badge notifications non-lues sidebar)
+**Prompt actuel**: prompt-11 (PERF-05 pagination Supabase + UX-05 debounce recherche)
 
 ---
 
@@ -10,9 +10,9 @@
 
 | Métrique | Valeur |
 |---------|--------|
-| Composants React | 92 |
+| Composants React | 93 |
 | Pages | 9 |
-| Hooks custom | 8 |
+| Hooks custom | 9 |
 | Tables Supabase | 31 |
 | Migrations SQL | 37 |
 | Edge Functions | 5 |
@@ -238,6 +238,8 @@
 | ~~Haute~~ | ~~Credentials dans .env commité (sécurité)~~ | ✅ Corrigé prompt-06 |
 | ~~Moyenne~~ | ~~UX-02 : Pas de Error Boundary~~ | ✅ Corrigé prompt-07 |
 | ~~Moyenne~~ | ~~UX-03 : Double interface inscription~~ | ✅ Corrigé prompt-07 |
+| ~~Moyenne~~ | ~~PERF-05 : Pagination grandes listes côté Supabase~~ | ✅ Corrigé prompt-11 |
+| ~~Moyenne~~ | ~~UX-05 : Debounce sur les recherches~~ | ✅ Corrigé prompt-11 |
 | Moyenne | Pas de .env.example | Onboarding difficile |
 | Basse | mock-data.ts non utilisé en prod | Dead code |
 | Basse | 29+ `any` types dans les pages | Type safety dégradée |
@@ -258,3 +260,4 @@
 | prompt-08 | 2026-04-14 | PERF-01 code splitting : 11 pages → React.lazy() + Suspense dans App.tsx — build vérifié (11 chunks page) (19/19 ✅) | ✅ Terminé |
 | prompt-09 | 2026-04-14 | TEST-01 AuthContext (9 tests : priorité rôles, localStorage, SIGNED_OUT, setActiveRole invalide) + TEST-03 export-csv (10 tests : BOM, headers, virgules, guillemets, newlines, null/undefined) (38/38 ✅) | ✅ Terminé |
 | prompt-10 | 2026-04-14 | FEAT-02 use-unread-notifications.ts (COUNT SQL + real-time) + badge Bell dans DashboardSidebar (rouge, 99+, tooltip) (38/38 ✅) | ✅ Terminé |
+| prompt-11 | 2026-04-14 | PERF-05 pagination Supabase .range() AuditLogPanel + AdminMessages (20/page) + composant Pagination réutilisable — UX-05 use-debounce.ts + debounce dans AccountingPanel, AdminDashboard, PaymentManager + pagination client-side historique (38/38 ✅) | ✅ Terminé |
