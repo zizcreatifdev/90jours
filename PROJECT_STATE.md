@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-15 (FEAT-04 rappels automatiques deadlines briefs)
+**Prompt actuel**: prompt-16 (FEAT-07 export PDF batch attestations cohorte)
 
 ---
 
@@ -119,6 +119,7 @@
 | Tracker attestations | ✅ Complet | 100% |
 | Génération PDF (html2canvas) | ✅ Complet | 100% |
 | Numéros de certificat uniques | ✅ Complet | 100% |
+| **Export ZIP batch cohorte (JSZip)** | ✅ Complet | 100% |
 
 **Complétion globale**: 100%
 **Bugs connus**: Aucun identifié
@@ -246,6 +247,7 @@
 | ~~Moyenne~~ | ~~UX-04 : Empty states absents sur listes vides~~ | ✅ Corrigé prompt-13 |
 | ~~Haute~~ | ~~FEAT-06 : Pas de vue profil étudiant pour le formateur~~ | ✅ Corrigé prompt-14 |
 | ~~Haute~~ | ~~FEAT-04 : Pas de rappels automatiques pour les deadlines briefs~~ | ✅ Corrigé prompt-15 |
+| ~~Moyenne~~ | ~~FEAT-07 : Pas d'export PDF batch pour les attestations d'une cohorte~~ | ✅ Corrigé prompt-16 |
 | Moyenne | Pas de .env.example | Onboarding difficile |
 | Basse | mock-data.ts non utilisé en prod | Dead code |
 | Basse | 29+ `any` types dans les pages | Type safety dégradée |
@@ -271,3 +273,4 @@
 | prompt-13 | 2026-04-14 | UX-04 EmptyState.tsx réutilisable (icon, title, description, action, className) + StudentBriefs + StudentMessages + NotificationPanel + StudentPortfolio — 9 tests (63/63 ✅) | ✅ Terminé |
 | prompt-14 | 2026-04-14 | FEAT-06 pages/StudentProfilePage.tsx (infos, briefs, portfolio, paiements, messages) + route /student/:id + StaffDashboard lignes cliquables — 63/63 ✅ | ✅ Terminé |
 | prompt-15 | 2026-04-14 | FEAT-04 supabase/functions/brief-reminders/index.ts (cron 24h@8h UTC) + config.toml schedule — notifications in-app + push via send-push-notification — 63/63 ✅ | ✅ Terminé |
+| prompt-16 | 2026-04-14 | FEAT-07 export ZIP batch attestations cohorte — AttestationIssuer.tsx : bouton "Exporter toute la cohorte (ZIP)" + html2canvas par étudiant + JSZip + barre de progression — 63/63 ✅ | ✅ Terminé |
