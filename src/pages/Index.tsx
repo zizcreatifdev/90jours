@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowRight, ChevronDown, Loader2, Palette, Film, CheckCircle, Star, Quote } from "lucide-react";
+import { ArrowRight, ChevronDown, Loader2, Quote } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useCohorts } from "@/hooks/use-cohorts";
@@ -55,25 +55,21 @@ const HOW_STEPS = [
     number: "01",
     title: "Choisissez votre formation",
     description: "Graphisme, Motion Design ou Vibecoding — sélectionnez la discipline qui correspond à vos ambitions.",
-    icon: Palette,
   },
   {
     number: "02",
     title: "Intégrez une cohorte",
     description: "25 étudiants maximum par session pour un suivi personnalisé et une vraie dynamique de groupe.",
-    icon: CheckCircle,
   },
   {
     number: "03",
     title: "Apprenez en faisant",
     description: "Briefs réels, projets pratiques et retours directs de formateurs professionnels du secteur.",
-    icon: Film,
   },
   {
     number: "04",
     title: "Obtenez votre attestation",
     description: "À la fin des 90 jours, recevez une attestation officielle et intégrez notre réseau d'alumni.",
-    icon: Star,
   },
 ];
 
@@ -297,35 +293,27 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Steps — horizontal with connecting line */}
-          <div className="relative">
-            {/* Connecting line (desktop only) */}
-            <div className="absolute top-12 left-[12.5%] right-[12.5%] hidden h-px bg-border md:block" aria-hidden="true" />
-
-            <div className="grid gap-10 md:grid-cols-4">
-              {HOW_STEPS.map((step, i) => (
-                <div
-                  key={step.number}
-                  className={cn(
-                    "flex flex-col items-center text-center transition-all duration-700",
-                    howVisible
-                      ? "opacity-100 translate-y-0"
-                      : "opacity-0 translate-y-8"
-                  )}
-                  style={{ transitionDelay: howVisible ? `${i * 120}ms` : "0ms" }}
-                >
-                  {/* Icon circle */}
-                  <div className="relative mb-6 flex h-24 w-24 items-center justify-center rounded-full border-2 border-border bg-white dark:bg-[#1a1a1a] shadow-lg">
-                    <step.icon className="h-8 w-8 text-accent" />
-                    <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground">
-                      {step.number}
-                    </span>
-                  </div>
-                  <h3 className="mb-2 font-display text-base font-semibold text-foreground">{step.title}</h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{step.description}</p>
-                </div>
-              ))}
-            </div>
+          {/* Steps — editorial, typographic, no icons */}
+          <div className="grid gap-px bg-border md:grid-cols-4">
+            {HOW_STEPS.map((step, i) => (
+              <div
+                key={step.number}
+                className={cn(
+                  "bg-white dark:bg-[#111111] px-8 py-10 transition-all duration-700",
+                  howVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+                )}
+                style={{ transitionDelay: howVisible ? `${i * 100}ms` : "0ms" }}
+              >
+                {/* Big number */}
+                <p className="mb-6 font-display text-7xl font-black leading-none text-foreground/8 select-none">
+                  {step.number}
+                </p>
+                {/* Short accent bar */}
+                <div className="mb-5 h-0.5 w-8 bg-accent" />
+                <h3 className="mb-3 font-display text-base font-bold text-foreground">{step.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{step.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
