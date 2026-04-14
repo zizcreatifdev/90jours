@@ -212,6 +212,34 @@ const StaffDashboard = () => {
     s.profiles?.last_name?.toLowerCase().includes(studentSearch.toLowerCase())
   );
 
+  const getStudentHealth = (progress: number) => {
+    if (!selectedCohort?.start_date || !selectedCohort?.end_date) return null;
+    const now = new Date();
+    const start = new Date(selectedCohort.start_date);
+    const end = new Date(selectedCohort.end_date);
+    if (now < start) return null;
+    const totalDays = Math.max(1, (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const daysPassed = Math.min(totalDays, (now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    const expectedPct = (daysPassed / totalDays) * 100;
+    if (expectedPct < 10) return null;
+    const ratio = progress / expectedPct;
+    if (ratio >= 0.75) return { label: "En bonne voie", emoji: "🟢", color: "text-green-700 dark:text-green-400", bg: "bg-green-50 dark:bg-green-950/30" };
+    if (ratio >= 0.4) return { label: "Attention", emoji: "🟠", color: "text-orange-700 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-950/30" };
+    return { label: "En difficulté", emoji: "🔴", color: "text-red-700 dark:text-red-400", bg: "bg-red-50 dark:bg-red-950/30" };
+  };
+
+  const healthCounts = filteredStudents.reduce(
+    (acc: { green: number; orange: number; red: number; unknown: number }, s: any) => {
+      const h = getStudentHealth(s.progress);
+      if (!h) acc.unknown++;
+      else if (h.emoji === "🟢") acc.green++;
+      else if (h.emoji === "🟠") acc.orange++;
+      else acc.red++;
+      return acc;
+    },
+    { green: 0, orange: 0, red: 0, unknown: 0 }
+  );
+
   const greeting = () => {
     const h = new Date().getHours();
     if (h < 12) return "Bonjour";
@@ -309,7 +337,16 @@ const StaffDashboard = () => {
             {/* Students with contact info */}
             <div className="rounded-2xl border border-border bg-card shadow-card">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4">
-                <h2 className="font-display text-lg font-semibold text-foreground">Étudiants inscrits</h2>
+                <div>
+                  <h2 className="font-display text-lg font-semibold text-foreground">Étudiants inscrits</h2>
+                  {(healthCounts.green + healthCounts.orange + healthCounts.red) > 0 && (
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-[11px] font-medium text-green-600 dark:text-green-400">🟢 {healthCounts.green}</span>
+                      <span className="text-[11px] font-medium text-orange-600 dark:text-orange-400">🟠 {healthCounts.orange}</span>
+                      <span className="text-[11px] font-medium text-red-600 dark:text-red-400">🔴 {healthCounts.red}</span>
+                    </div>
+                  )}
+                </div>
                 <div className="flex items-center gap-2">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -330,6 +367,7 @@ const StaffDashboard = () => {
                         <th className="px-6 py-3 font-medium">Nom</th>
                         <th className="px-6 py-3 font-medium">Téléphone</th>
                         <th className="px-6 py-3 font-medium">Progression</th>
+                        <th className="px-6 py-3 font-medium">Santé</th>
                       </tr>
                     </thead>
                      <tbody>
@@ -355,6 +393,17 @@ const StaffDashboard = () => {
                               <Progress value={s.progress} className="h-1.5 w-16" />
                               <span className="text-xs text-muted-foreground">{s.progress}%</span>
                             </div>
+                          </td>
+                          <td className="px-6 py-3">
+                            {(() => {
+                              const h = getStudentHealth(s.progress);
+                              if (!h) return <span className="text-xs text-muted-foreground/50">—</span>;
+                              return (
+                                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${h.color} ${h.bg}`}>
+                                  {h.emoji} {h.label}
+                                </span>
+                              );
+                            })()}
                           </td>
                         </tr>
                       ))}

@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import ActivityHeatmap from "@/components/ActivityHeatmap";
 
 interface EnrollmentWithCohort {
   id: string;
@@ -217,22 +217,7 @@ const StudentDashboard = () => {
   const now = new Date();
   const daysPassed = Math.max(0, Math.min(daysTotal, Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))));
   const daysLeft = Math.max(0, daysTotal - daysPassed);
-  const totalWeeks = Math.ceil(daysTotal / 7);
 
-  const weeklyData = (() => {
-    const start = new Date(cohort.start_date);
-    const weeks: { name: string; briefs: number }[] = [];
-    for (let w = 0; w < totalWeeks; w++) {
-      const weekStart = new Date(start.getTime() + w * 7 * 24 * 60 * 60 * 1000);
-      const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
-      const count = briefSubmissions.filter(s => {
-        const d = new Date(s.completed_at);
-        return d >= weekStart && d < weekEnd;
-      }).length;
-      weeks.push({ name: `S${w + 1}`, briefs: count });
-    }
-    return weeks;
-  })();
 
   const filteredResources = resources.filter(r =>
     !searchRes || r.title.toLowerCase().includes(searchRes.toLowerCase())
@@ -345,24 +330,13 @@ const StudentDashboard = () => {
               <div className="grid gap-8 lg:grid-cols-3">
                 {/* Left: Chart + Resources */}
                 <div className="lg:col-span-2 space-y-8">
-                  {/* Activity Chart */}
+                  {/* Activity Heatmap */}
                   <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
-                    <div className="mb-4 flex items-center justify-between">
-                      <h2 className="font-display text-lg font-semibold text-foreground">Briefs livrés par semaine</h2>
-                      <span className="rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-muted-foreground">Activité</span>
-                    </div>
-                    <ResponsiveContainer width="100%" height={260}>
-                      <BarChart data={weeklyData} barSize={20}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(220 10% 90%)" />
-                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(220 10% 45%)" }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(220 10% 45%)" }} allowDecimals={false} />
-                        <Tooltip
-                          contentStyle={{ background: "hsl(220 15% 10%)", border: "none", borderRadius: "12px", color: "#fff", fontSize: "13px" }}
-                          cursor={{ fill: "hsl(220 10% 94%)" }}
-                        />
-                        <Bar dataKey="briefs" fill="hsl(220 15% 10%)" radius={[6, 6, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    <ActivityHeatmap
+                      submissions={briefSubmissions}
+                      cohortStartDate={cohort.start_date}
+                      cohortEndDate={cohort.end_date}
+                    />
                   </div>
 
                   {/* Resources table with search + download */}

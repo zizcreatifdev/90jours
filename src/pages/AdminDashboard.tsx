@@ -39,6 +39,7 @@ import AttestationTracker from "@/components/attestation/AttestationTracker";
 import DashboardCalendar from "@/components/DashboardCalendar";
 import AdminMessages from "@/components/AdminMessages";
 import AccountingPanel from "@/components/AccountingPanel";
+import AdminAlertBanner from "@/components/AdminAlertBanner";
 interface UserRow {
   user_id: string;
   first_name: string;
@@ -66,6 +67,14 @@ const AdminDashboard = () => {
   const [formationFilter, setFormationFilter] = useState("all");
   const [archiving, setArchiving] = useState<string | null>(null);
   const [monthlyData, setMonthlyData] = useState<{ name: string; inscrits: number }[]>([]);
+
+  interface ActivityItem {
+    id: string;
+    type: "enrollment" | "payment" | "submission";
+    description: string;
+    timestamp: string;
+  }
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -110,6 +119,57 @@ const AdminDashboard = () => {
     fetchMonthlyData();
   }, []);
 
+  useEffect(() => {
+    const fetchActivity = async () => {
+      const [enrollRes, payRes, subRes] = await Promise.all([
+        supabase
+          .from("enrollments")
+          .select("id, enrolled_at, profiles:user_id(first_name, last_name), cohorts:cohort_id(name)")
+          .order("enrolled_at", { ascending: false })
+          .limit(5),
+        supabase
+          .from("payments")
+          .select("id, created_at, amount, status, profiles:user_id(first_name, last_name)")
+          .order("created_at", { ascending: false })
+          .limit(5),
+        supabase
+          .from("brief_submissions")
+          .select("id, completed_at, profiles:user_id(first_name, last_name), briefs:brief_id(title)")
+          .order("completed_at", { ascending: false })
+          .limit(5),
+      ]);
+
+      const fmt = (n: string) => {
+        const p = n as unknown as { first_name?: string; last_name?: string };
+        return `${p?.first_name || ""} ${p?.last_name || ""}`.trim() || "Inconnu";
+      };
+
+      const items: ActivityItem[] = [
+        ...(enrollRes.data || []).map((e: any) => ({
+          id: `enroll-${e.id}`,
+          type: "enrollment" as const,
+          description: `${fmt(e.profiles)} s'est inscrit${e.cohorts?.name ? ` · ${e.cohorts.name}` : ""}`,
+          timestamp: e.enrolled_at,
+        })),
+        ...(payRes.data || []).map((p: any) => ({
+          id: `pay-${p.id}`,
+          type: "payment" as const,
+          description: `${fmt(p.profiles)} — ${(p.amount || 0).toLocaleString("fr-FR")} FCFA (${p.status === "paid" ? "confirmé" : "en attente"})`,
+          timestamp: p.created_at,
+        })),
+        ...(subRes.data || []).map((s: any) => ({
+          id: `sub-${s.id}`,
+          type: "submission" as const,
+          description: `${fmt(s.profiles)} a soumis "${(s.briefs as any)?.title || "un brief"}"`,
+          timestamp: s.completed_at,
+        })),
+      ];
+
+      items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      setRecentActivity(items.slice(0, 10));
+    };
+    fetchActivity();
+  }, []);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -291,6 +351,8 @@ const AdminDashboard = () => {
         </header>
 
         <div className="p-4 md:p-8">
+          <AdminAlertBanner />
+
           {/* Stats */}
           <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatsCard icon={Users} label="Total inscrits" value={totalEnrolled} subtitle={`sur ${totalCapacity} places`} />
@@ -382,6 +444,41 @@ const AdminDashboard = () => {
                         })}
                       </tbody>
                     </table>
+                  </div>
+                </div>
+              )}
+              {/* Recent activity feed */}
+              {recentActivity.length > 0 && (
+                <div className="mt-8 rounded-2xl border border-border bg-card shadow-card">
+                  <div className="border-b border-border px-6 py-4">
+                    <h2 className="font-display text-lg font-semibold text-foreground">Activité récente</h2>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {recentActivity.map(item => {
+                      const typeConfig = {
+                        enrollment: { label: "Inscription", color: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/30" },
+                        payment: { label: "Paiement", color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-950/30" },
+                        submission: { label: "Brief soumis", color: "text-green-600 dark:text-green-400", bg: "bg-green-50 dark:bg-green-950/30" },
+                      }[item.type];
+                      const relativeTime = (() => {
+                        const diff = Date.now() - new Date(item.timestamp).getTime();
+                        const mins = Math.floor(diff / 60000);
+                        if (mins < 1) return "À l'instant";
+                        if (mins < 60) return `Il y a ${mins}min`;
+                        const hours = Math.floor(mins / 60);
+                        if (hours < 24) return `Il y a ${hours}h`;
+                        return new Date(item.timestamp).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+                      })();
+                      return (
+                        <div key={item.id} className="flex items-center gap-4 px-6 py-3 hover:bg-secondary/40 transition-colors">
+                          <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${typeConfig.color} ${typeConfig.bg}`}>
+                            {typeConfig.label}
+                          </span>
+                          <p className="flex-1 min-w-0 text-sm text-foreground truncate">{item.description}</p>
+                          <span className="shrink-0 text-xs text-muted-foreground">{relativeTime}</span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
