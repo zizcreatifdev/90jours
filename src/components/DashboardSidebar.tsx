@@ -22,8 +22,10 @@ import {
   CalendarDays,
   ChevronsLeft,
   ChevronsRight,
+  Bell,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -84,11 +86,13 @@ const SidebarNav = ({
   links,
   role,
   expanded,
+  unreadCount,
   onNavigate,
 }: {
   links: SidebarLink[];
   role: string;
   expanded: boolean;
+  unreadCount: number;
   onNavigate?: () => void;
 }) => {
   const location = useLocation();
@@ -169,6 +173,39 @@ const SidebarNav = ({
           <ThemeToggle />
         </div>
 
+        {/* Notifications */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              aria-label={`Notifications${unreadCount > 0 ? ` — ${unreadCount > 99 ? "99+" : unreadCount} non lues` : ""}`}
+              onClick={() => {
+                const path = role === "admin" ? "/admin" : role === "staff" ? "/staff" : "/student";
+                navigate(path);
+                onNavigate?.();
+              }}
+              className={cn(
+                "flex items-center gap-3 rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors",
+                expanded ? "h-10 px-3 w-full" : "h-10 w-10 justify-center"
+              )}
+            >
+              <div className="relative shrink-0">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex min-w-[1rem] h-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+              </div>
+              {expanded && <span className="text-sm font-medium">Notifications</span>}
+            </button>
+          </TooltipTrigger>
+          {!expanded && (
+            <TooltipContent side="right">
+              {unreadCount > 0 ? `${unreadCount > 99 ? "99+" : unreadCount} notification${unreadCount > 1 ? "s" : ""} non lue${unreadCount > 1 ? "s" : ""}` : "Notifications"}
+            </TooltipContent>
+          )}
+        </Tooltip>
+
         {/* Profile */}
         <Tooltip>
           <TooltipTrigger asChild>
@@ -220,13 +257,14 @@ const SidebarNav = ({
 const DashboardSidebar = ({ role, mobileOpen, onMobileOpenChange }: DashboardSidebarProps) => {
   const links = role === "admin" ? adminLinks : role === "staff" ? staffLinks : studentLinks;
   const [expanded, setExpanded] = useState(false);
+  const { unreadCount } = useUnreadNotifications();
 
   return (
     <>
       {/* Mobile sheet */}
       <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
         <SheetContent side="left" className="w-[220px] p-0 border-r border-border bg-card">
-          <SidebarNav links={links} role={role} expanded={true} onNavigate={() => onMobileOpenChange?.(false)} />
+          <SidebarNav links={links} role={role} expanded={true} unreadCount={unreadCount} onNavigate={() => onMobileOpenChange?.(false)} />
         </SheetContent>
       </Sheet>
 
@@ -238,7 +276,7 @@ const DashboardSidebar = ({ role, mobileOpen, onMobileOpenChange }: DashboardSid
         )}
       >
         <div className="flex-1 overflow-hidden">
-          <SidebarNav links={links} role={role} expanded={expanded} />
+          <SidebarNav links={links} role={role} expanded={expanded} unreadCount={unreadCount} />
         </div>
 
         {/* Expand/Collapse toggle */}

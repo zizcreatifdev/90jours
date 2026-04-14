@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-09 (TEST-01 AuthContext + TEST-03 export-csv)
+**Prompt actuel**: prompt-10 (FEAT-02 badge notifications non-lues sidebar)
 
 ---
 
@@ -12,7 +12,7 @@
 |---------|--------|
 | Composants React | 92 |
 | Pages | 9 |
-| Hooks custom | 7 |
+| Hooks custom | 8 |
 | Tables Supabase | 31 |
 | Migrations SQL | 37 |
 | Edge Functions | 5 |
@@ -257,3 +257,4 @@
 | prompt-07 | 2026-04-14 | UX-02 ErrorBoundary (class component + main.tsx) — UX-03 suppression onglet signup Login.tsx → lien /register (19/19 ✅) | ✅ Terminé |
 | prompt-08 | 2026-04-14 | PERF-01 code splitting : 11 pages → React.lazy() + Suspense dans App.tsx — build vérifié (11 chunks page) (19/19 ✅) | ✅ Terminé |
 | prompt-09 | 2026-04-14 | TEST-01 AuthContext (9 tests : priorité rôles, localStorage, SIGNED_OUT, setActiveRole invalide) + TEST-03 export-csv (10 tests : BOM, headers, virgules, guillemets, newlines, null/undefined) (38/38 ✅) | ✅ Terminé |
+| prompt-10 | 2026-04-14 | FEAT-02 use-unread-notifications.ts (COUNT SQL + real-time) + badge Bell dans DashboardSidebar (rouge, 99+, tooltip) (38/38 ✅) | ✅ Terminé |
