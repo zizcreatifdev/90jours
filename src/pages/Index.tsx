@@ -597,7 +597,7 @@ const Index = () => {
       <section className="relative overflow-hidden py-28">
         {/* Animated gradient background */}
         <div
-          className="absolute inset-0 -z-10"
+          className="absolute inset-0"
           style={{
             background: "linear-gradient(135deg, #8B5CF6 0%, #F97316 40%, #06B6D4 80%, #8B5CF6 100%)",
             backgroundSize: "300% 300%",
@@ -605,9 +605,9 @@ const Index = () => {
           }}
         />
         {/* Dark overlay for text contrast */}
-        <div className="absolute inset-0 -z-10 bg-black/50" />
+        <div className="absolute inset-0 bg-black/50" />
 
-        <div className="container mx-auto px-4 text-center">
+        <div className="relative z-10 container mx-auto px-4 text-center">
           <h2 className="mb-4 font-display text-3xl font-bold text-white md:text-5xl">
             Prêt(e) à transformer votre carrière ?
           </h2>
