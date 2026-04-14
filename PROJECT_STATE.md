@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-23 (Système de signature numérique de contrat)
+**Prompt actuel**: prompt-24 (Refonte landing page + témoignages admin)
 
 ---
 
@@ -10,11 +10,11 @@
 
 | Métrique | Valeur |
 |---------|--------|
-| Composants React | 96 |
+| Composants React | 97 |
 | Pages | 10 |
 | Hooks custom | 9 |
-| Tables Supabase | 31 |
-| Migrations SQL | 40 |
+| Tables Supabase | 32 |
+| Migrations SQL | 41 |
 | Edge Functions | 7 |
 | Tests | 63 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator + 9 EmptyState) |
 | Couverture tests | ~25% (ProtectedRoute + validate-url + AuthContext + export-csv + PasswordStrengthIndicator + EmptyState) |
@@ -61,6 +61,8 @@
 | Logs d'audit | ✅ Complet | 100% |
 | Paramètres site | ✅ Complet | 100% |
 | Calendrier | ✅ Complet | 100% |
+| Contrats (templates + signés) | ✅ Complet | 100% |
+| Témoignages (CRUD + reorder + toggle) | ✅ Complet | 100% |
 
 **Complétion globale**: 100%
 **Bugs connus**: Aucun identifié
@@ -216,7 +218,7 @@
 | Étudiant | BarChart par semaine peu engageant | ActivityHeatmap style GitHub (52×7 jours) | ✅ prompt-20 |
 | Staff | Liste étudiants plate, pas d'alerte santé cohorte | Indicateur 🟢🟠🔴 par étudiant + compteur santé cohorte | ✅ prompt-20 |
 | Admin | Overview sans alertes ni feed activité | AdminAlertBanner (portfolios/paiements/deadlines) + feed 10 dernières actions | ✅ prompt-20 |
-| Landing | Carousel sans indicateurs, CTA inscrit si connecté | Dots carousel + smart CTA selon auth | ⬜ à faire |
+| Landing | Carousel sans indicateurs, CTA inscrit si connecté | Dots carousel + smart CTA selon auth | ✅ prompt-24 |
 
 ### Nice to Have (7 items)
 | ID | Description | Impact | Effort |
@@ -322,3 +324,4 @@
 | prompt-21 | 2026-04-14 | NH-04 Mode Focus: toggle Maximize2/Minimize2 dans DashboardSidebar, masque sidebar, persiste localStorage, bouton flottant exit — NH-03 feedback formateur inline: BriefManager.tsx section expandable par brief (textarea+Save par étudiant, notif in-app étudiant), StudentBriefs.tsx bloc feedback sous statut — NH-07 payment-reminders Edge Function (cron 0 9 * * *, paiements pending > 30j, notif étudiant+admin+push) + migration brief_submissions.feedback — 63/63 ✅ | ✅ Terminé |
 | prompt-22 | 2026-04-14 | NH-01 Badges motivation: migration student_badges (id, user_id, badge_type, earned_at, metadata, UNIQUE user+type, RLS) — use-student-badges.ts hook (fetch, hasStreak7, checkAndAwardBadges, upsert ignoreDuplicates, newBadge) — BadgeShowcase.tsx (grille 5 badges colorés/verrouillés, animation confetti CSS, barre de progression) — intégration StudentDashboard.tsx (import hook+composant, useRef checkBadgesRef, check on cohort load + realtime channel) — 63/63 ✅ | ✅ Terminé |
 | prompt-23 | 2026-04-14 | Contrats: migration contract_templates + student_contracts (RLS, UNIQUE user+cohort, trigger updated_at, template HTML par défaut) — ContractSign.tsx (variables fillTemplate, scroll obligatoire, checkbox, nom signé = vérification profil, upsert snapshot) — ContractTemplateEditor.tsx (liste, editor HTML textarea, variables cliquables, aperçu demo) — SignedContractsPanel.tsx (table, filtre cohorte, modal snapshot, export CSV) — Register.tsx redirect vers /contract-sign si template actif — StudentDashboard.tsx carte "Mon contrat" + modal viewer — AdminDashboard.tsx onglet Contrats (Templates + Contrats signés) — DashboardSidebar FileSignature link — 63/63 ✅ | ✅ Terminé |
+| prompt-24 | 2026-04-14 | DB: migration testimonials (id, name, role, content, photo_url, is_visible, display_order, RLS public visible / admin all) — Index.tsx refonte complète: Section 2 "Comment ça marche" (4 étapes + IntersectionObserver), Section 3 "Nos formations" (cartes immersives couleurs filière violet/orange/cyan, hover glow, progress bar), Section 4 "Témoignages" (carousel auto-scroll 5s depuis Supabase, masqué si vide), Section 5 CTA gradient animé, Section 6 Footer inline (logo+tagline, nav scroll, contact, "Fait avec passion au Sénégal 🇸🇳") — TestimonialsManager.tsx (liste drag-and-drop reorder, toggle visibility, form add/edit, upload photo Supabase Storage, aperçu preview, dialog modal) — AdminDashboard.tsx onglet "testimonials" — DashboardSidebar MessageSquareQuote link — 63/63 ✅ | ✅ Terminé |

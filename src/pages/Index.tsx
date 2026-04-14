@@ -1,9 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
-import { ArrowRight, Sparkles, Users, Calendar, Award, Loader2, ChevronDown } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ArrowRight, ChevronDown, Loader2, Palette, Film, Code2, CheckCircle, Star, Quote } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import Footer from "@/components/Footer";
-import CohortCard from "@/components/CohortCard";
 import { useCohorts } from "@/hooks/use-cohorts";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 import { useHeroSlides } from "@/hooks/use-hero-slides";
@@ -11,27 +9,71 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import heroImageDefault from "@/assets/hero-image.jpg";
 import logoWhite from "@/assets/logo-white.png";
+import { cn } from "@/lib/utils";
 
-const features = [
+// ── Filière colour map ────────────────────────────────────────────────────────
+const FILIERE_COLORS: Record<string, { accent: string; glow: string; text: string; bg: string }> = {
+  graphisme: {
+    accent: "#8B5CF6",
+    glow: "rgba(139,92,246,0.35)",
+    text: "text-[#8B5CF6]",
+    bg: "bg-[#8B5CF6]",
+  },
+  motion: {
+    accent: "#F97316",
+    glow: "rgba(249,115,22,0.35)",
+    text: "text-[#F97316]",
+    bg: "bg-[#F97316]",
+  },
+  vibecoding: {
+    accent: "#06B6D4",
+    glow: "rgba(6,182,212,0.35)",
+    text: "text-[#06B6D4]",
+    bg: "bg-[#06B6D4]",
+  },
+};
+
+const getFiliereKey = (name = ""): keyof typeof FILIERE_COLORS => {
+  const n = name.toLowerCase();
+  if (n.includes("motion")) return "motion";
+  if (n.includes("vibe") || n.includes("code") || n.includes("coding")) return "vibecoding";
+  return "graphisme";
+};
+
+// ── Testimonial type ──────────────────────────────────────────────────────────
+interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  content: string;
+  photo_url: string | null;
+}
+
+// ── Steps for "Comment ça marche" ─────────────────────────────────────────────
+const HOW_STEPS = [
   {
-    icon: Sparkles,
-    title: "Formations pratiques",
-    description: "Des cours axés sur la pratique pour développer vos compétences créatives concrètes.",
+    number: "01",
+    title: "Choisissez votre formation",
+    description: "Graphisme, Motion Design ou Vibecoding — sélectionnez la discipline qui correspond à vos ambitions.",
+    icon: Palette,
   },
   {
-    icon: Users,
-    title: "Cohortes de 25 max",
-    description: "Des groupes à taille humaine pour un suivi personnalisé de chaque étudiant.",
+    number: "02",
+    title: "Intégrez une cohorte",
+    description: "25 étudiants maximum par session pour un suivi personnalisé et une vraie dynamique de groupe.",
+    icon: CheckCircle,
   },
   {
-    icon: Calendar,
-    title: "Programmes intensifs",
-    description: "Des programmes condensés et efficaces pour maîtriser les fondamentaux de votre discipline.",
+    number: "03",
+    title: "Apprenez en faisant",
+    description: "Briefs réels, projets pratiques et retours directs de formateurs professionnels du secteur.",
+    icon: Film,
   },
   {
-    icon: Award,
-    title: "Certification",
-    description: "Obtenez une attestation personnalisée à la fin de chaque programme de formation.",
+    number: "04",
+    title: "Obtenez votre attestation",
+    description: "À la fin des 90 jours, recevez une attestation officielle et intégrez notre réseau d'alumni.",
+    icon: Star,
   },
 ];
 
@@ -42,15 +84,26 @@ const Index = () => {
   const { user, roles } = useAuth();
   const heroTitle = settings.hero_title || "Formez-vous en 90 jours";
   const heroSubtitle = settings.hero_subtitle || "Des formations intensives qui transforment votre créativité en 90 jours.";
+
   const [formations, setFormations] = useState<{ id: string; name: string }[]>([]);
   const [selectedFormation, setSelectedFormation] = useState<string>("all");
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Testimonials
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
+
+  // Intersection observer refs for scroll animations
+  const howRef = useRef<HTMLElement>(null);
+  const formationsRef = useRef<HTMLElement>(null);
+  const [howVisible, setHowVisible] = useState(false);
+  const [formationsVisible, setFormationsVisible] = useState(false);
 
   // Carousel images: use slides from DB, fallback to default
   const carouselImages = slides.length > 0 ? slides.map((s) => s.image_url) : [heroImageDefault];
   const isHeroReady = !slidesLoading && !settingsLoading;
 
-  // Auto-advance carousel
+  // Auto-advance hero carousel
   useEffect(() => {
     if (carouselImages.length <= 1) return;
     const interval = setInterval(() => {
@@ -59,10 +112,55 @@ const Index = () => {
     return () => clearInterval(interval);
   }, [carouselImages.length]);
 
+  // Auto-advance testimonials carousel
+  useEffect(() => {
+    if (testimonials.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [testimonials.length]);
+
+  // Load formations
   useEffect(() => {
     supabase.from("formations").select("id, name").eq("is_active", true).order("name").then(({ data }) => {
       if (data) setFormations(data);
     });
+  }, []);
+
+  // Load visible testimonials
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
+      .from("testimonials")
+      .select("id, name, role, content, photo_url")
+      .eq("is_visible", true)
+      .order("display_order", { ascending: true })
+      .then(({ data }: { data: Testimonial[] | null }) => {
+        if (data) setTestimonials(data);
+      });
+  }, []);
+
+  // Intersection Observer — "Comment ça marche"
+  useEffect(() => {
+    if (!howRef.current) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setHowVisible(true); },
+      { threshold: 0.15 }
+    );
+    obs.observe(howRef.current);
+    return () => obs.disconnect();
+  }, []);
+
+  // Intersection Observer — Formations
+  useEffect(() => {
+    if (!formationsRef.current) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setFormationsVisible(true); },
+      { threshold: 0.1 }
+    );
+    obs.observe(formationsRef.current);
+    return () => obs.disconnect();
   }, []);
 
   const activeCohorts = cohorts
@@ -76,7 +174,8 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white dark:bg-[#0a0a0a]">
+
       {/* ===== HERO FULLSCREEN ===== */}
       <section className="relative h-screen w-full overflow-hidden bg-black">
         {/* Carousel background images */}
@@ -172,7 +271,7 @@ const Index = () => {
 
         {/* Scroll indicator — bottom right */}
         <button
-          onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
+          onClick={() => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" })}
           aria-label="Défiler vers le contenu"
           className="absolute bottom-6 right-6 z-10 flex items-center gap-1.5 text-white/60 text-xs md:bottom-8 md:right-10 hover:text-white/90 transition-colors cursor-pointer"
         >
@@ -181,68 +280,443 @@ const Index = () => {
         </button>
       </section>
 
-      {/* ===== FEATURES ===== */}
-      <section id="features" className="bg-accent py-20">
+      {/* ===== SECTION 2 — COMMENT ÇA MARCHE ===== */}
+      <section
+        id="how"
+        ref={howRef}
+        className="bg-white dark:bg-[#111111] py-24 overflow-hidden"
+      >
         <div className="container mx-auto px-4">
-        <div className="mb-12 text-center">
-          <h2 className="mb-3 font-display text-3xl font-bold text-accent-foreground">Pourquoi 90 jours ?</h2>
-          <p className="mx-auto max-w-xl text-accent-foreground/70">Une approche unique de la formation, pensée pour les créatifs ambitieux.</p>
-        </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {features.map((f) => (
-            <div key={f.title} className="group rounded-2xl glass-card p-6 transition-all hover:shadow-card-hover hover:-translate-y-1">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-background/20">
-                <f.icon className="h-6 w-6 text-accent-foreground" />
-              </div>
-              <h3 className="mb-2 font-display text-lg font-semibold text-foreground">{f.title}</h3>
-              <p className="text-sm leading-relaxed text-muted-foreground">{f.description}</p>
+          <div className="mb-16 text-center">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-accent">Le parcours</p>
+            <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">
+              Comment ça marche ?
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
+              De l'inscription à la certification, un programme pensé pour vous emmener loin en 90 jours.
+            </p>
+          </div>
+
+          {/* Steps — horizontal with connecting line */}
+          <div className="relative">
+            {/* Connecting line (desktop only) */}
+            <div className="absolute top-12 left-[12.5%] right-[12.5%] hidden h-px bg-border md:block" aria-hidden="true" />
+
+            <div className="grid gap-10 md:grid-cols-4">
+              {HOW_STEPS.map((step, i) => (
+                <div
+                  key={step.number}
+                  className={cn(
+                    "flex flex-col items-center text-center transition-all duration-700",
+                    howVisible
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-8"
+                  )}
+                  style={{ transitionDelay: howVisible ? `${i * 120}ms` : "0ms" }}
+                >
+                  {/* Icon circle */}
+                  <div className="relative mb-6 flex h-24 w-24 items-center justify-center rounded-full border-2 border-border bg-white dark:bg-[#1a1a1a] shadow-lg">
+                    <step.icon className="h-8 w-8 text-accent" />
+                    <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground">
+                      {step.number}
+                    </span>
+                  </div>
+                  <h3 className="mb-2 font-display text-base font-semibold text-foreground">{step.title}</h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{step.description}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
         </div>
       </section>
 
-      {/* ===== COHORTS ===== */}
-      <section id="cohorts" className="bg-secondary py-20">
+      {/* ===== SECTION 3 — NOS FORMATIONS ===== */}
+      <section
+        id="formations"
+        ref={formationsRef}
+        className="bg-[#f8f8f8] dark:bg-[#0a0a0a] py-24"
+      >
         <div className="container mx-auto px-4">
-          <div className="mb-12 text-center">
-            <h2 className="mb-3 font-display text-3xl font-bold text-foreground">Cohortes disponibles</h2>
-            <p className="mx-auto max-w-xl text-muted-foreground">Choisissez la session qui correspond à votre planning. Places limitées à 25 étudiants.</p>
+          <div className="mb-16 text-center">
+            <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-accent">Catalogue</p>
+            <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">
+              Nos formations
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
+              Choisissez la cohorte qui correspond à votre planning. Places limitées à 25 étudiants.
+            </p>
+
+            {/* Filière filter pills */}
             {formations.length > 1 && (
-              <div className="mt-6 flex flex-wrap justify-center gap-2">
+              <div className="mt-8 flex flex-wrap justify-center gap-2">
                 <button
                   onClick={() => setSelectedFormation("all")}
-                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${selectedFormation === "all" ? "bg-accent text-accent-foreground" : "bg-card border border-border text-muted-foreground hover:text-foreground"}`}
+                  className={cn(
+                    "rounded-full px-5 py-2 text-sm font-semibold transition-all",
+                    selectedFormation === "all"
+                      ? "bg-accent text-accent-foreground shadow-md"
+                      : "bg-white dark:bg-[#1a1a1a] border border-border text-muted-foreground hover:text-foreground"
+                  )}
                 >
                   Toutes
                 </button>
-                {formations.map((f) => (
-                  <button
-                    key={f.id}
-                    onClick={() => setSelectedFormation(f.id)}
-                    className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${selectedFormation === f.id ? "bg-accent text-accent-foreground" : "bg-card border border-border text-muted-foreground hover:text-foreground"}`}
-                  >
-                    {f.name}
-                  </button>
-                ))}
+                {formations.map((f) => {
+                  const key = getFiliereKey(f.name);
+                  const colors = FILIERE_COLORS[key];
+                  return (
+                    <button
+                      key={f.id}
+                      onClick={() => setSelectedFormation(f.id)}
+                      style={selectedFormation === f.id ? { backgroundColor: colors.accent, color: "#fff" } : {}}
+                      className={cn(
+                        "rounded-full px-5 py-2 text-sm font-semibold transition-all",
+                        selectedFormation === f.id
+                          ? "shadow-md"
+                          : "bg-white dark:bg-[#1a1a1a] border border-border text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {f.name}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
+
+          {/* Cohort cards — immersive grid */}
           {loading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-accent" />
             </div>
+          ) : activeCohorts.length === 0 ? (
+            <p className="py-16 text-center text-muted-foreground">Aucune cohorte disponible pour le moment.</p>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {activeCohorts.map((cohort) => (
-                <CohortCard key={cohort.id} cohort={cohort} />
-              ))}
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {activeCohorts.map((cohort, i) => {
+                const key = getFiliereKey(cohort.formation?.name);
+                const colors = FILIERE_COLORS[key];
+                const enrolled = cohort.enrollment_count ?? 0;
+                const spotsLeft = cohort.capacity - enrolled;
+                const pct = Math.round((enrolled / cohort.capacity) * 100);
+
+                // Icon per filière
+                const Icon = key === "motion" ? Film : key === "vibecoding" ? Code2 : Palette;
+
+                return (
+                  <div
+                    key={cohort.id}
+                    className={cn(
+                      "group relative overflow-hidden rounded-2xl border border-border bg-white dark:bg-[#111111] transition-all duration-500",
+                      "hover:-translate-y-1.5",
+                      formationsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+                    )}
+                    style={{
+                      transitionDelay: formationsVisible ? `${i * 80}ms` : "0ms",
+                      boxShadow: `0 0 0 0 ${colors.glow}`,
+                    }}
+                    onMouseEnter={(e) => {
+                      (e.currentTarget as HTMLDivElement).style.boxShadow = `0 8px 32px 0 ${colors.glow}`;
+                    }}
+                    onMouseLeave={(e) => {
+                      (e.currentTarget as HTMLDivElement).style.boxShadow = `0 0 0 0 ${colors.glow}`;
+                    }}
+                  >
+                    {/* Coloured top bar */}
+                    <div className="h-1.5 w-full" style={{ backgroundColor: colors.accent }} />
+
+                    <div className="p-6">
+                      {/* Header */}
+                      <div className="mb-4 flex items-start justify-between gap-3">
+                        <div
+                          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+                          style={{ backgroundColor: `${colors.accent}20` }}
+                        >
+                          <Icon className="h-6 w-6" style={{ color: colors.accent }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          {cohort.formation && (
+                            <span
+                              className="mb-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                              style={{ backgroundColor: `${colors.accent}20`, color: colors.accent }}
+                            >
+                              {cohort.formation.name}
+                            </span>
+                          )}
+                          <h3 className="font-display font-bold text-foreground leading-tight">
+                            Cohorte {cohort.name}
+                          </h3>
+                        </div>
+                      </div>
+
+                      {/* Dates */}
+                      <p className="mb-4 text-sm text-muted-foreground">
+                        {new Date(cohort.start_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                        {" → "}
+                        {new Date(cohort.end_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                      </p>
+
+                      {/* Level badge if available */}
+                      {cohort.level && (
+                        <span className="mb-4 inline-block rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                          {cohort.level}
+                        </span>
+                      )}
+
+                      {/* Enrollment progress */}
+                      <div className="mb-4">
+                        <div className="mb-1.5 flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">{enrolled} / {cohort.capacity} étudiants</span>
+                          {spotsLeft <= 3 && spotsLeft > 0 && (
+                            <span className="font-semibold text-amber-500">⚡ {spotsLeft} place{spotsLeft > 1 ? "s" : ""}</span>
+                          )}
+                          {spotsLeft === 0 && (
+                            <span className="font-semibold text-destructive">Complète</span>
+                          )}
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+                          <div
+                            className="h-full rounded-full transition-all duration-700"
+                            style={{ width: `${pct}%`, backgroundColor: colors.accent }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Price */}
+                      {cohort.total_price != null && (
+                        <p className="mb-5 text-xl font-bold text-foreground">
+                          {cohort.total_price.toLocaleString("fr-FR")}
+                          <span className="ml-1 text-sm font-normal text-muted-foreground">FCFA</span>
+                        </p>
+                      )}
+
+                      <Link to={spotsLeft === 0 ? "#" : `/register?cohort=${cohort.id}`}>
+                        <Button
+                          size="sm"
+                          disabled={spotsLeft === 0}
+                          className="w-full rounded-xl font-semibold"
+                          style={spotsLeft > 0 ? { backgroundColor: colors.accent, color: "#fff" } : {}}
+                        >
+                          {spotsLeft === 0 ? "Complet" : "S'inscrire"}
+                          {spotsLeft > 0 && <ArrowRight className="ml-2 h-4 w-4" />}
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
       </section>
 
-      <Footer />
+      {/* ===== SECTION 4 — TÉMOIGNAGES (hidden if none) ===== */}
+      {testimonials.length > 0 && (
+        <section className="bg-white dark:bg-[#111111] py-24 overflow-hidden">
+          <div className="container mx-auto px-4">
+            <div className="mb-14 text-center">
+              <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-accent">Alumni</p>
+              <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">
+                Ce qu'ils en disent
+              </h2>
+            </div>
+
+            {/* Carousel */}
+            <div className="relative mx-auto max-w-3xl">
+              <div className="overflow-hidden rounded-2xl border border-border bg-[#f8f8f8] dark:bg-[#1a1a1a] p-8 md:p-12">
+                {testimonials.map((t, i) => (
+                  <div
+                    key={t.id}
+                    className={cn(
+                      "transition-all duration-700 absolute inset-0 flex flex-col justify-center p-8 md:p-12",
+                      i === currentTestimonial
+                        ? "opacity-100 translate-x-0 pointer-events-auto"
+                        : i < currentTestimonial
+                        ? "opacity-0 -translate-x-full pointer-events-none"
+                        : "opacity-0 translate-x-full pointer-events-none"
+                    )}
+                  >
+                    <Quote className="mb-6 h-8 w-8 text-accent opacity-40" />
+                    <p className="mb-8 text-lg leading-relaxed text-foreground md:text-xl">
+                      {t.content}
+                    </p>
+                    <div className="flex items-center gap-4">
+                      {t.photo_url ? (
+                        <img
+                          src={t.photo_url}
+                          alt={t.name}
+                          className="h-12 w-12 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent text-lg font-bold text-accent-foreground">
+                          {t.name[0]}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-semibold text-foreground">{t.name}</p>
+                        <p className="text-sm text-muted-foreground">{t.role}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {/* Spacer to maintain height */}
+                <div className="invisible pointer-events-none p-0">
+                  <Quote className="mb-6 h-8 w-8" />
+                  <p className="mb-8 text-lg leading-relaxed md:text-xl min-h-[4rem]">
+                    {testimonials[currentTestimonial]?.content}
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-full" />
+                    <div>
+                      <p className="font-semibold">{testimonials[currentTestimonial]?.name}</p>
+                      <p className="text-sm">{testimonials[currentTestimonial]?.role}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dots */}
+              {testimonials.length > 1 && (
+                <div className="mt-6 flex justify-center gap-2">
+                  {testimonials.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentTestimonial(i)}
+                      aria-label={`Témoignage ${i + 1}`}
+                      className={cn(
+                        "h-2 rounded-full transition-all",
+                        i === currentTestimonial ? "w-6 bg-accent" : "w-2 bg-border hover:bg-accent/40"
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ===== SECTION 5 — CTA FINAL ===== */}
+      <section className="relative overflow-hidden py-28">
+        {/* Animated gradient background */}
+        <div
+          className="absolute inset-0 -z-10"
+          style={{
+            background: "linear-gradient(135deg, #8B5CF6 0%, #F97316 40%, #06B6D4 80%, #8B5CF6 100%)",
+            backgroundSize: "300% 300%",
+            animation: "gradient-shift 8s ease infinite",
+          }}
+        />
+        {/* Dark overlay for text contrast */}
+        <div className="absolute inset-0 -z-10 bg-black/50" />
+
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="mb-4 font-display text-3xl font-bold text-white md:text-5xl">
+            Prêt(e) à transformer votre carrière ?
+          </h2>
+          <p className="mx-auto mb-10 max-w-xl text-white/70 md:text-lg">
+            Rejoignez des centaines de créatifs qui ont osé investir 90 jours pour changer leur trajectoire professionnelle.
+          </p>
+          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+            <Link to="/register">
+              <Button
+                size="lg"
+                className="rounded-full bg-white text-black hover:bg-white/90 font-bold px-10 shadow-xl"
+              >
+                Commencer l'aventure
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link to="/login">
+              <Button
+                size="lg"
+                variant="outline"
+                className="rounded-full border-white/40 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 font-semibold px-10"
+              >
+                J'ai déjà un compte
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* Inline keyframe via style tag */}
+        <style>{`
+          @keyframes gradient-shift {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+        `}</style>
+      </section>
+
+      {/* ===== SECTION 6 — FOOTER ===== */}
+      <footer className="border-t border-border bg-[#0a0a0a] text-white">
+        <div className="container mx-auto px-4 py-14">
+          <div className="grid gap-10 md:grid-cols-3">
+            {/* Col 1 — Logo + tagline */}
+            <div>
+              <div className="mb-4 flex items-center gap-3">
+                {settings.logo_url ? (
+                  <img src={settings.logo_url} alt="Logo" className="h-10 w-auto brightness-0 invert" />
+                ) : (
+                  <>
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent">
+                      <span className="font-display text-xs font-bold text-accent-foreground">90</span>
+                    </div>
+                    <span className="font-display text-lg font-bold">90 jours</span>
+                  </>
+                )}
+              </div>
+              <p className="text-sm leading-relaxed text-white/60 max-w-xs">
+                {settings.footer_text || "Des formations intensives qui transforment votre créativité en 90 jours."}
+              </p>
+              {/* Filière colour dots */}
+              <div className="mt-5 flex gap-2">
+                <span className="h-2.5 w-2.5 rounded-full bg-[#8B5CF6]" title="Graphisme" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#F97316]" title="Motion Design" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#06B6D4]" title="Vibecoding" />
+              </div>
+            </div>
+
+            {/* Col 2 — Navigation */}
+            <div>
+              <h4 className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/40">Navigation</h4>
+              <div className="flex flex-col gap-2.5">
+                <button
+                  onClick={() => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" })}
+                  className="text-left text-sm text-white/60 transition-colors hover:text-white"
+                >
+                  Comment ça marche
+                </button>
+                <button
+                  onClick={() => document.getElementById("formations")?.scrollIntoView({ behavior: "smooth" })}
+                  className="text-left text-sm text-white/60 transition-colors hover:text-white"
+                >
+                  Nos formations
+                </button>
+                <Link to="/register" className="text-sm text-white/60 transition-colors hover:text-white">
+                  S'inscrire
+                </Link>
+                <Link to="/login" className="text-sm text-white/60 transition-colors hover:text-white">
+                  Connexion
+                </Link>
+              </div>
+            </div>
+
+            {/* Col 3 — Contact */}
+            <div>
+              <h4 className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/40">Contact</h4>
+              <p className="text-sm text-white/60">{settings.footer_email || "info@90jours.com"}</p>
+              <p className="mt-1 text-sm text-white/60">{settings.footer_phone || "+225 07 00 00 00 00"}</p>
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-white/30 sm:flex-row">
+            <span>© 2026 90 jours de formation. Tous droits réservés.</span>
+            <span>Fait avec passion au Sénégal 🇸🇳</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

@@ -42,6 +42,7 @@ import AccountingPanel from "@/components/AccountingPanel";
 import AdminAlertBanner from "@/components/AdminAlertBanner";
 import ContractTemplateEditor from "@/components/ContractTemplateEditor";
 import SignedContractsPanel from "@/components/SignedContractsPanel";
+import TestimonialsManager from "@/components/TestimonialsManager";
 interface UserRow {
   user_id: string;
   first_name: string;
@@ -822,6 +823,11 @@ const AdminDashboard = () => {
                   <SignedContractsPanel />
                 </TabsContent>
               </Tabs>
+            </TabsContent>
+
+            {/* Testimonials Tab */}
+            <TabsContent value="testimonials">
+              <TestimonialsManager />
             </TabsContent>
           </Tabs>
         </div>
