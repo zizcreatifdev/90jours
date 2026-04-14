@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-20 (Redesigns dashboards — ActivityHeatmap / santé cohorte / AdminAlertBanner + feed activité)
+**Prompt actuel**: prompt-21 (NH-04 Mode Focus sidebar + NH-03 feedback formateur inline sur briefs + NH-07 payment-reminders cron)
 
 ---
 
@@ -14,8 +14,8 @@
 | Pages | 10 |
 | Hooks custom | 9 |
 | Tables Supabase | 31 |
-| Migrations SQL | 37 |
-| Edge Functions | 6 |
+| Migrations SQL | 38 |
+| Edge Functions | 7 |
 | Tests | 63 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator + 9 EmptyState) |
 | Couverture tests | ~25% (ProtectedRoute + validate-url + AuthContext + export-csv + PasswordStrengthIndicator + EmptyState) |
 
@@ -223,11 +223,11 @@
 |----|-------------|--------|--------|
 | NH-01 | Streak soumission + badges achievements (DB légère) | 🔴 Fort | moyen |
 | NH-02 | Galerie portfolio cohorte (opt-in, vue mosaïque) | 🔴 Fort | moyen |
-| NH-03 | Feedback formateur inline sur briefs (migration + notif push) | 🔴 Fort | grand |
-| NH-04 | Mode Focus (sidebar masquée, plein écran, localStorage) | 🟠 Moyen | petit |
-| NH-05 | ActivityHeatmap style GitHub (remplace BarChart étudiant) | 🟠 Moyen | moyen |
+| NH-03 | Feedback formateur inline sur briefs (migration + notif push) | 🔴 Fort | grand | ✅ prompt-21 |
+| NH-04 | Mode Focus (sidebar masquée, plein écran, localStorage) | 🟠 Moyen | petit | ✅ prompt-21 |
+| NH-05 | ActivityHeatmap style GitHub (remplace BarChart étudiant) | 🟠 Moyen | moyen | ✅ prompt-20 |
 | NH-06 | Replay masterclass iframe YouTube/Vimeo intégré | 🟠 Moyen | petit |
-| NH-07 | Edge Function payment-reminders (cron hebdo, pattern brief-reminders) | 🔴 Fort | moyen |
+| NH-07 | Edge Function payment-reminders (cron hebdo, pattern brief-reminders) | 🔴 Fort | moyen | ✅ prompt-21 |
 
 ---
 
@@ -319,3 +319,4 @@
 | prompt-18 | 2026-04-14 | QW-01 badge urgence deadline (🔴<4h / ⚠️<18h, animate-pulse) + QW-05 badge notifs pulsant + QW-06 Progress transition 700ms + QW-07 descriptions expandables (line-clamp-2 + Lire plus) + QW-09 Skeletons dans 5 composants (StudentBriefs/Messages/Portfolio/AuditLog/PaymentStatus) + QW-10 ⚡ places restantes CohortCard — 63/63 ✅ | ✅ Terminé |
 | prompt-19 | 2026-04-14 | QW-02 icônes type ressource (PDF🔴/vidéo🔵/lien🟢) + QW-03 StatsCard trend (+12%/-3%) remplace checkmark SVG + QW-04 sidebar admin sections Pédagogie/Finance/Admin + icônes dédoublées (ListTodo, TrendingUp) + QW-08 stepper horizontal attestation (Portfolio→Paiement→Admin) avec CTA contextuels + QW-11 badge annonces cliquable → markAnnouncementsSeen() + QW-12 spinner debounce dans 3 search inputs — 63/63 ✅ | ✅ Terminé |
 | prompt-20 | 2026-04-14 | ÉTUDIANT: ActivityHeatmap.tsx style GitHub (remplace BarChart) — STAFF: indicateur santé 🟢🟠🔴 par étudiant (ratio progress/expectedProgress) + compteur santé cohorte — ADMIN: AdminAlertBanner.tsx (portfolios/paiements/deadlines urgentes) + feed "Activité récente" 10 actions (enrollments+payments+submissions) — 63/63 ✅ | ✅ Terminé |
+| prompt-21 | 2026-04-14 | NH-04 Mode Focus: toggle Maximize2/Minimize2 dans DashboardSidebar, masque sidebar, persiste localStorage, bouton flottant exit — NH-03 feedback formateur inline: BriefManager.tsx section expandable par brief (textarea+Save par étudiant, notif in-app étudiant), StudentBriefs.tsx bloc feedback sous statut — NH-07 payment-reminders Edge Function (cron 0 9 * * *, paiements pending > 30j, notif étudiant+admin+push) + migration brief_submissions.feedback — 63/63 ✅ | ✅ Terminé |

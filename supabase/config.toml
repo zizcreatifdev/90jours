@@ -21,3 +21,10 @@ verify_jwt = false
 [functions.brief-reminders]
 verify_jwt = false
 schedule = "0 8 * * *"
+
+# ── Scheduled function : payment reminders ────────────────────────────────────
+# Runs every day at 09:00 UTC.
+# Finds payments pending for > 30 days and notifies students + admins.
+[functions.payment-reminders]
+verify_jwt = false
+schedule = "0 9 * * *"

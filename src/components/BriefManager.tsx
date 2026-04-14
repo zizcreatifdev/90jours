@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Progress } from "@/components/ui/progress";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Trash2, ClipboardList, CheckCircle2, Clock, AlertTriangle, Tag } from "lucide-react";
+import { Plus, Loader2, Trash2, ClipboardList, CheckCircle2, Clock, AlertTriangle, Tag, MessageSquare, ChevronDown, ChevronUp, Save } from "lucide-react";
 
 interface BriefCategory {
   id: string;
@@ -40,6 +40,8 @@ interface BriefSubmission {
   completed_at: string;
   is_late: boolean;
   delay_days: number;
+  status?: string;
+  feedback?: string | null;
 }
 
 interface BriefManagerProps {
@@ -65,6 +67,9 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
   const [categoryId, setCategoryId] = useState("");
   const [briefFrequency, setBriefFrequency] = useState("");
   const [categories, setCategories] = useState<BriefCategory[]>([]);
+  const [expandedBriefs, setExpandedBriefs] = useState<Set<string>>(new Set());
+  const [feedbackEdits, setFeedbackEdits] = useState<Record<string, string>>({});
+  const [savingFeedback, setSavingFeedback] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     supabase.from("brief_categories").select("*").order("name").then(({ data }) => {
@@ -139,6 +144,36 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
     const { error } = await supabase.from("briefs").delete().eq("id", id);
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
     else setBriefs(prev => prev.filter(b => b.id !== id));
+  };
+
+  const toggleBriefExpanded = (briefId: string) => {
+    setExpandedBriefs(prev => {
+      const next = new Set(prev);
+      if (next.has(briefId)) next.delete(briefId);
+      else next.add(briefId);
+      return next;
+    });
+  };
+
+  const handleSaveFeedback = async (submissionId: string, userId: string, briefTitle: string, feedback: string) => {
+    setSavingFeedback(prev => new Set(prev).add(submissionId));
+    const { error } = await supabase.from("brief_submissions").update({ feedback }).eq("id", submissionId);
+    setSavingFeedback(prev => { const next = new Set(prev); next.delete(submissionId); return next; });
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    } else {
+      setSubmissions(prev => prev.map(s => s.id === submissionId ? { ...s, feedback } : s));
+      if (feedback.trim()) {
+        await supabase.from("notifications").insert({
+          user_id: userId,
+          title: "💬 Nouveau feedback formateur",
+          message: `Votre formateur a laissé un commentaire sur le brief "${briefTitle}".`,
+          type: "feedback",
+          created_by: user?.id,
+        });
+      }
+      toast({ title: "Feedback sauvegardé", description: feedback.trim() ? "L'étudiant a été notifié." : undefined });
+    }
   };
 
   const getSubmissionStats = (briefId: string) => {
@@ -303,6 +338,74 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
                         </div>
                       )}
                     </div>
+
+                    {/* Feedback inline per submission */}
+                    {students.length > 0 && (() => {
+                      const briefSubs = submissions.filter(s => s.brief_id === brief.id);
+                      const isExpanded = expandedBriefs.has(brief.id);
+                      return (
+                        <div className="mt-3 border-t border-border/50 pt-3">
+                          <button
+                            onClick={() => toggleBriefExpanded(brief.id)}
+                            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            <MessageSquare className="h-3.5 w-3.5" />
+                            <span>Feedback ({briefSubs.length}/{students.length} soumissions)</span>
+                            {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                          </button>
+                          {isExpanded && (
+                            <div className="mt-2 space-y-2">
+                              {students.map((student: any) => {
+                                const sub = briefSubs.find(s => s.user_id === student.user_id);
+                                const profile = student.profiles as { first_name: string; last_name: string } | null;
+                                const profileName = profile ? `${profile.first_name} ${profile.last_name}` : student.user_id;
+                                const currentFeedback = sub ? (feedbackEdits[sub.id] ?? sub.feedback ?? "") : "";
+                                return (
+                                  <div key={student.user_id} className="rounded-lg border border-border/60 bg-muted/30 p-3">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className="text-xs font-medium text-foreground">{profileName}</span>
+                                      {sub ? (
+                                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                          sub.status === "delivered"
+                                            ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400"
+                                            : "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400"
+                                        }`}>
+                                          {sub.status === "delivered" ? "✓ Livré" : "⏳ Réalisé"}
+                                        </span>
+                                      ) : (
+                                        <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground">
+                                          Non soumis
+                                        </span>
+                                      )}
+                                    </div>
+                                    {sub && (
+                                      <div className="flex gap-2">
+                                        <Textarea
+                                          value={currentFeedback}
+                                          onChange={e => setFeedbackEdits(prev => ({ ...prev, [sub.id]: e.target.value }))}
+                                          placeholder="Laisser un commentaire..."
+                                          className="flex-1 text-xs min-h-0 py-1.5 resize-none"
+                                          rows={2}
+                                        />
+                                        <button
+                                          onClick={() => handleSaveFeedback(sub.id, sub.user_id, brief.title, currentFeedback)}
+                                          disabled={savingFeedback.has(sub.id)}
+                                          className="self-end flex items-center gap-1 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                                        >
+                                          {savingFeedback.has(sub.id)
+                                            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                            : <Save className="h-3.5 w-3.5" />}
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })}

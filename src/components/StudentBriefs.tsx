@@ -27,6 +27,7 @@ interface Submission {
   delay_days: number;
   completed_at: string;
   status: string;
+  feedback?: string | null;
 }
 
 interface StudentBriefsProps {
@@ -327,6 +328,14 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
                         <span className="text-blue-500 font-medium">⏳ En attente de livraison</span>
                       )}
                     </div>
+
+                    {/* Feedback formateur */}
+                    {sub?.feedback && (
+                      <div className="ml-6 mt-2 rounded-lg border border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20 px-3 py-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400 mb-0.5">💬 Feedback formateur</p>
+                        <p className="text-xs text-foreground/80">{sub.feedback}</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Boutons d'action */}

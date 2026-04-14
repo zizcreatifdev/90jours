@@ -25,6 +25,8 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Bell,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
@@ -90,13 +92,17 @@ const SidebarNav = ({
   role,
   expanded,
   unreadCount,
+  focusMode,
   onNavigate,
+  onToggleFocusMode,
 }: {
   links: SidebarLink[];
   role: string;
   expanded: boolean;
   unreadCount: number;
+  focusMode: boolean;
   onNavigate?: () => void;
+  onToggleFocusMode: () => void;
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -181,6 +187,24 @@ const SidebarNav = ({
 
       {/* Bottom icons */}
       <div className={cn("flex flex-col gap-1 mt-2", expanded ? "" : "items-center")}>
+        {/* Focus Mode */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              aria-label={focusMode ? "Quitter le mode focus" : "Mode Focus"}
+              onClick={onToggleFocusMode}
+              className={cn(
+                "flex items-center gap-3 rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors",
+                expanded ? "h-10 px-3 w-full" : "h-10 w-10 justify-center"
+              )}
+            >
+              <Maximize2 className="h-5 w-5 shrink-0" />
+              {expanded && <span className="text-sm font-medium">Mode Focus</span>}
+            </button>
+          </TooltipTrigger>
+          {!expanded && <TooltipContent side="right">Mode Focus</TooltipContent>}
+        </Tooltip>
+
         <div className={expanded ? "" : "flex justify-center"}>
           <ThemeToggle />
         </div>
@@ -272,26 +296,50 @@ const SidebarNav = ({
 const DashboardSidebar = ({ role, mobileOpen, onMobileOpenChange }: DashboardSidebarProps) => {
   const links = role === "admin" ? adminLinks : role === "staff" ? staffLinks : studentLinks;
   const [expanded, setExpanded] = useState(false);
+  const [focusMode, setFocusMode] = useState(
+    () => localStorage.getItem("90jours-focus-mode") === "true"
+  );
   const { unreadCount } = useUnreadNotifications();
+
+  const toggleFocusMode = () => {
+    const next = !focusMode;
+    setFocusMode(next);
+    localStorage.setItem("90jours-focus-mode", String(next));
+  };
 
   return (
     <>
       {/* Mobile sheet */}
       <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
         <SheetContent side="left" className="w-[220px] p-0 border-r border-border bg-card">
-          <SidebarNav links={links} role={role} expanded={true} unreadCount={unreadCount} onNavigate={() => onMobileOpenChange?.(false)} />
+          <SidebarNav
+            links={links}
+            role={role}
+            expanded={true}
+            unreadCount={unreadCount}
+            focusMode={focusMode}
+            onNavigate={() => onMobileOpenChange?.(false)}
+            onToggleFocusMode={toggleFocusMode}
+          />
         </SheetContent>
       </Sheet>
 
-      {/* Desktop sidebar */}
+      {/* Desktop sidebar — hidden in focus mode */}
       <aside
         className={cn(
           "hidden md:flex h-screen flex-col border-r border-border bg-card sticky top-0 transition-all duration-200",
-          expanded ? "w-[220px]" : "w-[72px]"
+          focusMode ? "w-0 overflow-hidden border-0" : expanded ? "w-[220px]" : "w-[72px]"
         )}
       >
         <div className="flex-1 overflow-hidden">
-          <SidebarNav links={links} role={role} expanded={expanded} unreadCount={unreadCount} />
+          <SidebarNav
+            links={links}
+            role={role}
+            expanded={expanded}
+            unreadCount={unreadCount}
+            focusMode={focusMode}
+            onToggleFocusMode={toggleFocusMode}
+          />
         </div>
 
         {/* Expand/Collapse toggle */}
@@ -303,6 +351,18 @@ const DashboardSidebar = ({ role, mobileOpen, onMobileOpenChange }: DashboardSid
           {expanded ? <ChevronsLeft className="h-4 w-4" /> : <ChevronsRight className="h-4 w-4" />}
         </button>
       </aside>
+
+      {/* Floating exit button when in focus mode (desktop only) */}
+      {focusMode && (
+        <button
+          onClick={toggleFocusMode}
+          aria-label="Quitter le mode focus"
+          title="Quitter le mode focus"
+          className="hidden md:flex fixed left-3 top-1/2 -translate-y-1/2 z-50 h-10 w-10 items-center justify-center rounded-full bg-card border border-border shadow-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+        >
+          <Minimize2 className="h-4 w-4" />
+        </button>
+      )}
     </>
   );
 };
