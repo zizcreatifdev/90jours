@@ -256,14 +256,19 @@ const StudentDashboard = () => {
 
   if (allEnrollments.length === 0 || !enrollment || !cohort) {
     return (
-      <div className="flex min-h-screen bg-background">
-        <DashboardSidebar role="student" />
-        <main className="flex flex-1 items-center justify-center">
-          <div className="text-center">
-            <h2 className="font-display text-xl font-bold text-foreground mb-2">Pas encore inscrit</h2>
-            <p className="text-muted-foreground">Vous n'êtes inscrit à aucune cohorte pour le moment.</p>
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="max-w-md w-full text-center rounded-2xl border border-border bg-card p-10 shadow-card space-y-5">
+          <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-primary">
+            <span className="font-display text-xl font-bold text-primary-foreground">90</span>
           </div>
-        </main>
+          <div>
+            <h2 className="font-display text-xl font-bold text-foreground mb-2">Aucune formation en cours</h2>
+            <p className="text-muted-foreground text-sm">Vous n'êtes inscrit à aucune cohorte. Rejoignez une formation pour accéder à votre espace étudiant.</p>
+          </div>
+          <Button asChild className="w-full">
+            <Link to="/register">Voir les formations disponibles</Link>
+          </Button>
+        </div>
       </div>
     );
   }
