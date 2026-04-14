@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-07 (UX-02 ErrorBoundary + UX-03 unification flux inscription)
+**Prompt actuel**: prompt-08 (PERF-01 code splitting React.lazy sur toutes les pages)
 
 ---
 
@@ -213,7 +213,7 @@
 | SEC-02 | 🟠 Important | .gitignore | `.env` non exclu du repo git | ✅ Corrigé (prompt-06) |
 | SEC-03 | 🟠 Important | Edge Functions | CORS wildcard `"*"` sur fonctions sensibles | ✅ Corrigé (prompt-06) |
 | SEC-04 | 🟠 Important | StudentPortfolio | Pas de validation d'URL (XSS potentiel) | ✅ Corrigé (prompt-06) |
-| PERF-01 | 🔴 Critique | App.tsx | Zéro code splitting / lazy loading | ❌ À corriger |
+| PERF-01 | 🔴 Critique | App.tsx | Zéro code splitting / lazy loading | ✅ Corrigé (prompt-08) |
 | PERF-02 | 🔴 Critique | use-cohorts.ts | Charge tous les enrollments en mémoire côté client | ✅ Corrigé (prompt-05) |
 | PERF-03 | 🟠 Important | App.tsx | Aucun staleTime React Query | ✅ Corrigé (prompt-05) — use-cohorts |
 | UX-01 | 🔴 Critique | Login.tsx | Pas de "Mot de passe oublié" | ✅ Corrigé (prompt-03) |
@@ -232,7 +232,7 @@
 | ~~Haute~~ | ~~SEC-01 : ProtectedRoute vérifie les mauvais rôles~~ | ✅ Corrigé prompt-04 |
 | ~~Haute~~ | ~~PERF-02 : use-cohorts O(n) enrollments côté client~~ | ✅ Corrigé prompt-05 |
 | ~~Moyenne~~ | ~~PERF-03 : staleTime non configuré~~ | ✅ Corrigé prompt-05 (use-cohorts) |
-| Haute | PERF-01 : Pas de code splitting | Bundle size / TTI |
+| ~~Haute~~ | ~~PERF-01 : Pas de code splitting~~ | ✅ Corrigé prompt-08 |
 | Haute | Tests unitaires manquants (couverture ~0%) | Risque régressions |
 | ~~Haute~~ | ~~UX-01 / FEAT-01 : Mot de passe oublié absent~~ | ✅ Corrigé prompt-03 |
 | ~~Haute~~ | ~~Credentials dans .env commité (sécurité)~~ | ✅ Corrigé prompt-06 |
@@ -255,3 +255,4 @@
 | prompt-05 | 2026-04-14 | PERF-02 use-cohorts : COUNT SQL groupé + React Query staleTime 5min (9/9 ✅) | ✅ Terminé |
 | prompt-06 | 2026-04-14 | SEC-02 .env gitignore + .env.example — SEC-03 CORS whitelist 3 Edge Functions — SEC-04 isValidUrl() + StudentPortfolio (19/19 ✅) | ✅ Terminé |
 | prompt-07 | 2026-04-14 | UX-02 ErrorBoundary (class component + main.tsx) — UX-03 suppression onglet signup Login.tsx → lien /register (19/19 ✅) | ✅ Terminé |
+| prompt-08 | 2026-04-14 | PERF-01 code splitting : 11 pages → React.lazy() + Suspense dans App.tsx — build vérifié (11 chunks page) (19/19 ✅) | ✅ Terminé |
