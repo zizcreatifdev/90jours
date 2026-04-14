@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { CheckCircle, Clock, AlertCircle, CreditCard, ExternalLink, Plus, Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,7 +100,26 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
     }
   };
 
-  if (loading) return null;
+  if (loading) return (
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4">
+      <div className="flex items-center justify-between mb-2">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-8 w-32 rounded-lg" />
+      </div>
+      <Skeleton className="h-2.5 w-full rounded-full" />
+      <div className="space-y-3 mt-4">
+        {[1, 2].map(i => (
+          <div key={i} className="flex items-center justify-between rounded-xl border border-border p-4">
+            <div className="space-y-1.5">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+            <Skeleton className="h-6 w-20 rounded-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   const inscriptionAmount = formation?.registration_fee ?? 10000;
   const formationAmount = (formation?.total_price ?? 50000) - inscriptionAmount;

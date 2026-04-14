@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, History, UserPlus, UserMinus, Trash2, Link2Off } from "lucide-react";
+import { History, UserPlus, UserMinus, Trash2, Link2Off } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import Pagination from "@/components/ui/Pagination";
@@ -92,8 +93,22 @@ const AuditLogPanel = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-accent" />
+      <div>
+        <div className="flex items-center gap-2 mb-6">
+          <Skeleton className="h-5 w-5 rounded" />
+          <Skeleton className="h-5 w-52" />
+        </div>
+        <div className="space-y-1">
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="flex items-start gap-3 rounded-xl px-4 py-3">
+              <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

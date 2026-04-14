@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { MessageSquare, Send, Loader2, User, ChevronDown, ChevronUp } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -156,8 +157,24 @@ const StudentMessages = ({ cohortId }: StudentMessagesProps) => {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-4">
+        <div className="flex items-center gap-3 mb-6">
+          <Skeleton className="h-10 w-10 rounded-xl" />
+          <Skeleton className="h-5 w-40" />
+        </div>
+        {[1, 2, 3].map(i => (
+          <div key={i} className="rounded-2xl border border-border bg-card p-5 space-y-3">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-4 w-40" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-3/4" />
+          </div>
+        ))}
       </div>
     );
   }

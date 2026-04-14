@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-17 (Audit UX Expert — 12 quick wins + 3 redesigns + 7 nice-to-have)
+**Prompt actuel**: prompt-18 (Quick wins UX partie 1 — QW-01/05/06/07/09/10)
 
 ---
 
@@ -197,16 +197,16 @@
 ### Quick Wins UX (12 items)
 | ID | Description | Impact | Effort | Fichiers |
 |----|-------------|--------|--------|---------|
-| QW-01 | Deadline urgency badge sur les briefs (< 24h / < 4h) | 🔴 Fort | petit | StudentBriefs.tsx |
+| QW-01 | Deadline urgency badge sur les briefs (< 4h 🔴, < 18h ⚠️) | 🔴 Fort | petit | ✅ StudentBriefs.tsx |
 | QW-02 | Icônes contextuelles selon type ressource (PDF/vidéo/lien) | 🟠 Moyen | petit | StudentDashboard.tsx |
 | QW-03 | StatsCard : supprimer checkmark inutile (ou remplacer par trend) | 🟠 Moyen | petit | StatsCard.tsx |
 | QW-04 | Sidebar admin : grouper 17 items en sections (Pédagogie / Finance / Admin) | 🔴 Fort | petit | DashboardSidebar.tsx |
-| QW-05 | Badge notifs pulsant (animate-pulse) si non lues | 🟡 Subtil | petit | DashboardSidebar.tsx |
-| QW-06 | Progress bar: transition CSS duration-700 ease-out | 🟡 Subtil | petit | progress.tsx |
-| QW-07 | Brief descriptions expandables (line-clamp-2 + "Lire plus") | 🟠 Moyen | petit | StudentBriefs.tsx |
+| QW-05 | Badge notifs pulsant (animate-pulse) si non lues | 🟡 Subtil | petit | ✅ DashboardSidebar.tsx |
+| QW-06 | Progress bar: transition CSS duration-700 ease-out | 🟡 Subtil | petit | ✅ progress.tsx |
+| QW-07 | Brief descriptions expandables (line-clamp-2 + "Lire plus") | 🟠 Moyen | petit | ✅ StudentBriefs.tsx |
 | QW-08 | Attestation: checklist → stepper horizontal avec CTA contextuels | 🔴 Fort | petit | StudentAttestation.tsx |
-| QW-09 | Skeletons manquants dans composants internes (briefs, messages, paiements) | 🟠 Moyen | moyen | StudentBriefs.tsx + 4 autres |
-| QW-10 | CohortCard: "⚡ 2 places restantes" si spotsLeft <= 3 | 🟠 Moyen | petit | CohortCard.tsx |
+| QW-09 | Skeletons dans 5 composants internes (BriefsSkeleton + 4 autres) | 🟠 Moyen | moyen | ✅ StudentBriefs + Messages + Portfolio + AuditLog + PaymentStatus |
+| QW-10 | CohortCard: "⚡ places restantes" animé si spotsLeft <= 3 | 🟠 Moyen | petit | ✅ CohortCard.tsx |
 | QW-11 | Annonces: badge "non lu" navigue vers onglet annonces | 🟠 Moyen | petit | StudentDashboard.tsx |
 | QW-12 | Input search: spinner micro pendant debounce (search !== debouncedSearch) | 🟡 Subtil | petit | AdminDashboard.tsx + 2 autres |
 
@@ -316,3 +316,4 @@
 | prompt-15 | 2026-04-14 | FEAT-04 supabase/functions/brief-reminders/index.ts (cron 24h@8h UTC) + config.toml schedule — notifications in-app + push via send-push-notification — 63/63 ✅ | ✅ Terminé |
 | prompt-16 | 2026-04-14 | FEAT-07 export ZIP batch attestations cohorte — AttestationIssuer.tsx : bouton "Exporter toute la cohorte (ZIP)" + html2canvas par étudiant + JSZip + barre de progression — 63/63 ✅ | ✅ Terminé |
 | prompt-17 | 2026-04-14 | Audit UX Expert — 12 quick wins (deadline urgency, resource icons, sidebar grouping, StatsCard checkmark, brief expand, attestation stepper…) + redesign 3 dashboards + 7 nice-to-have (heatmap, galerie, feedback, streak…) — Rapport uniquement, aucun code modifié | ✅ Terminé |
+| prompt-18 | 2026-04-14 | QW-01 badge urgence deadline (🔴<4h / ⚠️<18h, animate-pulse) + QW-05 badge notifs pulsant + QW-06 Progress transition 700ms + QW-07 descriptions expandables (line-clamp-2 + Lire plus) + QW-09 Skeletons dans 5 composants (StudentBriefs/Messages/Portfolio/AuditLog/PaymentStatus) + QW-10 ⚡ places restantes CohortCard — 63/63 ✅ | ✅ Terminé |

@@ -81,6 +81,11 @@ const CohortCard = ({ cohort }: CohortCardProps) => {
         </span>
       </div>
 
+      {!isFull && spotsLeft <= 3 && (
+        <p className="mb-1.5 text-xs font-semibold text-orange-600 dark:text-orange-400 animate-pulse">
+          ⚡ Plus que {spotsLeft} place{spotsLeft > 1 ? "s" : ""} disponible{spotsLeft > 1 ? "s" : ""} !
+        </p>
+      )}
       <div className="mb-2 flex items-center justify-between text-sm">
         <span className="flex items-center gap-1.5 text-muted-foreground">
           <Users className="h-4 w-4" />

@@ -5,6 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { ClipboardList, CheckCircle2, Clock, AlertTriangle, Loader2, Tag, Send } from "lucide-react";
 import EmptyState from "@/components/ui/EmptyState";
 
@@ -33,6 +35,45 @@ interface StudentBriefsProps {
   formationColor?: string;
 }
 
+// ── Skeleton de chargement ────────────────────────────────────────────────────
+
+const BriefsSkeleton = () => (
+  <div className="space-y-6">
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+      <div className="flex items-center justify-between mb-3">
+        <Skeleton className="h-5 w-36" />
+        <Skeleton className="h-4 w-20" />
+      </div>
+      <Skeleton className="h-2.5 w-full mb-2 rounded-full" />
+      <div className="flex items-center gap-4">
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-3 w-20" />
+      </div>
+    </div>
+    <div className="space-y-3">
+      {[1, 2, 3].map(i => (
+        <div key={i} className="rounded-xl border border-border bg-card p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-4 w-4 rounded-full shrink-0" />
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-16 rounded-full" />
+              </div>
+              <Skeleton className="h-3 w-full ml-6" />
+              <Skeleton className="h-3 w-32 ml-6" />
+            </div>
+            <Skeleton className="h-8 w-20 rounded-lg shrink-0" />
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+// ── Composant ─────────────────────────────────────────────────────────────────
+
 const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBriefsProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -40,6 +81,16 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState<string | null>(null);
+  // QW-07 : descriptions expandables
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
+
+  const toggleDescription = (id: string) =>
+    setExpandedDescriptions(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   const refreshSubmissions = async () => {
     if (!user) return;
@@ -61,7 +112,7 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
     fetch();
   }, [user, cohortId]);
 
-  // Mark as "Réalisé" (completed but not delivered)
+  // Mark as "Réalisé"
   const handleMarkCompleted = async (brief: Brief) => {
     if (!user) return;
     setSubmitting(brief.id);
@@ -90,7 +141,7 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
     }
   };
 
-  // Mark as "Livré" (delivered to formateur)
+  // Mark as "Livré"
   const handleDeliver = async (brief: Brief, submission: Submission) => {
     if (!user) return;
     setSubmitting(brief.id);
@@ -102,7 +153,6 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
     } else {
       toast({ title: submission.is_late ? `Brief livré avec ${submission.delay_days} jour(s) de retard` : "Brief livré avec succès ! 🎉" });
 
-      // Notify admins if late
       if (submission.is_late) {
         const { data: admins } = await supabase.from("user_roles").select("user_id").eq("role", "super_admin");
         if (admins && admins.length > 0) {
@@ -123,9 +173,8 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
     }
   };
 
-  if (loading) {
-    return <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
-  }
+  // QW-09 : skeleton pendant le chargement
+  if (loading) return <BriefsSkeleton />;
 
   const deliveredCount = submissions.filter(s => s.status === "delivered").length;
   const completedCount = submissions.filter(s => s.status === "completed").length;
@@ -174,17 +223,29 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
             const isCompleted = sub?.status === "completed";
             const isDelivered = sub?.status === "delivered";
 
+            // QW-01 : calcul urgence deadline
+            const hoursUntilDeadline = !isPastDeadline
+              ? (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60)
+              : -1;
+            const isCritical = !sub && !isPastDeadline && hoursUntilDeadline <= 4;
+            const isUrgent = !sub && !isPastDeadline && hoursUntilDeadline <= 18 && !isCritical;
+
+            // QW-07 : description expandable
+            const isExpanded = expandedDescriptions.has(brief.id);
+            const hasLongDescription = (brief.description?.length ?? 0) > 120;
+
             return (
-              <div key={brief.id} className={`rounded-xl border p-4 transition-all ${
+              <div key={brief.id} className={cn("rounded-xl border p-4 transition-all",
                 isDelivered
                   ? "border-green-200 bg-green-50/50 dark:border-green-900 dark:bg-green-950/20"
                   : isCompleted
                   ? "border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20"
                   : "border-border bg-card"
-              }`}>
+              )}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      {/* Icône statut */}
                       {isDelivered ? (
                         <Send className="h-4 w-4 text-green-600 flex-shrink-0" />
                       ) : isCompleted ? (
@@ -194,26 +255,67 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
                       ) : (
                         <Clock className="h-4 w-4 text-accent flex-shrink-0" />
                       )}
-                      <h3 className={`font-display font-semibold text-sm ${
+
+                      {/* Titre */}
+                      <h3 className={cn("font-display font-semibold text-sm",
                         isDelivered ? "text-green-700 dark:text-green-400"
                         : isCompleted ? "text-blue-700 dark:text-blue-400"
                         : "text-foreground"
-                      }`}>
+                      )}>
                         {brief.title}
                       </h3>
+
+                      {/* QW-01 : Badge urgence deadline */}
+                      {(isCritical || isUrgent) && (
+                        <span className={cn(
+                          "rounded-full px-2 py-0.5 text-[10px] font-bold animate-pulse",
+                          isCritical
+                            ? "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400"
+                            : "bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-400"
+                        )}>
+                          {isCritical
+                            ? `🔴 ${Math.round(hoursUntilDeadline)}h`
+                            : `⚠️ ${Math.round(hoursUntilDeadline)}h`}
+                        </span>
+                      )}
+
+                      {/* Catégorie */}
                       {brief.category_name && (
                         <Badge variant="secondary" className="gap-1 text-xs">
                           <Tag className="h-3 w-3" /> {brief.category_name}
                         </Badge>
                       )}
+
+                      {/* Fréquence */}
                       {brief.brief_frequency && (
                         <Badge variant="outline" className="text-xs">
                           {brief.brief_frequency === "daily" ? "📅 Journalier" : "📆 Hebdomadaire"}
                         </Badge>
                       )}
                     </div>
-                    {brief.description && <p className="text-xs text-muted-foreground mb-1.5 ml-6">{brief.description}</p>}
-                    <div className="ml-6 flex items-center gap-3 text-xs text-muted-foreground">
+
+                    {/* QW-07 : Description expandable */}
+                    {brief.description && (
+                      <div className="ml-6">
+                        <p className={cn(
+                          "text-xs text-muted-foreground mb-0.5",
+                          hasLongDescription && !isExpanded ? "line-clamp-2" : ""
+                        )}>
+                          {brief.description}
+                        </p>
+                        {hasLongDescription && (
+                          <button
+                            onClick={() => toggleDescription(brief.id)}
+                            className="text-xs text-accent hover:underline mb-1.5"
+                          >
+                            {isExpanded ? "Réduire" : "Lire plus"}
+                          </button>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Deadline + statut */}
+                    <div className="ml-6 flex items-center gap-3 text-xs text-muted-foreground mt-1">
                       <span>Deadline : {deadlineDate.toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
                       {sub?.is_late && (
                         <span className="text-orange-500 font-medium">⚠ {sub.delay_days} jour(s) de retard</span>
@@ -226,7 +328,8 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
                       )}
                     </div>
                   </div>
-                  {/* Action buttons */}
+
+                  {/* Boutons d'action */}
                   <div className="flex flex-shrink-0 gap-2">
                     {!sub && (
                       <Button

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Briefcase, CheckCircle2, XCircle, Clock, Loader2, ExternalLink } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/EmptyState";
 
 interface StudentPortfolioProps {
@@ -67,7 +68,17 @@ const StudentPortfolio = ({ cohortId, formationName, formationColor }: StudentPo
     }
   };
 
-  if (loading) return <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+  if (loading) return (
+    <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4">
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-5 w-5 rounded" />
+        <Skeleton className="h-5 w-32" />
+      </div>
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-3/4" />
+      <Skeleton className="h-9 w-full rounded-lg" />
+    </div>
+  );
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4">

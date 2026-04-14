@@ -191,7 +191,10 @@ const SidebarNav = ({
               <div className="relative shrink-0">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -right-1.5 -top-1.5 flex min-w-[1rem] h-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+                  <span className={cn(
+                    "absolute -right-1.5 -top-1.5 flex min-w-[1rem] h-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white",
+                    unreadCount > 0 && "animate-pulse"
+                  )}>
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
