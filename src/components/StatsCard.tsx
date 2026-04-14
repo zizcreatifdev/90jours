@@ -6,9 +6,10 @@ interface StatsCardProps {
   value: string | number;
   subtitle?: string;
   variant?: "default" | "accent" | "dark";
+  trend?: { value: number; positive: boolean };
 }
 
-const StatsCard = ({ icon: Icon, label, value, subtitle, variant = "default" }: StatsCardProps) => {
+const StatsCard = ({ icon: Icon, label, value, subtitle, variant = "default", trend }: StatsCardProps) => {
   if (variant === "dark") {
     return (
       <div className="rounded-xl bg-primary p-4 text-primary-foreground">
@@ -28,12 +29,15 @@ const StatsCard = ({ icon: Icon, label, value, subtitle, variant = "default" }: 
         <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${variant === "accent" ? "bg-accent/10" : "bg-secondary"}`}>
           <Icon className={`h-4 w-4 ${variant === "accent" ? "text-accent" : "text-muted-foreground"}`} />
         </div>
-        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-secondary">
-          <svg className="h-2.5 w-2.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" />
-            <path d="m9 12 2 2 4-4" />
-          </svg>
-        </div>
+        {trend !== undefined ? (
+          <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+            trend.positive
+              ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
+              : "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400"
+          }`}>
+            {trend.positive ? "+" : ""}{trend.value}%
+          </span>
+        ) : null}
       </div>
       <p className={`font-display text-2xl font-bold ${variant === "accent" ? "text-accent" : "text-foreground"}`}>{value}</p>
       <p className="mt-0.5 text-xs text-muted-foreground">{label}</p>

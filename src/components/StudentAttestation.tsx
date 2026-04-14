@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Award, Download, Lock, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Award, Download, Lock, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AttestationPreview } from "@/components/AttestationTemplateEditor";
 import html2canvas from "html2canvas";
@@ -141,24 +141,46 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg bg-secondary p-3">
-          <p className="text-sm text-muted-foreground flex items-center gap-1">
-            <Lock className="h-4 w-4" /> Attestation non disponible
+        <div className="rounded-lg bg-secondary p-4 space-y-3">
+          <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+            <Lock className="h-4 w-4 shrink-0" /> Complétez les étapes pour débloquer votre attestation.
           </p>
-          <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-            <li className="flex items-center gap-1.5">
-              {portfolioValidated ? <CheckCircle2 className="h-3 w-3 text-green-600" /> : <XCircle className="h-3 w-3 text-red-500" />}
-              Portfolio validé
-            </li>
-            <li className="flex items-center gap-1.5">
-              {paymentsComplete ? <CheckCircle2 className="h-3 w-3 text-green-600" /> : <XCircle className="h-3 w-3 text-red-500" />}
-              Paiements complets
-            </li>
-            <li className="flex items-center gap-1.5">
-              <XCircle className="h-3 w-3 text-red-500" />
-              Attestation délivrée par l'admin
-            </li>
-          </ul>
+          <div className="flex items-start gap-0">
+            {/* Step 1: Portfolio */}
+            <div className="flex flex-col items-center flex-1">
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border-2 ${portfolioValidated ? "bg-green-100 border-green-400 text-green-700 dark:bg-green-950/40 dark:border-green-600 dark:text-green-400" : "bg-card border-border text-muted-foreground"}`}>
+                {portfolioValidated ? <CheckCircle2 className="h-4 w-4" /> : "1"}
+              </div>
+              <p className={`mt-1 text-center text-[10px] font-semibold ${portfolioValidated ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>Portfolio</p>
+              {!portfolioValidated && (
+                <a href="/student?tab=portfolio" className="mt-0.5 text-[10px] text-accent hover:underline">Soumettre →</a>
+              )}
+            </div>
+            {/* Connector 1-2 */}
+            <div className={`flex-1 max-w-[28px] h-0.5 mt-4 ${portfolioValidated ? "bg-green-400 dark:bg-green-600" : "bg-border"}`} />
+            {/* Step 2: Paiement */}
+            <div className="flex flex-col items-center flex-1">
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border-2 ${paymentsComplete ? "bg-green-100 border-green-400 text-green-700 dark:bg-green-950/40 dark:border-green-600 dark:text-green-400" : portfolioValidated ? "bg-card border-border text-muted-foreground" : "bg-card border-border/40 text-muted-foreground/40"}`}>
+                {paymentsComplete ? <CheckCircle2 className="h-4 w-4" /> : "2"}
+              </div>
+              <p className={`mt-1 text-center text-[10px] font-semibold ${paymentsComplete ? "text-green-600 dark:text-green-400" : portfolioValidated ? "text-muted-foreground" : "text-muted-foreground/40"}`}>Paiement</p>
+              {!paymentsComplete && portfolioValidated && (
+                <a href="/student?tab=payments" className="mt-0.5 text-[10px] text-accent hover:underline">Payer →</a>
+              )}
+            </div>
+            {/* Connector 2-3 */}
+            <div className={`flex-1 max-w-[28px] h-0.5 mt-4 ${paymentsComplete && portfolioValidated ? "bg-green-400 dark:bg-green-600" : "bg-border"}`} />
+            {/* Step 3: Admin */}
+            <div className="flex flex-col items-center flex-1">
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border-2 ${portfolioValidated && paymentsComplete ? "bg-card border-border text-muted-foreground" : "bg-card border-border/40 text-muted-foreground/40"}`}>
+                3
+              </div>
+              <p className={`mt-1 text-center text-[10px] font-semibold ${portfolioValidated && paymentsComplete ? "text-muted-foreground" : "text-muted-foreground/40"}`}>Admin</p>
+              {portfolioValidated && paymentsComplete && (
+                <p className="mt-0.5 text-[10px] text-yellow-600 dark:text-yellow-400">En attente…</p>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

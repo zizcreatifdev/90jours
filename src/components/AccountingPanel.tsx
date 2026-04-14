@@ -446,7 +446,10 @@ const AccountingPanel = () => {
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Rechercher..." className="pl-9 bg-secondary border-0" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+              <Input placeholder="Rechercher..." className="pl-9 pr-8 bg-secondary border-0" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+              {searchQuery !== debouncedSearch && (
+                <Loader2 className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
+              )}
             </div>
             <Select value={typeFilter} onValueChange={v => { setTypeFilter(v); setHistoryPage(0); }}>
               <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>

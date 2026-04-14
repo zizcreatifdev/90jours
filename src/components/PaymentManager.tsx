@@ -347,7 +347,10 @@ const PaymentManager = () => {
             </Select>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Rechercher..." className="w-48 pl-9 bg-secondary border-0" value={search} onChange={e => setSearch(e.target.value)} />
+              <Input placeholder="Rechercher..." className="w-48 pl-9 pr-8 bg-secondary border-0" value={search} onChange={e => setSearch(e.target.value)} />
+              {search !== debouncedSearch && (
+                <Loader2 className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
+              )}
             </div>
             <Button variant="outline" size="sm" onClick={handleExport} className="gap-1">
               <Download className="h-4 w-4" /> CSV

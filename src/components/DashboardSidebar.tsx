@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -12,6 +12,8 @@ import {
   Wallet,
   Tag,
   ClipboardList,
+  ListTodo,
+  TrendingUp,
   Briefcase,
   TicketPercent,
   Upload,
@@ -37,24 +39,25 @@ interface SidebarLink {
   href: string;
   label: string;
   icon: React.ElementType;
+  sectionLabel?: string;
 }
 
 const adminLinks: SidebarLink[] = [
   { href: "/admin?tab=overview", label: "Vue d'ensemble", icon: LayoutDashboard },
   { href: "/admin?tab=calendar", label: "Calendrier", icon: CalendarDays },
   { href: "/admin?tab=messages", label: "Messages", icon: Megaphone },
-  { href: "/admin?tab=formations", label: "Formations", icon: GraduationCap },
+  { href: "/admin?tab=formations", label: "Formations", icon: GraduationCap, sectionLabel: "Pédagogie" },
   { href: "/admin?tab=formateurs", label: "Staff", icon: UserCircle },
-  { href: "/admin?tab=tasks", label: "Tâches", icon: ClipboardList },
+  { href: "/admin?tab=tasks", label: "Tâches", icon: ListTodo },
   { href: "/admin?tab=cohorts", label: "Cohortes", icon: BookOpen },
   { href: "/admin?tab=briefs", label: "Briefs", icon: ClipboardList },
   { href: "/admin?tab=categories", label: "Catégories", icon: Tag },
-  { href: "/admin?tab=payments", label: "Paiements", icon: Wallet },
+  { href: "/admin?tab=payments", label: "Paiements", icon: Wallet, sectionLabel: "Finance" },
   { href: "/admin?tab=promos", label: "Codes promo", icon: TicketPercent },
-  { href: "/admin?tab=portfolios", label: "Portfolios", icon: Briefcase },
+  { href: "/admin?tab=accounting", label: "Comptabilité", icon: TrendingUp },
+  { href: "/admin?tab=portfolios", label: "Portfolios", icon: Briefcase, sectionLabel: "Admin" },
   { href: "/admin?tab=attestations", label: "Attestations", icon: Award },
   { href: "/admin?tab=users", label: "Utilisateurs", icon: Users },
-  { href: "/admin?tab=accounting", label: "Comptabilité", icon: Wallet },
   { href: "/admin?tab=audit", label: "Historique", icon: History },
   { href: "/admin?tab=settings", label: "Paramètres", icon: Settings },
 ];
@@ -156,13 +159,22 @@ const SidebarNav = ({
             </Link>
           );
 
-          if (expanded) return <div key={link.href}>{content}</div>;
-
           return (
-            <Tooltip key={link.href}>
-              <TooltipTrigger asChild>{content}</TooltipTrigger>
-              <TooltipContent side="right">{link.label}</TooltipContent>
-            </Tooltip>
+            <Fragment key={link.href}>
+              {link.sectionLabel && (
+                expanded
+                  ? <div className="mt-3 mb-0.5 px-1"><p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">{link.sectionLabel}</p></div>
+                  : <div className="my-2 mx-auto h-px w-6 bg-border/60" />
+              )}
+              {expanded ? (
+                <div>{content}</div>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>{content}</TooltipTrigger>
+                  <TooltipContent side="right">{link.label}</TooltipContent>
+                </Tooltip>
+              )}
+            </Fragment>
           );
         })}
       </nav>

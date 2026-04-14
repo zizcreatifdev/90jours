@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, FileText, Megaphone, Send, Loader2, Search, Download, Users, CreditCard, ClipboardList, Award, ChevronDown, Menu } from "lucide-react";
+import { BookOpen, Calendar, FileText, Megaphone, Send, Loader2, Search, Download, Users, CreditCard, ClipboardList, Award, ChevronDown, Menu, Play, ExternalLink } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useSearchParams } from "react-router-dom";
 import DashboardSidebar from "@/components/DashboardSidebar";
@@ -45,6 +45,12 @@ interface EnrollmentWithCohort {
 }
 
 const COHORT_STATUS_PRIORITY: Record<string, number> = { active: 0, upcoming: 1, completed: 2, archived: 3 };
+
+const RESOURCE_TYPE_CONFIG: Record<string, { Icon: React.ElementType; className: string; label: string }> = {
+  pdf: { Icon: FileText, className: "bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400", label: "PDF" },
+  video: { Icon: Play, className: "bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400", label: "Vidéo" },
+  link: { Icon: ExternalLink, className: "bg-green-50 text-green-600 dark:bg-green-950/30 dark:text-green-400", label: "Lien" },
+};
 
 const StudentDashboard = () => {
   const [searchParams] = useSearchParams();
@@ -391,7 +397,16 @@ const StudentDashboard = () => {
                               <tr key={r.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
                                 <td className="px-6 py-3.5 text-sm font-medium text-foreground">{r.title}</td>
                                 <td className="px-6 py-3.5">
-                                  <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent">{r.type}</span>
+                                  {(() => {
+                                    const cfg = RESOURCE_TYPE_CONFIG[r.type] ?? { Icon: FileText, className: "bg-accent/10 text-accent", label: r.type };
+                                    const { Icon, className, label } = cfg;
+                                    return (
+                                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${className}`}>
+                                        <Icon className="h-3 w-3" />
+                                        {label}
+                                      </span>
+                                    );
+                                  })()}
                                 </td>
                                 <td className="px-6 py-3.5 text-sm text-muted-foreground">
                                   {new Date(r.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
@@ -422,9 +437,13 @@ const StudentDashboard = () => {
                     <div className="flex items-center justify-between border-b border-border px-6 py-4">
                       <h2 className="font-display text-base font-semibold text-foreground">Annonces</h2>
                       {unseenCount > 0 && (
-                        <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-accent px-1.5 text-[10px] font-bold text-accent-foreground">
+                        <button
+                          onClick={markAnnouncementsSeen}
+                          title="Marquer toutes les annonces comme lues"
+                          className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-accent px-1.5 text-[10px] font-bold text-accent-foreground hover:bg-accent/80 transition-colors"
+                        >
                           {unseenCount}
-                        </span>
+                        </button>
                       )}
                     </div>
                     <div className="divide-y divide-border max-h-80 overflow-y-auto">
