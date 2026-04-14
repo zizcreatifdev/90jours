@@ -19,7 +19,8 @@ const ProfilePage     = React.lazy(() => import("./pages/ProfilePage"));
 const SetupAccount    = React.lazy(() => import("./pages/SetupAccount"));
 const ForgotPassword  = React.lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword   = React.lazy(() => import("./pages/ResetPassword"));
-const NotFound        = React.lazy(() => import("./pages/NotFound"));
+const NotFound          = React.lazy(() => import("./pages/NotFound"));
+const StudentProfilePage = React.lazy(() => import("./pages/StudentProfilePage"));
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,7 @@ const App = () => (
                 <Route path="/staff" element={<ProtectedRoute requiredRole="staff"><StaffDashboard /></ProtectedRoute>} />
                 <Route path="/student" element={<ProtectedRoute requiredRole="student"><StudentDashboard /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                <Route path="/student/:id" element={<ProtectedRoute><StudentProfilePage /></ProtectedRoute>} />
                 <Route path="/setup-account" element={<SetupAccount />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />

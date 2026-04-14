@@ -1,6 +1,6 @@
 import { Users, FileText, Megaphone, BookOpen, Loader2, Search, Plus, Upload, Trash2, Mail, Download, ListTodo, ClipboardList, Briefcase, Menu } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import NotificationPanel from "@/components/NotificationPanel";
 import OfficialMessageSender from "@/components/OfficialMessageSender";
 import FormateurMessageSender from "@/components/FormateurMessageSender";
@@ -28,6 +28,7 @@ import DashboardCalendar from "@/components/DashboardCalendar";
 
 const StaffDashboard = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { cohorts: allCohorts, loading } = useCohorts();
   const { profile, user } = useAuth();
@@ -333,13 +334,19 @@ const StaffDashboard = () => {
                     </thead>
                      <tbody>
                       {filteredStudents.map((s: any) => (
-                        <tr key={s.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
+                        <tr
+                          key={s.id}
+                          onClick={() => navigate(`/student/${s.user_id}`)}
+                          className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors cursor-pointer"
+                        >
                           <td className="px-6 py-3">
                             <div className="flex items-center gap-2.5">
                               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-xs font-bold text-muted-foreground">
                                 {s.profiles?.first_name?.[0]?.toUpperCase() || "?"}
                               </div>
-                              <span className="text-sm font-medium text-foreground">{s.profiles?.first_name} {s.profiles?.last_name}</span>
+                              <span className="text-sm font-medium text-foreground hover:text-accent transition-colors">
+                                {s.profiles?.first_name} {s.profiles?.last_name}
+                              </span>
                             </div>
                           </td>
                           <td className="px-6 py-3 text-sm text-muted-foreground">{s.profiles?.phone || "—"}</td>
