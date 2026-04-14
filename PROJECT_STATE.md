@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-01 (initialisation fichiers mémoire)
+**Prompt actuel**: prompt-02 (audit complet)
 
 ---
 
@@ -187,11 +187,40 @@
 
 ---
 
-## Bugs Connus
+## Audit Complet (prompt-02)
+
+**Status**: ✅ 100% — Rapport d'audit généré le 14 avril 2026
+
+### Résumé des Findings
+
+| Catégorie | Critique 🔴 | Important 🟠 | Utile 🟡 | Total |
+|-----------|------------|-------------|---------|-------|
+| Sécurité | 1 | 3 | 2 | 6 |
+| Performance | 2 | 2 | 2 | 6 |
+| UX/UI | 1 | 2 | 3 | 6 |
+| Tests | 2 | 3 | 0 | 5 |
+| Fonctionnalités manquantes | 1 | 1 | 5 | 7 |
+| **TOTAL** | **7** | **11** | **12** | **30** |
+
+---
+
+## Bugs Connus / Failles Identifiées
 
 | ID | Sévérité | Module | Description | Status |
 |----|---------|--------|-------------|--------|
-| - | - | - | Aucun bug connu dans le code | - |
+| SEC-01 | 🔴 Critique | ProtectedRoute | Vérifie `roles.includes()` au lieu de `activeRole` — bypass possible pour utilisateurs multi-rôles | ❌ À corriger |
+| SEC-02 | 🟠 Important | .gitignore | `.env` non exclu du repo git | ❌ À corriger |
+| SEC-03 | 🟠 Important | Edge Functions | CORS wildcard `"*"` sur fonctions sensibles | ❌ À corriger |
+| SEC-04 | 🟠 Important | StudentPortfolio | Pas de validation d'URL (XSS potentiel) | ❌ À corriger |
+| PERF-01 | 🔴 Critique | App.tsx | Zéro code splitting / lazy loading | ❌ À corriger |
+| PERF-02 | 🔴 Critique | use-cohorts.ts | Charge tous les enrollments en mémoire côté client | ❌ À corriger |
+| PERF-03 | 🟠 Important | App.tsx | Aucun staleTime React Query | ❌ À corriger |
+| UX-01 | 🔴 Critique | Login.tsx | Pas de "Mot de passe oublié" | ❌ À corriger |
+| UX-02 | 🟠 Important | App.tsx | Aucun Error Boundary React | ❌ À corriger |
+| UX-03 | 🟠 Important | Login+Register | Double interface inscription incohérente | ❌ À corriger |
+| TEST-01 | 🔴 Critique | AuthContext.tsx | Zéro test sur logique de rôles | ❌ À corriger |
+| TEST-02 | 🔴 Critique | ProtectedRoute.tsx | Zéro test sur protection des routes | ❌ À corriger |
+| FEAT-01 | 🔴 Critique | Login.tsx | Reset de mot de passe absent | ❌ À ajouter |
 
 ---
 
@@ -199,12 +228,18 @@
 
 | Priorité | Item | Impact |
 |---------|------|--------|
+| Haute | SEC-01 : ProtectedRoute vérifie les mauvais rôles | Faille accès non autorisé |
+| Haute | PERF-02 : use-cohorts O(n) enrollments côté client | Scalabilité bloquante |
+| Haute | PERF-01 : Pas de code splitting | Bundle size / TTI |
 | Haute | Tests unitaires manquants (couverture ~0%) | Risque régressions |
+| Haute | UX-01 / FEAT-01 : Mot de passe oublié absent | UX critique manquante |
 | Haute | Credentials dans .env commité (sécurité) | Risque sécurité |
+| Moyenne | PERF-03 : staleTime non configuré | Requêtes réseau inutiles |
+| Moyenne | UX-02 : Pas de Error Boundary | Écran blanc sur crash |
+| Moyenne | UX-03 : Double interface inscription | Confusion utilisateur |
 | Moyenne | Pas de .env.example | Onboarding difficile |
-| Moyenne | Pas de README.md | Documentation entrée |
 | Basse | mock-data.ts non utilisé en prod | Dead code |
-| Basse | Pas de error boundaries React | UX dégradée sur crash |
+| Basse | 29+ `any` types dans les pages | Type safety dégradée |
 
 ---
 
@@ -213,3 +248,4 @@
 | Prompt | Date | Description | Status |
 |--------|------|-------------|--------|
 | prompt-01 | 2026-04-14 | Création fichiers mémoire (ARCHITECTURE.md, CLAUDE.md, TEST_AGENT.md, PROJECT_STATE.md) | ✅ Terminé |
+| prompt-02 | 2026-04-14 | Audit complet — 30 findings (7 critiques, 11 importants, 12 utiles) | ✅ Terminé |
