@@ -33,9 +33,11 @@ const SignedContractsPanel = () => {
   useEffect(() => {
     const fetchContracts = async () => {
       setLoading(true);
+
+      // 1. Fetch contracts + cohort name (no direct FK to profiles from user_id)
       const { data, error } = await supabase
         .from("student_contracts")
-        .select("*, profiles:user_id(first_name, last_name), cohorts:cohort_id(name)")
+        .select("*, cohorts:cohort_id(name)")
         .not("signed_at", "is", null)
         .order("signed_at", { ascending: false });
 
@@ -45,7 +47,22 @@ const SignedContractsPanel = () => {
         return;
       }
 
-      const mapped = (data || []).map((c: any) => ({
+      const rows = data || [];
+
+      // 2. Fetch profiles separately for the collected user_ids
+      const userIds = [...new Set(rows.map((c: any) => c.user_id))];
+      let profileMap: Record<string, { first_name: string; last_name: string }> = {};
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("user_id, first_name, last_name")
+          .in("user_id", userIds);
+        if (profilesData) {
+          profilesData.forEach((p: any) => { profileMap[p.user_id] = p; });
+        }
+      }
+
+      const mapped = rows.map((c: any) => ({
         id: c.id,
         user_id: c.user_id,
         cohort_id: c.cohort_id,
@@ -54,7 +71,7 @@ const SignedContractsPanel = () => {
         ip_address: c.ip_address,
         contract_snapshot: c.contract_snapshot,
         created_at: c.created_at,
-        profile: c.profiles as { first_name: string; last_name: string } | null,
+        profile: profileMap[c.user_id] ?? null,
         cohort_name: (c.cohorts as { name: string } | null)?.name ?? "—",
       })) as SignedContract[];
 
