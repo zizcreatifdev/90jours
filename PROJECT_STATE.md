@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-06 (sécurité : .env gitignore + CORS whitelist + validation URL portfolio)
+**Prompt actuel**: prompt-07 (UX-02 ErrorBoundary + UX-03 unification flux inscription)
 
 ---
 
@@ -217,8 +217,8 @@
 | PERF-02 | 🔴 Critique | use-cohorts.ts | Charge tous les enrollments en mémoire côté client | ✅ Corrigé (prompt-05) |
 | PERF-03 | 🟠 Important | App.tsx | Aucun staleTime React Query | ✅ Corrigé (prompt-05) — use-cohorts |
 | UX-01 | 🔴 Critique | Login.tsx | Pas de "Mot de passe oublié" | ✅ Corrigé (prompt-03) |
-| UX-02 | 🟠 Important | App.tsx | Aucun Error Boundary React | ❌ À corriger |
-| UX-03 | 🟠 Important | Login+Register | Double interface inscription incohérente | ❌ À corriger |
+| UX-02 | 🟠 Important | App.tsx | Aucun Error Boundary React | ✅ Corrigé (prompt-07) |
+| UX-03 | 🟠 Important | Login+Register | Double interface inscription incohérente | ✅ Corrigé (prompt-07) |
 | TEST-01 | 🔴 Critique | AuthContext.tsx | Zéro test sur logique de rôles | ❌ À corriger |
 | TEST-02 | 🔴 Critique | ProtectedRoute.tsx | Zéro test sur protection des routes | ✅ Corrigé (prompt-04) — 8 tests |
 | FEAT-01 | 🔴 Critique | Login.tsx | Reset de mot de passe absent | ✅ Corrigé (prompt-03) |
@@ -236,8 +236,8 @@
 | Haute | Tests unitaires manquants (couverture ~0%) | Risque régressions |
 | ~~Haute~~ | ~~UX-01 / FEAT-01 : Mot de passe oublié absent~~ | ✅ Corrigé prompt-03 |
 | ~~Haute~~ | ~~Credentials dans .env commité (sécurité)~~ | ✅ Corrigé prompt-06 |
-| Moyenne | UX-02 : Pas de Error Boundary | Écran blanc sur crash |
-| Moyenne | UX-03 : Double interface inscription | Confusion utilisateur |
+| ~~Moyenne~~ | ~~UX-02 : Pas de Error Boundary~~ | ✅ Corrigé prompt-07 |
+| ~~Moyenne~~ | ~~UX-03 : Double interface inscription~~ | ✅ Corrigé prompt-07 |
 | Moyenne | Pas de .env.example | Onboarding difficile |
 | Basse | mock-data.ts non utilisé en prod | Dead code |
 | Basse | 29+ `any` types dans les pages | Type safety dégradée |
@@ -254,3 +254,4 @@
 | prompt-04 | 2026-04-14 | Fix SEC-01 ProtectedRoute : activeRole au lieu de roles[] + 8 tests unitaires (9/9 ✅) | ✅ Terminé |
 | prompt-05 | 2026-04-14 | PERF-02 use-cohorts : COUNT SQL groupé + React Query staleTime 5min (9/9 ✅) | ✅ Terminé |
 | prompt-06 | 2026-04-14 | SEC-02 .env gitignore + .env.example — SEC-03 CORS whitelist 3 Edge Functions — SEC-04 isValidUrl() + StudentPortfolio (19/19 ✅) | ✅ Terminé |
+| prompt-07 | 2026-04-14 | UX-02 ErrorBoundary (class component + main.tsx) — UX-03 suppression onglet signup Login.tsx → lien /register (19/19 ✅) | ✅ Terminé |
