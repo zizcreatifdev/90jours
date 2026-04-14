@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-22 (NH-01 Système de streaks et badges de motivation)
+**Prompt actuel**: prompt-23 (Système de signature numérique de contrat)
 
 ---
 
@@ -14,7 +14,7 @@
 | Pages | 10 |
 | Hooks custom | 9 |
 | Tables Supabase | 31 |
-| Migrations SQL | 39 |
+| Migrations SQL | 40 |
 | Edge Functions | 7 |
 | Tests | 63 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator + 9 EmptyState) |
 | Couverture tests | ~25% (ProtectedRoute + validate-url + AuthContext + export-csv + PasswordStrengthIndicator + EmptyState) |
@@ -321,3 +321,4 @@
 | prompt-20 | 2026-04-14 | ÉTUDIANT: ActivityHeatmap.tsx style GitHub (remplace BarChart) — STAFF: indicateur santé 🟢🟠🔴 par étudiant (ratio progress/expectedProgress) + compteur santé cohorte — ADMIN: AdminAlertBanner.tsx (portfolios/paiements/deadlines urgentes) + feed "Activité récente" 10 actions (enrollments+payments+submissions) — 63/63 ✅ | ✅ Terminé |
 | prompt-21 | 2026-04-14 | NH-04 Mode Focus: toggle Maximize2/Minimize2 dans DashboardSidebar, masque sidebar, persiste localStorage, bouton flottant exit — NH-03 feedback formateur inline: BriefManager.tsx section expandable par brief (textarea+Save par étudiant, notif in-app étudiant), StudentBriefs.tsx bloc feedback sous statut — NH-07 payment-reminders Edge Function (cron 0 9 * * *, paiements pending > 30j, notif étudiant+admin+push) + migration brief_submissions.feedback — 63/63 ✅ | ✅ Terminé |
 | prompt-22 | 2026-04-14 | NH-01 Badges motivation: migration student_badges (id, user_id, badge_type, earned_at, metadata, UNIQUE user+type, RLS) — use-student-badges.ts hook (fetch, hasStreak7, checkAndAwardBadges, upsert ignoreDuplicates, newBadge) — BadgeShowcase.tsx (grille 5 badges colorés/verrouillés, animation confetti CSS, barre de progression) — intégration StudentDashboard.tsx (import hook+composant, useRef checkBadgesRef, check on cohort load + realtime channel) — 63/63 ✅ | ✅ Terminé |
+| prompt-23 | 2026-04-14 | Contrats: migration contract_templates + student_contracts (RLS, UNIQUE user+cohort, trigger updated_at, template HTML par défaut) — ContractSign.tsx (variables fillTemplate, scroll obligatoire, checkbox, nom signé = vérification profil, upsert snapshot) — ContractTemplateEditor.tsx (liste, editor HTML textarea, variables cliquables, aperçu demo) — SignedContractsPanel.tsx (table, filtre cohorte, modal snapshot, export CSV) — Register.tsx redirect vers /contract-sign si template actif — StudentDashboard.tsx carte "Mon contrat" + modal viewer — AdminDashboard.tsx onglet Contrats (Templates + Contrats signés) — DashboardSidebar FileSignature link — 63/63 ✅ | ✅ Terminé |

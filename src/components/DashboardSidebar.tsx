@@ -27,6 +27,7 @@ import {
   Bell,
   Maximize2,
   Minimize2,
+  FileSignature,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
@@ -59,6 +60,7 @@ const adminLinks: SidebarLink[] = [
   { href: "/admin?tab=accounting", label: "Comptabilité", icon: TrendingUp },
   { href: "/admin?tab=portfolios", label: "Portfolios", icon: Briefcase, sectionLabel: "Admin" },
   { href: "/admin?tab=attestations", label: "Attestations", icon: Award },
+  { href: "/admin?tab=contracts", label: "Contrats", icon: FileSignature },
   { href: "/admin?tab=users", label: "Utilisateurs", icon: Users },
   { href: "/admin?tab=audit", label: "Historique", icon: History },
   { href: "/admin?tab=settings", label: "Paramètres", icon: Settings },

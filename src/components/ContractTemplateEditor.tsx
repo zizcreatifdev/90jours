@@ -1,0 +1,295 @@
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { Loader2, Plus, Pencil, Trash2, Eye, FileSignature, ToggleLeft, ToggleRight } from "lucide-react";
+
+interface ContractTemplate {
+  id: string;
+  name: string;
+  content: string;
+  formation_id: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+const AVAILABLE_VARIABLES = [
+  { key: "{{prenom}}", label: "Prénom de l'étudiant" },
+  { key: "{{nom}}", label: "Nom de famille" },
+  { key: "{{email}}", label: "Email" },
+  { key: "{{formation}}", label: "Nom de la formation" },
+  { key: "{{cohorte}}", label: "Numéro/nom de la cohorte" },
+  { key: "{{formateur}}", label: "Nom du formateur référent" },
+  { key: "{{date_debut}}", label: "Date de début de la cohorte" },
+  { key: "{{date_fin}}", label: "Date de fin de la cohorte" },
+  { key: "{{montant}}", label: "Montant total de la formation" },
+  { key: "{{date_signature}}", label: "Date de signature" },
+  { key: "{{heure_signature}}", label: "Heure de signature" },
+  { key: "{{signature_name}}", label: "Nom saisi lors de la signature" },
+];
+
+const DEMO_VARS: Record<string, string> = {
+  prenom: "Aminata",
+  nom: "Diallo",
+  email: "aminata.diallo@email.com",
+  formation: "Design Graphique 90 Jours",
+  cohorte: "A",
+  formateur: "Pierre Martin",
+  date_debut: "1er septembre 2026",
+  date_fin: "29 novembre 2026",
+  montant: "450 000 FCFA",
+  date_signature: "14 avril 2026",
+  heure_signature: "09:30",
+  signature_name: "Aminata Diallo",
+};
+
+const fillDemo = (html: string): string =>
+  Object.entries(DEMO_VARS).reduce(
+    (acc, [k, v]) => acc.replace(new RegExp(`\\{\\{${k}\\}\\}`, "g"), v),
+    html
+  );
+
+const ContractTemplateEditor = () => {
+  const { toast } = useToast();
+  const [templates, setTemplates] = useState<ContractTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formName, setFormName] = useState("");
+  const [formContent, setFormContent] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+
+  const fetchTemplates = async () => {
+    const { data } = await supabase
+      .from("contract_templates")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setTemplates((data || []) as ContractTemplate[]);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchTemplates(); }, []);
+
+  const resetForm = () => { setEditingId(null); setFormName(""); setFormContent(""); };
+
+  const handleEdit = (t: ContractTemplate) => {
+    setEditingId(t.id);
+    setFormName(t.name);
+    setFormContent(t.content);
+  };
+
+  const handleSave = async () => {
+    if (!formName.trim() || !formContent.trim()) {
+      toast({ title: "Erreur", description: "Nom et contenu requis.", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+
+    if (editingId) {
+      const { error } = await supabase
+        .from("contract_templates")
+        .update({ name: formName.trim(), content: formContent.trim() })
+        .eq("id", editingId);
+      if (error) {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Template mis à jour" });
+        resetForm();
+        fetchTemplates();
+      }
+    } else {
+      const { error } = await supabase
+        .from("contract_templates")
+        .insert({ name: formName.trim(), content: formContent.trim(), is_active: true });
+      if (error) {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Template créé" });
+        resetForm();
+        fetchTemplates();
+      }
+    }
+    setSaving(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("contract_templates").delete().eq("id", id);
+    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    else setTemplates(prev => prev.filter(t => t.id !== id));
+  };
+
+  const handleToggleActive = async (t: ContractTemplate) => {
+    const { error } = await supabase
+      .from("contract_templates")
+      .update({ is_active: !t.is_active })
+      .eq("id", t.id);
+    if (!error) setTemplates(prev => prev.map(x => x.id === t.id ? { ...x, is_active: !x.is_active } : x));
+  };
+
+  const isEditing = editingId !== null;
+
+  return (
+    <div className="space-y-6">
+      {/* Template list */}
+      <div className="rounded-2xl border border-border bg-card shadow-card">
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
+            <FileSignature className="h-4 w-4" /> Templates de contrat ({templates.length})
+          </h2>
+          {!isEditing && (
+            <Button size="sm" onClick={() => setEditingId("")}>
+              <Plus className="mr-1 h-4 w-4" /> Nouveau template
+            </Button>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+        ) : templates.length === 0 && !isEditing ? (
+          <p className="px-6 py-10 text-center text-sm text-muted-foreground">Aucun template. Cliquez sur "Nouveau template" pour commencer.</p>
+        ) : (
+          <div className="divide-y divide-border">
+            {templates.map(t => (
+              <div key={t.id} className="flex items-center justify-between gap-4 px-6 py-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-sm text-foreground">{t.name}</p>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      t.is_active
+                        ? "bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400"
+                        : "bg-muted text-muted-foreground"
+                    }`}>
+                      {t.is_active ? "Actif" : "Inactif"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t.formation_id ? "Formation spécifique" : "Générique"} — Mis à jour le {new Date(t.updated_at).toLocaleDateString("fr-FR")}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    onClick={() => setPreviewHtml(fillDemo(t.content))}
+                    title="Aperçu"
+                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleToggleActive(t)}
+                    title={t.is_active ? "Désactiver" : "Activer"}
+                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                  >
+                    {t.is_active ? <ToggleRight className="h-4 w-4 text-green-600" /> : <ToggleLeft className="h-4 w-4" />}
+                  </button>
+                  <button
+                    onClick={() => handleEdit(t)}
+                    title="Modifier"
+                    className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <ConfirmDialog
+                    trigger={
+                      <button title="Supprimer" className="rounded-lg p-1.5 text-muted-foreground hover:text-destructive transition-colors">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    }
+                    title="Supprimer ce template ?"
+                    description="Les contrats déjà signés ne seront pas affectés (ils ont un snapshot)."
+                    confirmLabel="Supprimer"
+                    onConfirm={() => handleDelete(t.id)}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Editor form */}
+      {(isEditing || editingId === "") && (
+        <div className="rounded-2xl border border-border bg-card shadow-card p-6">
+          <h3 className="font-display text-base font-semibold text-foreground mb-5">
+            {editingId ? "Modifier le template" : "Nouveau template"}
+          </h3>
+          <div className="grid gap-5 lg:grid-cols-3">
+            {/* Form (left 2/3) */}
+            <div className="lg:col-span-2 space-y-4">
+              <div>
+                <Label>Nom du template</Label>
+                <Input
+                  value={formName}
+                  onChange={e => setFormName(e.target.value)}
+                  placeholder="Ex: Contrat standard 90 jours"
+                />
+              </div>
+              <div>
+                <Label>Contenu HTML</Label>
+                <Textarea
+                  value={formContent}
+                  onChange={e => setFormContent(e.target.value)}
+                  rows={20}
+                  className="font-mono text-xs"
+                  placeholder="<html>...</html>"
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button onClick={handleSave} disabled={saving}>
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {editingId ? "Enregistrer les modifications" : "Créer le template"}
+                </Button>
+                <Button variant="outline" onClick={resetForm}>Annuler</Button>
+                {formContent && (
+                  <Button variant="ghost" onClick={() => setPreviewHtml(fillDemo(formContent))}>
+                    <Eye className="mr-1.5 h-4 w-4" /> Aperçu
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Variables reference (right 1/3) */}
+            <div className="rounded-xl border border-border bg-muted/30 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Variables disponibles</p>
+              <div className="space-y-2">
+                {AVAILABLE_VARIABLES.map(v => (
+                  <div key={v.key} className="flex items-start gap-2">
+                    <code
+                      className="text-[11px] bg-accent/10 text-accent px-1.5 py-0.5 rounded cursor-pointer hover:bg-accent/20 font-mono shrink-0"
+                      onClick={() => setFormContent(prev => prev + v.key)}
+                      title="Cliquer pour insérer"
+                    >
+                      {v.key}
+                    </code>
+                    <span className="text-xs text-muted-foreground">{v.label}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-[10px] text-muted-foreground">Cliquez sur une variable pour l'insérer à la fin du texte.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Preview modal */}
+      <Dialog open={previewHtml !== null} onOpenChange={() => setPreviewHtml(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display">Aperçu du contrat (données fictives)</DialogTitle>
+          </DialogHeader>
+          <div
+            className="rounded-xl border border-border bg-white text-[13px]"
+            dangerouslySetInnerHTML={{ __html: previewHtml || "" }}
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default ContractTemplateEditor;

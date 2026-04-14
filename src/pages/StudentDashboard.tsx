@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, FileText, Megaphone, Send, Loader2, Search, Download, Users, CreditCard, ClipboardList, Award, ChevronDown, Menu, Play, ExternalLink } from "lucide-react";
+import { BookOpen, Calendar, FileText, Megaphone, Send, Loader2, Search, Download, Users, CreditCard, ClipboardList, Award, ChevronDown, Menu, Play, ExternalLink, FileSignature } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useSearchParams } from "react-router-dom";
 import DashboardSidebar from "@/components/DashboardSidebar";
@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -193,6 +194,21 @@ const StudentDashboard = () => {
   };
 
   const unseenCount = announcements.filter(a => !seenAnnouncements.has(a.id)).length;
+
+  // ── Contrat ─────────────────────────────────────────────────────────────────
+  const [contract, setContract] = useState<{ signed_at: string | null; contract_snapshot: string | null } | null | undefined>(undefined);
+  const [contractModalOpen, setContractModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user || !cohort) return;
+    supabase
+      .from("student_contracts")
+      .select("signed_at, contract_snapshot")
+      .eq("user_id", user.id)
+      .eq("cohort_id", cohort.id)
+      .maybeSingle()
+      .then(({ data }) => setContract(data as { signed_at: string | null; contract_snapshot: string | null } | null));
+  }, [user?.id, cohort?.id]);
 
   // ── Badges ──────────────────────────────────────────────────────────────────
   const { badges: studentBadges, newBadge, isLoading: badgesLoading, checkAndAwardBadges } = useStudentBadges();
@@ -478,8 +494,58 @@ const StudentDashboard = () => {
 
                   {/* Attestation on dashboard */}
                   <StudentAttestation cohortId={cohort.id} />
+
+                  {/* Mon contrat */}
+                  {contract !== undefined && (
+                    <div className="rounded-2xl border border-border bg-card shadow-card p-5">
+                      <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2 mb-4">
+                        <FileSignature className="h-4 w-4" /> Mon contrat
+                      </h2>
+                      {contract?.signed_at ? (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 rounded-xl bg-green-50 dark:bg-green-950/20 px-3 py-2.5 text-sm text-green-700 dark:text-green-400">
+                            <Award className="h-4 w-4 shrink-0" />
+                            <div>
+                              <p className="font-semibold">Contrat signé ✅</p>
+                              <p className="text-xs opacity-80">
+                                Le {new Date(contract.signed_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+                              </p>
+                            </div>
+                          </div>
+                          {contract.contract_snapshot && (
+                            <Button variant="outline" size="sm" className="w-full" onClick={() => setContractModalOpen(true)}>
+                              <FileSignature className="mr-1.5 h-4 w-4" /> Voir mon contrat
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2 rounded-xl bg-amber-50 dark:bg-amber-950/20 px-3 py-2.5 text-sm text-amber-700 dark:text-amber-400">
+                            <FileSignature className="h-4 w-4 shrink-0" />
+                            <p className="font-medium">Contrat non signé ⚠️</p>
+                          </div>
+                          <Link to={`/contract-sign?cohort_id=${cohort.id}`}>
+                            <Button size="sm" className="w-full">Signer mon contrat</Button>
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* Contract viewer modal */}
+              <Dialog open={contractModalOpen} onOpenChange={setContractModalOpen}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+                  <DialogHeader>
+                    <DialogTitle className="font-display">Mon contrat de formation</DialogTitle>
+                  </DialogHeader>
+                  <div
+                    className="rounded-xl border border-border bg-white text-[13px]"
+                    dangerouslySetInnerHTML={{ __html: contract?.contract_snapshot || "" }}
+                  />
+                </DialogContent>
+              </Dialog>
             </>
           )}
 

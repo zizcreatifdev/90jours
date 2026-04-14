@@ -40,6 +40,8 @@ import DashboardCalendar from "@/components/DashboardCalendar";
 import AdminMessages from "@/components/AdminMessages";
 import AccountingPanel from "@/components/AccountingPanel";
 import AdminAlertBanner from "@/components/AdminAlertBanner";
+import ContractTemplateEditor from "@/components/ContractTemplateEditor";
+import SignedContractsPanel from "@/components/SignedContractsPanel";
 interface UserRow {
   user_id: string;
   first_name: string;
@@ -804,6 +806,22 @@ const AdminDashboard = () => {
               <div className="space-y-6">
                 <SiteSettingsPanel settings={siteSettings} onUpdated={refetchSettings} />
               </div>
+            </TabsContent>
+
+            {/* Contracts Tab */}
+            <TabsContent value="contracts">
+              <Tabs defaultValue="templates">
+                <TabsList className="mb-6">
+                  <TabsTrigger value="templates">Templates</TabsTrigger>
+                  <TabsTrigger value="signed">Contrats signés</TabsTrigger>
+                </TabsList>
+                <TabsContent value="templates">
+                  <ContractTemplateEditor />
+                </TabsContent>
+                <TabsContent value="signed">
+                  <SignedContractsPanel />
+                </TabsContent>
+              </Tabs>
             </TabsContent>
           </Tabs>
         </div>

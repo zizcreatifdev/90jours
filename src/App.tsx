@@ -19,6 +19,7 @@ const ProfilePage     = React.lazy(() => import("./pages/ProfilePage"));
 const SetupAccount    = React.lazy(() => import("./pages/SetupAccount"));
 const ForgotPassword  = React.lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword   = React.lazy(() => import("./pages/ResetPassword"));
+const ContractSign   = React.lazy(() => import("./pages/ContractSign"));
 const NotFound          = React.lazy(() => import("./pages/NotFound"));
 const StudentProfilePage = React.lazy(() => import("./pages/StudentProfilePage"));
 
@@ -43,6 +44,7 @@ const App = () => (
                 <Route path="/student" element={<ProtectedRoute requiredRole="student"><StudentDashboard /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                 <Route path="/student/:id" element={<ProtectedRoute><StudentProfilePage /></ProtectedRoute>} />
+                <Route path="/contract-sign" element={<ProtectedRoute><ContractSign /></ProtectedRoute>} />
                 <Route path="/setup-account" element={<SetupAccount />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />

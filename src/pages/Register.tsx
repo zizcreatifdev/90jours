@@ -88,8 +88,21 @@ const Register = () => {
       });
       if (enrollError) throw enrollError;
 
-      toast({ title: "Inscription réussie ! 🎉", description: "Bienvenue dans votre espace étudiant." });
-      setTimeout(() => navigate("/student"), 2000);
+      // Check if an active contract template exists → redirect to signing step
+      const { data: template } = await supabase
+        .from("contract_templates")
+        .select("id")
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+
+      if (template) {
+        toast({ title: "Inscription enregistrée !", description: "Veuillez lire et signer votre contrat de formation." });
+        setTimeout(() => navigate(`/contract-sign?cohort_id=${selectedCohort}`), 1200);
+      } else {
+        toast({ title: "Inscription réussie ! 🎉", description: "Bienvenue dans votre espace étudiant." });
+        setTimeout(() => navigate("/student"), 2000);
+      }
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
     } finally {
