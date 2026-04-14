@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-08 (PERF-01 code splitting React.lazy sur toutes les pages)
+**Prompt actuel**: prompt-09 (TEST-01 AuthContext + TEST-03 export-csv)
 
 ---
 
@@ -16,8 +16,8 @@
 | Tables Supabase | 31 |
 | Migrations SQL | 37 |
 | Edge Functions | 5 |
-| Tests | 19 (1 placeholder + 8 ProtectedRoute + 10 validate-url) |
-| Couverture tests | ~7% (ProtectedRoute + validate-url) |
+| Tests | 38 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv) |
+| Couverture tests | ~18% (ProtectedRoute + validate-url + AuthContext + export-csv) |
 
 ---
 
@@ -219,7 +219,7 @@
 | UX-01 | 🔴 Critique | Login.tsx | Pas de "Mot de passe oublié" | ✅ Corrigé (prompt-03) |
 | UX-02 | 🟠 Important | App.tsx | Aucun Error Boundary React | ✅ Corrigé (prompt-07) |
 | UX-03 | 🟠 Important | Login+Register | Double interface inscription incohérente | ✅ Corrigé (prompt-07) |
-| TEST-01 | 🔴 Critique | AuthContext.tsx | Zéro test sur logique de rôles | ❌ À corriger |
+| TEST-01 | 🔴 Critique | AuthContext.tsx | Zéro test sur logique de rôles | ✅ Corrigé (prompt-09) |
 | TEST-02 | 🔴 Critique | ProtectedRoute.tsx | Zéro test sur protection des routes | ✅ Corrigé (prompt-04) — 8 tests |
 | FEAT-01 | 🔴 Critique | Login.tsx | Reset de mot de passe absent | ✅ Corrigé (prompt-03) |
 
@@ -233,7 +233,7 @@
 | ~~Haute~~ | ~~PERF-02 : use-cohorts O(n) enrollments côté client~~ | ✅ Corrigé prompt-05 |
 | ~~Moyenne~~ | ~~PERF-03 : staleTime non configuré~~ | ✅ Corrigé prompt-05 (use-cohorts) |
 | ~~Haute~~ | ~~PERF-01 : Pas de code splitting~~ | ✅ Corrigé prompt-08 |
-| Haute | Tests unitaires manquants (couverture ~0%) | Risque régressions |
+| Moyenne | Tests unitaires (couverture ~18% — AuthContext, ProtectedRoute, validate-url, export-csv) | Risque régressions |
 | ~~Haute~~ | ~~UX-01 / FEAT-01 : Mot de passe oublié absent~~ | ✅ Corrigé prompt-03 |
 | ~~Haute~~ | ~~Credentials dans .env commité (sécurité)~~ | ✅ Corrigé prompt-06 |
 | ~~Moyenne~~ | ~~UX-02 : Pas de Error Boundary~~ | ✅ Corrigé prompt-07 |
@@ -256,3 +256,4 @@
 | prompt-06 | 2026-04-14 | SEC-02 .env gitignore + .env.example — SEC-03 CORS whitelist 3 Edge Functions — SEC-04 isValidUrl() + StudentPortfolio (19/19 ✅) | ✅ Terminé |
 | prompt-07 | 2026-04-14 | UX-02 ErrorBoundary (class component + main.tsx) — UX-03 suppression onglet signup Login.tsx → lien /register (19/19 ✅) | ✅ Terminé |
 | prompt-08 | 2026-04-14 | PERF-01 code splitting : 11 pages → React.lazy() + Suspense dans App.tsx — build vérifié (11 chunks page) (19/19 ✅) | ✅ Terminé |
+| prompt-09 | 2026-04-14 | TEST-01 AuthContext (9 tests : priorité rôles, localStorage, SIGNED_OUT, setActiveRole invalide) + TEST-03 export-csv (10 tests : BOM, headers, virgules, guillemets, newlines, null/undefined) (38/38 ✅) | ✅ Terminé |

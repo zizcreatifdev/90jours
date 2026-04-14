@@ -71,21 +71,22 @@ Tests du composant `src/components/ProtectedRoute.tsx` :
 |--------|-------|-----------|
 | ProtectedRoute | 8 | ~90% |
 | validate-url.ts | 10 | ~100% |
+| AuthContext | 9 | ~80% |
+| export-csv.ts | 10 | ~95% |
 | Composants (autres) | 0 | 0% |
-| Hooks | 0 | 0% |
+| Hooks (autres) | 0 | 0% |
 | Pages | 0 | 0% |
-| AuthContext | 0 | 0% |
-| **TOTAL** | **19** | **~7%** |
+| **TOTAL** | **38** | **~18%** |
 
 ---
 
 ## Zones Prioritaires à Tester (TODO)
 
 ### Priorité Haute
-- [ ] `src/contexts/AuthContext.tsx` — logique de rôles, redirections
+- [x] `src/contexts/AuthContext.tsx` — ✅ 9 tests (prompt-09)
 - [x] `src/components/ProtectedRoute.tsx` — ✅ 8 tests (prompt-04)
 - [x] `src/lib/validate-url.ts` — ✅ 10 tests (prompt-06)
-- [ ] `src/lib/export-csv.ts` — export des données
+- [x] `src/lib/export-csv.ts` — ✅ 10 tests (prompt-09)
 - [ ] `src/lib/utils.ts` — fonction cn()
 
 ### Priorité Moyenne
@@ -168,9 +169,9 @@ describe("useMonHook", () => {
 ## Rapport de Test Actuel (au 14 avril 2026)
 
 ```
-Test Files  3 passed (3)
-Tests       19 passed (19)
-Duration    ~5.81s
+Test Files  5 passed (5)
+Tests       38 passed (38)
+Duration    ~11.50s
 
 Couverture : NON configurée (pas de --coverage dans les scripts)
 ```
