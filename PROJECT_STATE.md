@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 14 avril 2026
 **Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-11 (PERF-05 pagination Supabase + UX-05 debounce recherche)
+**Prompt actuel**: prompt-12 (SEC-05 indicateur force mot de passe)
 
 ---
 
@@ -10,14 +10,14 @@
 
 | Métrique | Valeur |
 |---------|--------|
-| Composants React | 93 |
+| Composants React | 94 |
 | Pages | 9 |
 | Hooks custom | 9 |
 | Tables Supabase | 31 |
 | Migrations SQL | 37 |
 | Edge Functions | 5 |
-| Tests | 38 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv) |
-| Couverture tests | ~18% (ProtectedRoute + validate-url + AuthContext + export-csv) |
+| Tests | 54 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator) |
+| Couverture tests | ~22% (ProtectedRoute + validate-url + AuthContext + export-csv + PasswordStrengthIndicator) |
 
 ---
 
@@ -222,6 +222,7 @@
 | TEST-01 | 🔴 Critique | AuthContext.tsx | Zéro test sur logique de rôles | ✅ Corrigé (prompt-09) |
 | TEST-02 | 🔴 Critique | ProtectedRoute.tsx | Zéro test sur protection des routes | ✅ Corrigé (prompt-04) — 8 tests |
 | FEAT-01 | 🔴 Critique | Login.tsx | Reset de mot de passe absent | ✅ Corrigé (prompt-03) |
+| SEC-05 | 🟠 Important | Register/ResetPassword/SetupAccount | Aucun indicateur de force de mot de passe, minLength=6 | ✅ Corrigé (prompt-12) |
 
 ---
 
@@ -240,6 +241,7 @@
 | ~~Moyenne~~ | ~~UX-03 : Double interface inscription~~ | ✅ Corrigé prompt-07 |
 | ~~Moyenne~~ | ~~PERF-05 : Pagination grandes listes côté Supabase~~ | ✅ Corrigé prompt-11 |
 | ~~Moyenne~~ | ~~UX-05 : Debounce sur les recherches~~ | ✅ Corrigé prompt-11 |
+| ~~Haute~~ | ~~SEC-05 : Pas d'indicateur de force mot de passe~~ | ✅ Corrigé prompt-12 |
 | Moyenne | Pas de .env.example | Onboarding difficile |
 | Basse | mock-data.ts non utilisé en prod | Dead code |
 | Basse | 29+ `any` types dans les pages | Type safety dégradée |
@@ -261,3 +263,4 @@
 | prompt-09 | 2026-04-14 | TEST-01 AuthContext (9 tests : priorité rôles, localStorage, SIGNED_OUT, setActiveRole invalide) + TEST-03 export-csv (10 tests : BOM, headers, virgules, guillemets, newlines, null/undefined) (38/38 ✅) | ✅ Terminé |
 | prompt-10 | 2026-04-14 | FEAT-02 use-unread-notifications.ts (COUNT SQL + real-time) + badge Bell dans DashboardSidebar (rouge, 99+, tooltip) (38/38 ✅) | ✅ Terminé |
 | prompt-11 | 2026-04-14 | PERF-05 pagination Supabase .range() AuditLogPanel + AdminMessages (20/page) + composant Pagination réutilisable — UX-05 use-debounce.ts + debounce dans AccountingPanel, AdminDashboard, PaymentManager + pagination client-side historique (38/38 ✅) | ✅ Terminé |
+| prompt-12 | 2026-04-14 | SEC-05 PasswordStrengthIndicator.tsx (barre 3 niveaux, 4 critères) + Register + ResetPassword + SetupAccount (indicateur + blocage si faible + minLength 8) — 16 tests (54/54 ✅) | ✅ Terminé |

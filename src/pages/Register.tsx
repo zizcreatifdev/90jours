@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Users, CheckCircle, Loader2 } from "lucide-react";
+import PasswordStrengthIndicator, { getPasswordStrength } from "@/components/PasswordStrengthIndicator";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -38,6 +39,10 @@ const Register = () => {
     e.preventDefault();
     if (!selectedCohort) {
       toast({ title: "Erreur", description: "Veuillez sélectionner une cohorte.", variant: "destructive" });
+      return;
+    }
+    if (!user && getPasswordStrength(formData.password) === "weak") {
+      toast({ title: "Mot de passe trop faible", description: "Ajoutez une majuscule, un chiffre et un caractère spécial (8 caractères minimum).", variant: "destructive" });
       return;
     }
     setSubmitting(true);
@@ -187,7 +192,8 @@ const Register = () => {
                 </div>
                 <div className="mt-4">
                   <Label htmlFor="password">Mot de passe</Label>
-                  <Input id="password" type="password" required minLength={6} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="••••••••" />
+                  <Input id="password" type="password" required minLength={8} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="••••••••" />
+                  <PasswordStrengthIndicator password={formData.password} />
                 </div>
                 <div className="mt-4">
                   <Label htmlFor="phone">Téléphone</Label>

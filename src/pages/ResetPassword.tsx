@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { KeyRound, Loader2, AlertTriangle } from "lucide-react";
+import PasswordStrengthIndicator, { getPasswordStrength } from "@/components/PasswordStrengthIndicator";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -51,10 +52,10 @@ const ResetPassword = () => {
       return;
     }
 
-    if (password.length < 6) {
+    if (getPasswordStrength(password) === "weak") {
       toast({
-        title: "Mot de passe trop court",
-        description: "Le mot de passe doit contenir au moins 6 caractères.",
+        title: "Mot de passe trop faible",
+        description: "Ajoutez une majuscule, un chiffre et un caractère spécial (8 caractères minimum).",
         variant: "destructive",
       });
       return;
@@ -148,7 +149,7 @@ const ResetPassword = () => {
                   Nouveau mot de passe
                 </h1>
                 <p className="text-center text-sm text-muted-foreground">
-                  Choisissez un mot de passe d'au moins 6 caractères.
+                  Choisissez un mot de passe fort (8 caractères, majuscule, chiffre, symbole).
                 </p>
               </div>
 
@@ -159,12 +160,13 @@ const ResetPassword = () => {
                     id="password"
                     type="password"
                     required
-                    minLength={6}
+                    minLength={8}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     autoFocus
                   />
+                  <PasswordStrengthIndicator password={password} />
                 </div>
                 <div>
                   <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
@@ -172,7 +174,7 @@ const ResetPassword = () => {
                     id="confirm-password"
                     type="password"
                     required
-                    minLength={6}
+                    minLength={8}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
