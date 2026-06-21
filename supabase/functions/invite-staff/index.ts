@@ -1,6 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ALLOWED_ORIGINS = ["https://90jours.com", "https://formations90jours.netlify.app"];
+const ALLOWED_ORIGINS = ["https://60jours.vercel.app"];
 
 Deno.serve(async (req) => {
   const origin = req.headers.get("origin") ?? "";
@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
           first_name: first_name || "",
           last_name: last_name || "",
         },
-        redirectTo: `${req.headers.get("origin") || supabaseUrl.replace('.supabase.co', '.lovable.app')}/setup-account`,
+        redirectTo: `${req.headers.get("origin") || supabaseUrl.replace('.supabase.co', '.vercel.app')}/setup-account`,
       });
 
       if (inviteError) {
