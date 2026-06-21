@@ -89,10 +89,10 @@ const ResetPassword = () => {
       <div className="hidden w-1/2 items-center justify-center bg-primary lg:flex">
         <div className="max-w-md px-12 text-center">
           <div className="mx-auto mb-6">
-            <img src={logoWhite} alt="90jours" className="mx-auto h-16" />
+            <img src={logoWhite} alt="60jours" className="mx-auto h-16" />
           </div>
           <h2 className="mb-4 font-display text-3xl font-bold text-primary-foreground">
-            90 jours de formation
+            60 jours de formation
           </h2>
           <p className="text-primary-foreground/70">
             Choisissez un nouveau mot de passe sécurisé pour votre compte.
@@ -104,8 +104,8 @@ const ResetPassword = () => {
       <div className="flex w-full items-center justify-center bg-background px-4 lg:w-1/2">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex items-center justify-center lg:hidden">
-            <img src={logoDark} alt="90jours" className="h-10 dark:hidden" />
-            <img src={logoWhite} alt="90jours" className="hidden h-10 dark:block" />
+            <img src={logoDark} alt="60jours" className="h-10 dark:hidden" />
+            <img src={logoWhite} alt="60jours" className="hidden h-10 dark:block" />
           </div>
 
           {checking ? (

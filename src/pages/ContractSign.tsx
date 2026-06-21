@@ -142,7 +142,7 @@ const ContractSign = () => {
         prenom: profile?.first_name || "",
         nom: profile?.last_name || "",
         email: user.email || "",
-        formation: formation?.name || "90 Jours",
+        formation: formation?.name || "60 Jours",
         cohorte: c.name,
         formateur: formateurName,
         date_debut: new Date(c.start_date).toLocaleDateString("fr-FR", {
@@ -266,7 +266,7 @@ const ContractSign = () => {
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-              <span className="font-display text-xs font-bold text-primary-foreground">90</span>
+              <span className="font-display text-xs font-bold text-primary-foreground">60</span>
             </div>
             <div>
               <p className="font-display text-sm font-bold text-foreground">Contrat de Formation</p>

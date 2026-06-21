@@ -30,8 +30,8 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 glass-nav">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2.5">
-          <img src={logoDark} alt="90jours" className="h-8 w-auto object-contain dark:hidden" />
-          <img src={logoWhite} alt="90jours" className="h-8 w-auto object-contain hidden dark:block" />
+          <img src={logoDark} alt="60jours" className="h-8 w-auto object-contain dark:hidden" />
+          <img src={logoWhite} alt="60jours" className="h-8 w-auto object-contain hidden dark:block" />
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">

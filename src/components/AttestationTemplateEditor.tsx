@@ -290,7 +290,7 @@ export const AttestationPreview = ({
             <img src={logoUrl} alt="Logo" className="h-16 w-auto object-contain" crossOrigin="anonymous" />
           ) : (
             <div className="flex items-center justify-center">
-              <span className="text-3xl font-bold tracking-tight" style={{ color }}>90 JOURS</span>
+              <span className="text-3xl font-bold tracking-tight" style={{ color }}>60 JOURS</span>
             </div>
           )}
         </div>

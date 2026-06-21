@@ -13,12 +13,12 @@ interface SiteSettings {
 
 const defaults: SiteSettings = {
   hero_image_url: null,
-  hero_title: "Formez-vous en 90 jours",
-  hero_subtitle: "Des formations intensives qui transforment votre créativité en 90 jours.",
+  hero_title: "Formez-vous en 60 jours",
+  hero_subtitle: "Des formations intensives qui transforment votre créativité en 60 jours.",
   logo_url: null,
-  footer_email: "info@90jours.com",
+  footer_email: "info@60jours.com",
   footer_phone: "+225 07 00 00 00 00",
-  footer_text: "Des formations intensives qui transforment votre créativité en 90 jours.",
+  footer_text: "Des formations intensives qui transforment votre créativité en 60 jours.",
 };
 
 export const useSiteSettings = () => {

@@ -147,7 +147,7 @@ const SiteSettingsPanel = ({ settings, onUpdated }: SiteSettingsPanelProps) => {
               id="hero-title"
               value={heroTitle}
               onChange={(e) => setHeroTitle(e.target.value)}
-              placeholder="Formez-vous en 90 jours"
+              placeholder="Formez-vous en 60 jours"
               className="mt-1.5"
             />
           </div>
@@ -187,7 +187,7 @@ const SiteSettingsPanel = ({ settings, onUpdated }: SiteSettingsPanelProps) => {
                 id="footer-email"
                 value={footerEmail}
                 onChange={(e) => setFooterEmail(e.target.value)}
-                placeholder="info@90jours.com"
+                placeholder="info@60jours.com"
                 className="mt-1.5"
               />
             </div>

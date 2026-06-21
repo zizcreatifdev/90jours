@@ -69,7 +69,7 @@ const HOW_STEPS = [
   {
     number: "04",
     title: "Obtenez votre attestation",
-    description: "À la fin des 90 jours, recevez une attestation officielle et intégrez notre réseau d'alumni.",
+    description: "À la fin des 60 jours, recevez une attestation officielle et intégrez notre réseau d'alumni.",
   },
 ];
 
@@ -78,8 +78,8 @@ const Index = () => {
   const { settings, loading: settingsLoading } = useSiteSettings();
   const { slides, loading: slidesLoading } = useHeroSlides();
   const { user, roles } = useAuth();
-  const heroTitle = settings.hero_title || "Formez-vous en 90 jours";
-  const heroSubtitle = settings.hero_subtitle || "Des formations intensives qui transforment votre créativité en 90 jours.";
+  const heroTitle = settings.hero_title || "Formez-vous en 60 jours";
+  const heroSubtitle = settings.hero_subtitle || "Des formations intensives qui transforment votre créativité en 60 jours.";
 
   const [formations, setFormations] = useState<{ id: string; name: string }[]>([]);
   const [selectedFormation, setSelectedFormation] = useState<string>("all");
@@ -192,7 +192,7 @@ const Index = () => {
             {settings.logo_url ? (
               <img src={settings.logo_url} alt="Logo" className="h-14 w-auto md:h-20" />
             ) : (
-              <img src={logoWhite} alt="Formations 90 jours" className="h-14 w-auto md:h-20" />
+              <img src={logoWhite} alt="Formations 60 jours" className="h-14 w-auto md:h-20" />
             )}
           </Link>
 
@@ -289,7 +289,7 @@ const Index = () => {
               Comment ça marche ?
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-              De l'inscription à la certification, un programme pensé pour vous emmener loin en 90 jours.
+              De l'inscription à la certification, un programme pensé pour vous emmener loin en 60 jours.
             </p>
           </div>
 
@@ -600,7 +600,7 @@ const Index = () => {
             Prêt(e) à transformer votre carrière ?
           </h2>
           <p className="mx-auto mb-10 max-w-xl text-white/70 md:text-lg">
-            Rejoignez des centaines de créatifs qui ont osé investir 90 jours pour changer leur trajectoire professionnelle.
+            Rejoignez des centaines de créatifs qui ont osé investir 60 jours pour changer leur trajectoire professionnelle.
           </p>
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link to="/register">
@@ -646,14 +646,14 @@ const Index = () => {
                 ) : (
                   <>
                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent">
-                      <span className="font-display text-xs font-bold text-accent-foreground">90</span>
+                      <span className="font-display text-xs font-bold text-accent-foreground">60</span>
                     </div>
-                    <span className="font-display text-lg font-bold">90 jours</span>
+                    <span className="font-display text-lg font-bold">60 jours</span>
                   </>
                 )}
               </div>
               <p className="text-sm leading-relaxed text-white/60 max-w-xs">
-                {settings.footer_text || "Des formations intensives qui transforment votre créativité en 90 jours."}
+                {settings.footer_text || "Des formations intensives qui transforment votre créativité en 60 jours."}
               </p>
               {/* Filière colour dots */}
               <div className="mt-5 flex gap-2">
@@ -691,14 +691,14 @@ const Index = () => {
             {/* Col 3 — Contact */}
             <div>
               <h4 className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/40">Contact</h4>
-              <p className="text-sm text-white/60">{settings.footer_email || "info@90jours.com"}</p>
+              <p className="text-sm text-white/60">{settings.footer_email || "info@60jours.com"}</p>
               <p className="mt-1 text-sm text-white/60">{settings.footer_phone || "+225 07 00 00 00 00"}</p>
             </div>
           </div>
 
           {/* Bottom bar */}
           <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-white/30 sm:flex-row">
-            <span>© 2026 90 jours de formation. Tous droits réservés.</span>
+            <span>© 2026 60 jours de formation. Tous droits réservés.</span>
             <span>Fait avec passion au Sénégal 🇸🇳</span>
           </div>
         </div>

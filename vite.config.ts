@@ -24,9 +24,9 @@ export default defineConfig(({ mode }) => ({
         importScripts: ["/custom-sw.js"],
       },
       manifest: {
-        name: "90 jours de formation",
-        short_name: "90jours",
-        description: "Formations intensives créatives en 90 jours",
+        name: "60 jours de formation",
+        short_name: "60jours",
+        description: "Formations intensives créatives en 60 jours",
         theme_color: "#1a1d23",
         background_color: "#f0f1f4",
         display: "standalone",

@@ -273,7 +273,7 @@ const StaffDashboard = () => {
             </button>
             <div>
               <h1 className="font-display text-lg md:text-xl font-bold text-foreground">{greeting()}, {profile?.first_name || "Staff"} !</h1>
-              <p className="text-xs md:text-sm text-muted-foreground">90 jours de formation</p>
+              <p className="text-xs md:text-sm text-muted-foreground">60 jours de formation</p>
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4">

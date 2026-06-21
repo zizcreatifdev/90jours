@@ -84,7 +84,7 @@ const SetupAccount = () => {
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="w-full max-w-sm text-center">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary">
-            <span className="font-display text-2xl font-bold text-primary-foreground">90</span>
+            <span className="font-display text-2xl font-bold text-primary-foreground">60</span>
           </div>
           <h1 className="mb-2 font-display text-2xl font-bold text-foreground">Lien expiré</h1>
           <p className="mb-6 text-muted-foreground">
@@ -103,7 +103,7 @@ const SetupAccount = () => {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary">
-            <span className="font-display text-2xl font-bold text-primary-foreground">90</span>
+            <span className="font-display text-2xl font-bold text-primary-foreground">60</span>
           </div>
           <h1 className="mb-2 font-display text-2xl font-bold text-foreground">
             Finalisez votre compte

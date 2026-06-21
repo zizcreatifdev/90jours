@@ -40,13 +40,13 @@ const Login = () => {
       <div className="hidden w-1/2 items-center justify-center bg-primary lg:flex">
         <div className="max-w-md px-12 text-center">
           <div className="mx-auto mb-6">
-            <img src={logoWhite} alt="90jours" className="h-16 mx-auto" />
+            <img src={logoWhite} alt="60jours" className="h-16 mx-auto" />
           </div>
           <h2 className="mb-4 font-display text-3xl font-bold text-primary-foreground">
-            90 jours de formation
+            60 jours de formation
           </h2>
           <p className="text-primary-foreground/70">
-            Votre plateforme de formation intensive en 90 jours. Connectez-vous pour accéder à votre espace.
+            Votre plateforme de formation intensive en 60 jours. Connectez-vous pour accéder à votre espace.
           </p>
         </div>
       </div>
@@ -55,8 +55,8 @@ const Login = () => {
       <div className="flex w-full items-center justify-center bg-background px-4 lg:w-1/2">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex items-center justify-center lg:hidden">
-            <img src={logoDark} alt="90jours" className="h-10 dark:hidden" />
-            <img src={logoWhite} alt="90jours" className="h-10 hidden dark:block" />
+            <img src={logoDark} alt="60jours" className="h-10 dark:hidden" />
+            <img src={logoWhite} alt="60jours" className="h-10 hidden dark:block" />
           </div>
 
           <h1 className="mb-2 font-display text-2xl font-bold text-foreground">Connexion</h1>

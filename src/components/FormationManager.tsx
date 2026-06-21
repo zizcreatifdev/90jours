@@ -43,7 +43,7 @@ const emptyForm = {
   level: "debutant",
   registration_fee: 10000,
   total_price: 50000,
-  duration_days: 90,
+  duration_days: 60,
 };
 
 const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved: () => void }) => {
@@ -65,7 +65,7 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
           level: formation.level || "debutant",
           registration_fee: formation.registration_fee ?? 10000,
           total_price: formation.total_price ?? 50000,
-          duration_days: formation.duration_days ?? 90,
+          duration_days: formation.duration_days ?? 60,
         }
       : { ...emptyForm }
   );
@@ -117,7 +117,7 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div>
             <Label htmlFor="fname">Nom de la formation</Label>
-            <Input id="fname" required value={form.name} onChange={e => { setForm({ ...form, name: e.target.value, slug: generateSlug(e.target.value) }); }} placeholder="90 jours en motion" />
+            <Input id="fname" required value={form.name} onChange={e => { setForm({ ...form, name: e.target.value, slug: generateSlug(e.target.value) }); }} placeholder="60 jours en motion" />
           </div>
           <div>
             <Label htmlFor="fslug">Slug (identifiant URL)</Label>
@@ -139,7 +139,7 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
           </div>
           <div>
             <Label htmlFor="fduration">Durée (en jours)</Label>
-            <Input id="fduration" type="number" min={1} required value={form.duration_days} onChange={e => setForm({ ...form, duration_days: parseInt(e.target.value) || 90 })} placeholder="90" />
+            <Input id="fduration" type="number" min={1} required value={form.duration_days} onChange={e => setForm({ ...form, duration_days: parseInt(e.target.value) || 60 })} placeholder="60" />
           </div>
 
           <div className="border-t border-border pt-4">

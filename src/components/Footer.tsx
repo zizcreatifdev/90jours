@@ -15,14 +15,14 @@ const Footer = () => {
               ) : (
                 <>
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent">
-                    <span className="font-display text-xs font-bold text-accent-foreground">90</span>
+                    <span className="font-display text-xs font-bold text-accent-foreground">60</span>
                   </div>
-                  <span className="font-display text-lg font-bold">90 jours de formation</span>
+                  <span className="font-display text-lg font-bold">60 jours de formation</span>
                 </>
               )}
             </div>
             <p className="text-sm opacity-80">
-              {settings.footer_text || "Des formations intensives qui transforment votre créativité en 90 jours."}
+              {settings.footer_text || "Des formations intensives qui transforment votre créativité en 60 jours."}
             </p>
           </div>
           <div>
@@ -35,12 +35,12 @@ const Footer = () => {
           </div>
           <div>
             <h4 className="mb-3 font-display text-sm font-semibold uppercase tracking-wider opacity-60">Contact</h4>
-            <p className="text-sm opacity-80">{settings.footer_email || "info@90jours.com"}</p>
+            <p className="text-sm opacity-80">{settings.footer_email || "info@60jours.com"}</p>
             <p className="text-sm opacity-80">{settings.footer_phone || "+225 07 00 00 00 00"}</p>
           </div>
         </div>
         <div className="mt-8 border-t border-primary-foreground/10 pt-6 text-center text-xs opacity-50">
-          © 2026 90 jours de formation. Tous droits réservés.
+          © 2026 60 jours de formation. Tous droits réservés.
         </div>
       </div>
     </footer>

@@ -128,7 +128,7 @@ const SidebarNav = ({
         )}
         onClick={onNavigate}
       >
-        <span className="font-display text-xs font-bold text-primary-foreground">90</span>
+        <span className="font-display text-xs font-bold text-primary-foreground">60</span>
       </Link>
 
       {/* Role Switcher */}

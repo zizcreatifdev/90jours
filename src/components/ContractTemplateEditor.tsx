@@ -39,7 +39,7 @@ const DEMO_VARS: Record<string, string> = {
   prenom: "Aminata",
   nom: "Diallo",
   email: "aminata.diallo@email.com",
-  formation: "Design Graphique 90 Jours",
+  formation: "Design Graphique 60 Jours",
   cohorte: "A",
   formateur: "Pierre Martin",
   date_debut: "1er septembre 2026",
@@ -232,7 +232,7 @@ const ContractTemplateEditor = () => {
                 <Input
                   value={formName}
                   onChange={e => setFormName(e.target.value)}
-                  placeholder="Ex: Contrat standard 90 jours"
+                  placeholder="Ex: Contrat standard 60 jours"
                 />
               </div>
               <div>

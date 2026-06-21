@@ -2,7 +2,7 @@
 // This file is imported by the PWA service worker
 
 self.addEventListener("push", (event) => {
-  let data = { title: "90 jours de formation", body: "Nouvelle notification" };
+  let data = { title: "60 jours de formation", body: "Nouvelle notification" };
 
   if (event.data) {
     try {

@@ -150,7 +150,7 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
             <Select value={form.cohort_type} onValueChange={v => setForm({ ...form, cohort_type: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="standard">Standard (90 jours)</SelectItem>
+                <SelectItem value="standard">Standard (60 jours)</SelectItem>
                 <SelectItem value="initiation">Initiation</SelectItem>
               </SelectContent>
             </Select>
