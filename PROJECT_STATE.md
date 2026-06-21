@@ -1,8 +1,16 @@
 # PROJECT_STATE.md — État du Projet
 
-**Dernière mise à jour**: 14 avril 2026
-**Branche active**: `claude/create-project-state-K3MOH`
-**Prompt actuel**: prompt-24 (Refonte landing page + témoignages admin)
+**Dernière mise à jour**: 21 juin 2026
+**Branche active**: `claude/elegant-curie-wcw2cl`
+**Prompt actuel**: migration-supabase (montage base nouvelle instance + rebrand 60 jours)
+
+> 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
+> instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
+> Fichiers créés à la racine : `MIGRATION_60JOURS.sql` (les 42 migrations
+> concaténées + 5 modifs de seed), `SETUP_SUPERADMIN.sql`, `DEPLOIEMENT.md`.
+> Hygiène secrets : `.gitignore` (+ `.env.local`, `.env.*.local`) et `.env.example`
+> (noms de variables front, valeurs vides) mis à jour.
+> Étapes manuelles restantes : voir `DEPLOIEMENT.md`.
 
 ---
 
@@ -324,4 +332,5 @@
 | prompt-21 | 2026-04-14 | NH-04 Mode Focus: toggle Maximize2/Minimize2 dans DashboardSidebar, masque sidebar, persiste localStorage, bouton flottant exit — NH-03 feedback formateur inline: BriefManager.tsx section expandable par brief (textarea+Save par étudiant, notif in-app étudiant), StudentBriefs.tsx bloc feedback sous statut — NH-07 payment-reminders Edge Function (cron 0 9 * * *, paiements pending > 30j, notif étudiant+admin+push) + migration brief_submissions.feedback — 63/63 ✅ | ✅ Terminé |
 | prompt-22 | 2026-04-14 | NH-01 Badges motivation: migration student_badges (id, user_id, badge_type, earned_at, metadata, UNIQUE user+type, RLS) — use-student-badges.ts hook (fetch, hasStreak7, checkAndAwardBadges, upsert ignoreDuplicates, newBadge) — BadgeShowcase.tsx (grille 5 badges colorés/verrouillés, animation confetti CSS, barre de progression) — intégration StudentDashboard.tsx (import hook+composant, useRef checkBadgesRef, check on cohort load + realtime channel) — 63/63 ✅ | ✅ Terminé |
 | prompt-23 | 2026-04-14 | Contrats: migration contract_templates + student_contracts (RLS, UNIQUE user+cohort, trigger updated_at, template HTML par défaut) — ContractSign.tsx (variables fillTemplate, scroll obligatoire, checkbox, nom signé = vérification profil, upsert snapshot) — ContractTemplateEditor.tsx (liste, editor HTML textarea, variables cliquables, aperçu demo) — SignedContractsPanel.tsx (table, filtre cohorte, modal snapshot, export CSV) — Register.tsx redirect vers /contract-sign si template actif — StudentDashboard.tsx carte "Mon contrat" + modal viewer — AdminDashboard.tsx onglet Contrats (Templates + Contrats signés) — DashboardSidebar FileSignature link — 63/63 ✅ | ✅ Terminé |
+| migration-supabase | 2026-06-21 | Préparation nouvelle instance Supabase : `MIGRATION_60JOURS.sql` (42 migrations concaténées + 5 modifs seed : suppr. formation/cohortes d'exemple, site_settings vidés, contrat 90→60, duration_days DEFAULT 60), `SETUP_SUPERADMIN.sql`, `DEPLOIEMENT.md`, `.gitignore`/`.env.example` durcis — build OK | ✅ Terminé |
 | prompt-24 | 2026-04-14 | DB: migration testimonials (id, name, role, content, photo_url, is_visible, display_order, RLS public visible / admin all) — Index.tsx refonte complète: Section 2 "Comment ça marche" (4 étapes + IntersectionObserver), Section 3 "Nos formations" (cartes immersives couleurs filière violet/orange/cyan, hover glow, progress bar), Section 4 "Témoignages" (carousel auto-scroll 5s depuis Supabase, masqué si vide), Section 5 CTA gradient animé, Section 6 Footer inline (logo+tagline, nav scroll, contact, "Fait avec passion au Sénégal 🇸🇳") — TestimonialsManager.tsx (liste drag-and-drop reorder, toggle visibility, form add/edit, upload photo Supabase Storage, aperçu preview, dialog modal) — AdminDashboard.tsx onglet "testimonials" — DashboardSidebar MessageSquareQuote link — 63/63 ✅ | ✅ Terminé |
