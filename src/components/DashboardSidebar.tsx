@@ -27,6 +27,7 @@ import {
   Bell,
   Maximize2,
   Minimize2,
+  ChevronDown,
   FileSignature,
   MessageSquareQuote,
   ListPlus,
@@ -36,6 +37,13 @@ import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import ThemeToggle from "@/components/ThemeToggle";
 import RoleSwitcher from "@/components/RoleSwitcher";
 import { cn } from "@/lib/utils";
@@ -191,77 +199,73 @@ const SidebarNav = ({
         })}
       </nav>
 
-      {/* Bottom icons */}
+      {/* Bottom utility zone */}
       <div className={cn("flex flex-col gap-1 mt-2", expanded ? "" : "items-center")}>
-        {/* Focus Mode */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              aria-label={focusMode ? "Quitter le mode focus" : "Mode Focus"}
-              onClick={onToggleFocusMode}
-              className={cn(
-                "flex items-center gap-3 rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors",
-                expanded ? "h-10 px-3 w-full" : "h-10 w-10 justify-center"
-              )}
-            >
-              <Maximize2 className="h-5 w-5 shrink-0" />
-              {expanded && <span className="text-sm font-medium">Mode Focus</span>}
-            </button>
-          </TooltipTrigger>
-          {!expanded && <TooltipContent side="right">Mode Focus</TooltipContent>}
-        </Tooltip>
+        {/* Icon row: Focus, Theme, Notifications - horizontal when expanded, vertical when collapsed */}
+        <div className={cn(
+          expanded ? "flex items-center gap-0.5 mb-1" : "flex flex-col items-center gap-1"
+        )}>
+          {/* Mode Focus */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                aria-label={focusMode ? "Quitter le mode focus" : "Mode Focus"}
+                onClick={onToggleFocusMode}
+                className={cn(
+                  "flex items-center justify-center rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors",
+                  expanded ? "h-8 w-8" : "h-10 w-10"
+                )}
+              >
+                <Maximize2 className={cn("shrink-0", expanded ? "h-4 w-4" : "h-5 w-5")} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Mode Focus</TooltipContent>
+          </Tooltip>
 
-        <div className={expanded ? "" : "flex justify-center"}>
+          {/* ThemeToggle */}
           <ThemeToggle />
-        </div>
 
-        {/* Notifications */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount > 99 ? "99+" : unreadCount} non lues` : ""}`}
-              onClick={() => {
-                const path = role === "admin" ? "/admin" : role === "staff" ? "/staff" : "/student";
-                navigate(path);
-                onNavigate?.();
-              }}
-              className={cn(
-                "flex items-center gap-3 rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors",
-                expanded ? "h-10 px-3 w-full" : "h-10 w-10 justify-center"
-              )}
-            >
-              <div className="relative shrink-0">
-                <Bell className="h-5 w-5" />
+          {/* Notifications */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount > 99 ? "99+" : unreadCount} non lues` : ""}`}
+                onClick={() => {
+                  const path = role === "admin" ? "/admin" : role === "staff" ? "/staff" : "/student";
+                  navigate(path);
+                  onNavigate?.();
+                }}
+                className={cn(
+                  "relative flex items-center justify-center rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors",
+                  expanded ? "h-8 w-8" : "h-10 w-10"
+                )}
+              >
+                <Bell className={cn("shrink-0", expanded ? "h-4 w-4" : "h-5 w-5")} />
                 {unreadCount > 0 && (
                   <span className={cn(
-                    "absolute -right-1.5 -top-1.5 flex min-w-[1rem] h-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white",
-                    unreadCount > 0 && "animate-pulse"
+                    "absolute flex items-center justify-center rounded-full bg-red-500 font-bold leading-none text-white animate-pulse",
+                    expanded
+                      ? "-right-1 -top-1 h-3.5 min-w-[0.875rem] px-0.5 text-[9px]"
+                      : "-right-1.5 -top-1.5 h-4 min-w-[1rem] px-1 text-[10px]"
                   )}>
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
-              </div>
-              {expanded && <span className="text-sm font-medium">Notifications</span>}
-            </button>
-          </TooltipTrigger>
-          {!expanded && (
+              </button>
+            </TooltipTrigger>
             <TooltipContent side="right">
               {unreadCount > 0 ? `${unreadCount > 99 ? "99+" : unreadCount} notification${unreadCount > 1 ? "s" : ""} non lue${unreadCount > 1 ? "s" : ""}` : "Notifications"}
             </TooltipContent>
-          )}
-        </Tooltip>
+          </Tooltip>
+        </div>
 
-        {/* Profile */}
-        <Tooltip>
-          <TooltipTrigger asChild>
+        {/* Profile block - avatar + first name (expanded) or avatar only (collapsed), opens DropdownMenu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
             <button
-              aria-label="Mon profil"
-              onClick={() => {
-                navigate("/profile");
-                onNavigate?.();
-              }}
+              aria-label="Menu profil"
               className={cn(
-                "flex items-center gap-3 rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors",
+                "flex items-center gap-2 rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors",
                 expanded ? "h-10 px-3 w-full" : "h-10 w-10 justify-center"
               )}
             >
@@ -271,29 +275,34 @@ const SidebarNav = ({
                   {(profile?.first_name?.[0] || "U").toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              {expanded && <span className="text-sm font-medium truncate">Mon profil</span>}
-            </button>
-          </TooltipTrigger>
-          {!expanded && <TooltipContent side="right">Mon profil</TooltipContent>}
-        </Tooltip>
-
-        {/* Sign out */}
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              aria-label="Déconnexion"
-              onClick={handleSignOut}
-              className={cn(
-                "flex items-center gap-3 rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors",
-                expanded ? "h-10 px-3 w-full" : "h-10 w-10 justify-center"
+              {expanded && (
+                <>
+                  <span className="flex-1 text-left text-sm font-medium truncate">
+                    {profile?.first_name || "Profil"}
+                  </span>
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                </>
               )}
-            >
-              <LogOut className="h-5 w-5 shrink-0" />
-              {expanded && <span className="text-sm font-medium">Déconnexion</span>}
             </button>
-          </TooltipTrigger>
-          {!expanded && <TooltipContent side="right">Déconnexion</TooltipContent>}
-        </Tooltip>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="right" align="end" className="w-44">
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={() => { navigate("/profile"); onNavigate?.(); }}
+            >
+              <UserCircle className="mr-2 h-4 w-4" />
+              Mon profil
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer text-destructive focus:text-destructive"
+              onClick={handleSignOut}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Déconnexion
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
