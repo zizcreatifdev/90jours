@@ -377,7 +377,7 @@ const Index = () => {
         ref={howRef}
         className="bg-white dark:bg-[#111111] py-24 overflow-hidden"
       >
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12">
           <div className="mb-16 text-center">
             <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-accent">Le parcours</p>
             <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">
@@ -419,7 +419,7 @@ const Index = () => {
         ref={formationsRef}
         className="bg-[#f8f8f8] dark:bg-[#0a0a0a] py-24"
       >
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12">
           <div className="mb-16 text-center">
             <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-accent">Catalogue</p>
             <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">
@@ -502,7 +502,7 @@ const Index = () => {
       {/* ===== SECTION 4 : TÉMOIGNAGES (hidden if none) ===== */}
       {testimonials.length > 0 && (
         <section className="bg-white dark:bg-[#111111] py-24 overflow-hidden">
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-6 sm:px-8 lg:px-12">
             <div className="mb-14 text-center">
               <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-accent">Alumni</p>
               <h2 className="font-display text-3xl font-bold text-foreground md:text-4xl">
@@ -595,7 +595,7 @@ const Index = () => {
         {/* Fine gold top border */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#C5A05A]/35 to-transparent" />
 
-        <div className="relative z-10 container mx-auto px-4 text-center">
+        <div className="relative z-10 container mx-auto px-6 sm:px-8 lg:px-12 text-center">
           <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-accent">Passez à l'action</p>
           <h2 className="mb-4 font-display text-3xl font-bold text-white md:text-5xl">
             Prêts à transformer votre trajectoire ?
@@ -628,7 +628,7 @@ const Index = () => {
 
       {/* ===== SECTION 6 : FOOTER ===== */}
       <footer className="border-t border-white/10 bg-[#0E1B2E] text-white">
-        <div className="container mx-auto px-4 py-14">
+        <div className="container mx-auto px-6 sm:px-8 lg:px-12 py-14">
           <div className="grid gap-10 md:grid-cols-3">
             {/* Col 1 : Logo + tagline */}
             <div>
