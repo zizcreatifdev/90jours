@@ -10,13 +10,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Send, Loader2, MessageSquarePlus, PartyPopper, Info, AlertTriangle } from "lucide-react";
+import { Send, Loader2, MessageSquarePlus, PartyPopper, Info, AlertTriangle, Globe } from "lucide-react";
 
 const MESSAGE_TYPES = [
-  { value: "official", label: "📢 Message officiel", icon: Info },
-  { value: "celebration", label: "🎉 Célébration / Fête", icon: PartyPopper },
-  { value: "urgent", label: "⚠️ Urgent", icon: AlertTriangle },
-  { value: "info", label: "ℹ️ Information", icon: Info },
+  { value: "official", label: "Message officiel", Icon: Info },
+  { value: "celebration", label: "Celebration", Icon: PartyPopper },
+  { value: "urgent", label: "Urgent", Icon: AlertTriangle },
+  { value: "info", label: "Information", Icon: Info },
 ];
 
 const OfficialMessageSender = () => {
@@ -68,7 +68,7 @@ const OfficialMessageSender = () => {
       // Send push notifications
       sendPushToUsers(studentIds, title, message);
 
-      toast({ title: `Message envoyé à ${studentIds.length} étudiant(s) ! 🎉` });
+      toast({ title: `Message envoyé à ${studentIds.length} étudiant(s).` });
       setTitle("");
       setMessage("");
       setType("official");
@@ -101,7 +101,12 @@ const OfficialMessageSender = () => {
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {MESSAGE_TYPES.map(t => (
-                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    <SelectItem key={t.value} value={t.value}>
+                      <span className="flex items-center gap-2">
+                        <t.Icon className="h-4 w-4 shrink-0" />
+                        {t.label}
+                      </span>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -111,7 +116,12 @@ const OfficialMessageSender = () => {
               <Select value={cohortId} onValueChange={setCohortId}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">🌐 Toutes les cohortes</SelectItem>
+                  <SelectItem value="all">
+                    <span className="flex items-center gap-2">
+                      <Globe className="h-4 w-4 shrink-0" />
+                      Toutes les cohortes
+                    </span>
+                  </SelectItem>
                   {cohorts.map(c => (
                     <SelectItem key={c.id} value={c.id}>Cohorte {c.name}</SelectItem>
                   ))}
@@ -121,7 +131,7 @@ const OfficialMessageSender = () => {
           </div>
           <div>
             <Label htmlFor="msg-title">Titre</Label>
-            <Input id="msg-title" required maxLength={200} value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Joyeuse fête de Tabaski ! 🐏" />
+            <Input id="msg-title" required maxLength={200} value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Joyeuse fête de Tabaski !" />
           </div>
           <div>
             <Label htmlFor="msg-content">Message</Label>
