@@ -29,6 +29,7 @@ import {
   Minimize2,
   FileSignature,
   MessageSquareQuote,
+  ListPlus,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
@@ -59,7 +60,8 @@ const adminLinks: SidebarLink[] = [
   { href: "/admin?tab=payments", label: "Paiements", icon: Wallet, sectionLabel: "Finance" },
   { href: "/admin?tab=promos", label: "Codes promo", icon: TicketPercent },
   { href: "/admin?tab=accounting", label: "Comptabilité", icon: TrendingUp },
-  { href: "/admin?tab=portfolios", label: "Portfolios", icon: Briefcase, sectionLabel: "Admin" },
+  { href: "/admin?tab=waitlist", label: "Liste d'attente", icon: ListPlus, sectionLabel: "Admin" },
+  { href: "/admin?tab=portfolios", label: "Portfolios", icon: Briefcase },
   { href: "/admin?tab=attestations", label: "Attestations", icon: Award },
   { href: "/admin?tab=contracts", label: "Contrats", icon: FileSignature },
   { href: "/admin?tab=testimonials", label: "Témoignages", icon: MessageSquareQuote },

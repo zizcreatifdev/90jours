@@ -43,6 +43,7 @@ import AdminAlertBanner from "@/components/AdminAlertBanner";
 import ContractTemplateEditor from "@/components/ContractTemplateEditor";
 import SignedContractsPanel from "@/components/SignedContractsPanel";
 import TestimonialsManager from "@/components/TestimonialsManager";
+import WaitlistManager from "@/components/WaitlistManager";
 interface UserRow {
   user_id: string;
   first_name: string;
@@ -828,6 +829,11 @@ const AdminDashboard = () => {
             {/* Testimonials Tab */}
             <TabsContent value="testimonials">
               <TestimonialsManager />
+            </TabsContent>
+
+            {/* Waitlist Tab */}
+            <TabsContent value="waitlist">
+              <WaitlistManager />
             </TabsContent>
           </Tabs>
         </div>

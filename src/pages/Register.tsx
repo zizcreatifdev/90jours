@@ -10,8 +10,10 @@ import { useCohorts } from "@/hooks/use-cohorts";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Users, CheckCircle, Loader2 } from "lucide-react";
+import { Users, CheckCircle, Loader2, Bell } from "lucide-react";
 import PasswordStrengthIndicator, { getPasswordStrength } from "@/components/PasswordStrengthIndicator";
+import WaitlistForm from "@/components/WaitlistForm";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -24,6 +26,8 @@ const Register = () => {
   const [formData, setFormData] = useState({ firstName: "", lastName: "", email: "", phone: "", password: "", motivation: "" });
   const [submitting, setSubmitting] = useState(false);
   const [staffFormationIds, setStaffFormationIds] = useState<string[]>([]);
+  const [waitlistFormationId, setWaitlistFormationId] = useState<string | null>(null);
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
 
   // Fetch formations where current user is staff
   useEffect(() => {
@@ -34,6 +38,24 @@ const Register = () => {
     };
     fetchStaffFormations();
   }, [user]);
+
+  // Fix URL bypass: if cohort from URL is full, clear selection and open waitlist
+  useEffect(() => {
+    if (!cohortFromUrl || cohortsLoading || cohorts.length === 0) return;
+    const target = cohorts.find((c) => c.id === cohortFromUrl);
+    if (!target) return;
+    const enrolled = target.enrollment_count ?? 0;
+    if (enrolled >= target.capacity) {
+      setSelectedCohort("");
+      setWaitlistFormationId(target.formation_id ?? null);
+      setWaitlistOpen(true);
+    }
+  }, [cohortFromUrl, cohorts, cohortsLoading]);
+
+  const openCohorts = cohorts.filter((c) => c.status !== "archived");
+  const aucuneCohorteOuverte = !cohortsLoading && openCohorts.length === 0;
+  const toutesPleines = !cohortsLoading && openCohorts.length > 0 &&
+    openCohorts.every((c) => (c.enrollment_count ?? 0) >= c.capacity);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,9 +150,14 @@ const Register = () => {
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-accent" />
                 </div>
+              ) : aucuneCohorteOuverte ? (
+                <div className="rounded-xl border border-border bg-muted/40 p-6 text-center">
+                  <p className="font-display font-semibold text-foreground">Aucune cohorte ouverte pour le moment</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Inscrivez-vous sur la liste d'attente pour etre notifie en priorite.</p>
+                </div>
               ) : (
                 <div className="grid gap-3">
-                  {cohorts.filter((c) => c.status !== "archived").map((cohort) => {
+                  {openCohorts.map((cohort) => {
                     const enrolled = cohort.enrollment_count ?? 0;
                     const isFull = enrolled >= cohort.capacity;
                     const isStaffOnFormation = !!cohort.formation_id && staffFormationIds.includes(cohort.formation_id);
@@ -138,20 +165,22 @@ const Register = () => {
                     const spotsLeft = cohort.capacity - enrolled;
                     const isSelected = selectedCohort === cohort.id;
                     return (
-                       <button
-                        type="button"
+                      <div
                         key={cohort.id}
-                        disabled={isDisabled}
-                        onClick={() => setSelectedCohort(cohort.id)}
-                        className={`flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-xl border-2 p-3 sm:p-4 text-left transition-all gap-2 ${
+                        className={`flex flex-col sm:flex-row sm:items-center sm:justify-between rounded-xl border-2 p-3 sm:p-4 gap-2 transition-all ${
                           isDisabled
-                            ? "cursor-not-allowed border-border bg-muted opacity-60"
+                            ? "border-border bg-muted/40"
                             : isSelected
                             ? "border-accent bg-accent/5"
-                            : "border-border bg-card hover:border-accent/50"
+                            : "border-border bg-card"
                         }`}
                       >
-                        <div>
+                        <button
+                          type="button"
+                          disabled={isDisabled}
+                          onClick={() => !isDisabled && setSelectedCohort(cohort.id)}
+                          className={`flex-1 text-left ${isDisabled ? "cursor-default opacity-60" : "cursor-pointer"}`}
+                        >
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-display font-semibold text-foreground">Cohorte {cohort.name}</p>
                             {cohort.formation && (
@@ -164,12 +193,25 @@ const Register = () => {
                             {new Date(cohort.start_date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })} —{" "}
                             {new Date(cohort.end_date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
                           </p>
-                        </div>
+                        </button>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           {isStaffOnFormation ? (
-                            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Vous êtes formateur</span>
+                            <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">Vous etes formateur</span>
                           ) : isFull ? (
-                            <span className="rounded-full bg-destructive/10 px-3 py-1 text-xs font-semibold text-destructive">Complète</span>
+                            <>
+                              <span className="rounded-full bg-destructive/10 px-3 py-1 text-xs font-semibold text-destructive">Complete</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setWaitlistFormationId(cohort.formation_id ?? null);
+                                  setWaitlistOpen(true);
+                                }}
+                                className="flex items-center gap-1.5 rounded-full border border-[#C5A05A] px-3 py-1 text-xs font-semibold text-[#C5A05A] hover:bg-[#C5A05A]/10 transition-colors"
+                              >
+                                <Bell className="h-3 w-3" />
+                                Me prevenir
+                              </button>
+                            </>
                           ) : (
                             <span className="flex items-center gap-1 text-sm text-accent">
                               <Users className="h-3.5 w-3.5" />
@@ -178,7 +220,7 @@ const Register = () => {
                           )}
                           {isSelected && <CheckCircle className="h-5 w-5 text-accent" />}
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -235,9 +277,46 @@ const Register = () => {
               {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Inscription en cours...</> : "Confirmer l'inscription"}
             </Button>
           </form>
+
+          {/* Waitlist CTA when no cohorts available or all full */}
+          {(aucuneCohorteOuverte || toutesPleines) && (
+            <div className="mt-6 rounded-2xl border border-[#C5A05A]/30 bg-[#C5A05A]/5 p-6 text-center">
+              <p className="font-display font-semibold text-foreground">
+                {aucuneCohorteOuverte
+                  ? "Pas de cohorte ouverte en ce moment"
+                  : "Toutes les cohortes sont completes"}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Inscrivez-vous sur la liste d'attente et nous vous contacterons en priorite.
+              </p>
+              <Button
+                type="button"
+                onClick={() => { setWaitlistFormationId(null); setWaitlistOpen(true); }}
+                className="mt-4 bg-[#C5A05A] text-white hover:bg-[#b08d49] font-semibold"
+              >
+                <Bell className="mr-2 h-4 w-4" />
+                Rejoindre la liste d'attente
+              </Button>
+            </div>
+          )}
         </div>
       </div>
       <Footer />
+
+      {/* Waitlist dialog */}
+      <Dialog open={waitlistOpen} onOpenChange={setWaitlistOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl font-bold text-foreground">
+              Liste d'attente
+            </DialogTitle>
+          </DialogHeader>
+          <WaitlistForm
+            preselectedFormationId={waitlistFormationId}
+            onSuccess={() => setTimeout(() => setWaitlistOpen(false), 2500)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

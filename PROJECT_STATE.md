@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 22 juin 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: restyle-public-2 (sections + CTA + footer en palette nuit/doré)
+**Prompt actuel**: module-waitlist (table SQL + formulaire public + onglet admin)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -18,11 +18,11 @@
 
 | Métrique | Valeur |
 |---------|--------|
-| Composants React | 97 |
+| Composants React | 99 |
 | Pages | 10 |
 | Hooks custom | 9 |
-| Tables Supabase | 32 |
-| Migrations SQL | 41 |
+| Tables Supabase | 33 |
+| Migrations SQL | 42 |
 | Edge Functions | 7 |
 | Tests | 63 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator + 9 EmptyState) |
 | Couverture tests | ~25% (ProtectedRoute + validate-url + AuthContext + export-csv + PasswordStrengthIndicator + EmptyState) |
