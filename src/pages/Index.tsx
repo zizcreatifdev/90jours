@@ -7,8 +7,6 @@ import { useSiteSettings } from "@/hooks/use-site-settings";
 import { useHeroSlides } from "@/hooks/use-hero-slides";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import heroImageDefault from "@/assets/hero-image.jpg";
-import logoWhite from "@/assets/logo-white.png";
 import { cn } from "@/lib/utils";
 
 // ── Filière colour map ────────────────────────────────────────────────────────
@@ -78,8 +76,8 @@ const Index = () => {
   const { settings, loading: settingsLoading } = useSiteSettings();
   const { slides, loading: slidesLoading } = useHeroSlides();
   const { user, roles } = useAuth();
-  const heroTitle = settings.hero_title || "Formez-vous en 60 jours";
-  const heroSubtitle = settings.hero_subtitle || "Des formations intensives qui transforment votre créativité en 60 jours.";
+  const heroTitle = settings.hero_title || "Révélez votre potentiel créatif en 60 jours";
+  const heroSubtitle = settings.hero_subtitle || "Que vous soyez en reconversion, en quête de perfectionnement ou simplement curieux d'apprendre, nos formations intensives transforment votre créativité.";
 
   const [formations, setFormations] = useState<{ id: string; name: string }[]>([]);
   const [selectedFormation, setSelectedFormation] = useState<string>("all");
@@ -95,8 +93,8 @@ const Index = () => {
   const [howVisible, setHowVisible] = useState(false);
   const [formationsVisible, setFormationsVisible] = useState(false);
 
-  // Carousel images: use slides from DB, fallback to default
-  const carouselImages = slides.length > 0 ? slides.map((s) => s.image_url) : [heroImageDefault];
+  // Carousel images: use slides from DB. When empty, the hero shows a navy gradient fallback (no stock photo).
+  const carouselImages = slides.map((s) => s.image_url);
   const isHeroReady = !slidesLoading && !settingsLoading;
 
   // Auto-advance hero carousel
@@ -173,7 +171,13 @@ const Index = () => {
     <div className="min-h-screen bg-white dark:bg-[#0a0a0a]">
 
       {/* ===== HERO FULLSCREEN ===== */}
-      <section className="relative h-screen w-full overflow-hidden bg-black">
+      <section className="relative h-screen w-full overflow-hidden bg-[#0E1B2E]">
+        {/* Premium navy base + fallback background (shown when no hero_slides are uploaded) */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0E1B2E] via-[#13243d] to-[#0a1422]" />
+        <div
+          className="absolute inset-0"
+          style={{ backgroundImage: "radial-gradient(120% 80% at 75% 18%, rgba(197,160,90,0.16), transparent 55%)" }}
+        />
         {/* Carousel background images */}
         {isHeroReady && carouselImages.map((src, i) => (
           <img
@@ -183,7 +187,7 @@ const Index = () => {
             className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${i === currentSlide ? "opacity-100" : "opacity-0"}`}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0E1B2E] via-[#0E1B2E]/60 to-[#0E1B2E]/25" />
 
         {/* Top bar: Logo left, Nav right */}
         <div className="relative z-10 flex items-center justify-between px-6 py-6 md:px-10 md:py-8">
@@ -192,7 +196,7 @@ const Index = () => {
             {settings.logo_url ? (
               <img src={settings.logo_url} alt="Logo" className="h-14 w-auto md:h-20" />
             ) : (
-              <img src={logoWhite} alt="Formations 60 jours" className="h-14 w-auto md:h-20" />
+              <span className="font-display text-3xl font-semibold tracking-tight text-accent md:text-4xl">60</span>
             )}
           </Link>
 
@@ -202,7 +206,7 @@ const Index = () => {
               <Button
                 size="sm"
                 variant="outline"
-                className="rounded-full border-white/30 bg-white/5 text-white backdrop-blur-sm hover:bg-white/15 text-xs md:text-sm px-4 md:px-5"
+                className="rounded-full border border-white/20 bg-white/5 text-white backdrop-blur-sm transition-colors hover:border-accent/60 hover:text-accent text-xs md:text-sm px-4 md:px-5"
               >
                 S'inscrire
               </Button>
@@ -212,7 +216,7 @@ const Index = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="rounded-full border-white/30 bg-white/5 text-white backdrop-blur-sm hover:bg-white/15 text-xs md:text-sm px-4 md:px-5"
+                  className="rounded-full border border-white/20 bg-white/5 text-white backdrop-blur-sm transition-colors hover:border-accent/60 hover:text-accent text-xs md:text-sm px-4 md:px-5"
                 >
                   Mon espace
                 </Button>
@@ -222,7 +226,7 @@ const Index = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="rounded-full border-white/30 bg-white/5 text-white backdrop-blur-sm hover:bg-white/15 text-xs md:text-sm px-4 md:px-5"
+                  className="rounded-full border border-white/20 bg-white/5 text-white backdrop-blur-sm transition-colors hover:border-accent/60 hover:text-accent text-xs md:text-sm px-4 md:px-5"
                 >
                   Connexion
                 </Button>
@@ -233,17 +237,17 @@ const Index = () => {
 
         {/* Hero title — bottom left */}
         <div className="absolute bottom-16 left-6 right-6 z-10 md:bottom-20 md:left-10 md:right-auto md:max-w-2xl">
-          <h1 className="font-display text-3xl font-bold leading-tight text-white md:text-5xl lg:text-6xl">
+          <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-white md:text-6xl lg:text-7xl">
             {heroTitle}
           </h1>
-          <p className="mt-3 max-w-lg text-base text-white/70 md:text-lg">
+          <p className="mt-5 max-w-xl text-base leading-relaxed text-white/75 md:text-lg">
             {heroSubtitle}
           </p>
           <div className="mt-6">
             <Link to="/register">
               <Button
                 size="lg"
-                className="rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-semibold shadow-lg px-8"
+                className="rounded-full bg-accent px-8 font-semibold text-accent-foreground shadow-lg shadow-[#C5A05A]/25 transition-all hover:bg-[#d4b06a] hover:shadow-[#C5A05A]/40"
               >
                 S'inscrire maintenant
               </Button>
