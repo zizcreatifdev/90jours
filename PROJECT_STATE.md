@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 22 juin 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: validation uniforme des formulaires (* + bouton conditionnel + erreurs inline)
+**Prompt actuel**: attestation : paiement complet + livrable valide requis comme conditions bloquantes
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.

@@ -177,6 +177,7 @@ const AttestationIssuer = () => {
   const [loading, setLoading] = useState(false);
   const [issuing, setIssuing] = useState<string | null>(null);
   const [exportProgress, setExportProgress] = useState<{ current: number; total: number } | null>(null);
+  const [deliverableLabel, setDeliverableLabel] = useState("Portfolio");
 
   const availableCohorts = cohorts;
 
@@ -188,12 +189,13 @@ const AttestationIssuer = () => {
       // Get cohort formation for pricing
       const { data: cohortData } = await supabase
         .from("cohorts")
-        .select("formation_id, formation:formations(registration_fee, total_price)")
+        .select("formation_id, formation:formations(registration_fee, total_price, deliverable_label)")
         .eq("id", selectedCohort)
         .maybeSingle();
 
       const formation = cohortData?.formation as any;
       const requiredTotal = (formation?.registration_fee || 10000) + (formation?.total_price || 50000);
+      setDeliverableLabel(formation?.deliverable_label || "Portfolio");
 
       // Get enrollments (students only)
       const { data: enrollments } = await supabase
@@ -518,8 +520,8 @@ const AttestationIssuer = () => {
               <thead>
                 <tr className="border-b border-border text-left text-xs text-muted-foreground bg-secondary/50">
                   <th className="px-4 py-3 font-medium">Étudiant</th>
-                  <th className="px-4 py-3 font-medium">Portfolio</th>
-                  <th className="px-4 py-3 font-medium">Paiements</th>
+                  <th className="px-4 py-3 font-medium">{deliverableLabel}</th>
+                  <th className="px-4 py-3 font-medium">Paiement</th>
                   <th className="px-4 py-3 font-medium">Attestation</th>
                   <th className="px-4 py-3 font-medium">Action</th>
                 </tr>
@@ -535,17 +537,28 @@ const AttestationIssuer = () => {
                       <td className="px-4 py-3 text-sm font-medium text-foreground">{s.first_name} {s.last_name}</td>
                       <td className="px-4 py-3">
                         {portfolioOk ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-green-600"><CheckCircle2 className="h-3 w-3" /> Validé</span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 px-2 py-0.5 text-xs font-medium">
+                            <CheckCircle2 className="h-3 w-3" /> Validé
+                          </span>
                         ) : s.portfolio_status === "pending" ? (
-                          <span className="text-xs text-yellow-600">En attente</span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 text-yellow-700 px-2 py-0.5 text-xs font-medium">
+                            En attente
+                          </span>
                         ) : s.portfolio_status === "rejected" ? (
-                          <span className="text-xs text-red-600">Rejeté</span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-red-100 text-red-700 px-2 py-0.5 text-xs font-medium">
+                            <XCircle className="h-3 w-3" /> Rejeté
+                          </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">Non soumis</span>
+                          <span className="inline-flex items-center gap-1 rounded-full bg-secondary text-muted-foreground px-2 py-0.5 text-xs font-medium">
+                            Non soumis
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`text-xs font-medium ${paymentOk ? "text-green-600" : "text-red-500"}`}>
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                          paymentOk ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                        }`}>
+                          {paymentOk ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
                           {s.payments_total.toLocaleString("fr-FR")} / {s.required_total.toLocaleString("fr-FR")} FCFA
                         </span>
                       </td>
@@ -573,7 +586,13 @@ const AttestationIssuer = () => {
                             Délivrer
                           </Button>
                         ) : (
-                          <span className="text-xs text-muted-foreground">Non éligible</span>
+                          <span className="text-xs text-red-500">
+                            {!portfolioOk && !paymentOk
+                              ? `${deliverableLabel} non validé, paiement incomplet`
+                              : !portfolioOk
+                              ? `${deliverableLabel} non validé`
+                              : "Paiement incomplet"}
+                          </span>
                         )}
                       </td>
                     </tr>
