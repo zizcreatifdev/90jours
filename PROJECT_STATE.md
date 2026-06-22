@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 22 juin 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: fix-superadmin-cta (masquer S'inscrire pour super_admin sur la page d'accueil)
+**Prompt actuel**: restyle-public-2 (sections + CTA + footer en palette nuit/doré)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.

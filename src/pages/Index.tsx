@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowRight, ChevronDown, Loader2, Quote } from "lucide-react";
+import { ArrowRight, ChevronDown, Loader2, Quote, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useCohorts } from "@/hooks/use-cohorts";
@@ -24,10 +24,10 @@ const FILIERE_COLORS: Record<string, { accent: string; glow: string; text: strin
     bg: "bg-[#F97316]",
   },
   vibecoding: {
-    accent: "#06B6D4",
-    glow: "rgba(6,182,212,0.35)",
-    text: "text-[#06B6D4]",
-    bg: "bg-[#06B6D4]",
+    accent: "#0D9488",
+    glow: "rgba(13,148,136,0.35)",
+    text: "text-[#0D9488]",
+    bg: "bg-[#0D9488]",
   },
 };
 
@@ -51,23 +51,23 @@ interface Testimonial {
 const HOW_STEPS = [
   {
     number: "01",
-    title: "Choisissez votre formation",
-    description: "Graphisme, Motion Design ou Vibecoding — sélectionnez la discipline qui correspond à vos ambitions.",
+    title: "Choisissez votre discipline",
+    description: "Graphisme, Motion Design ou Vibecoding : trouvez la filière qui correspond à votre ambition et à votre rythme de progression.",
   },
   {
     number: "02",
-    title: "Intégrez une cohorte",
-    description: "25 étudiants maximum par session pour un suivi personnalisé et une vraie dynamique de groupe.",
+    title: "Rejoignez une cohorte",
+    description: "25 apprenants maximum par session. Un encadrement individualisé dans une dynamique collective qui accélère l'apprentissage.",
   },
   {
     number: "03",
-    title: "Apprenez en faisant",
-    description: "Briefs réels, projets pratiques et retours directs de formateurs professionnels du secteur.",
+    title: "Progressez par la pratique",
+    description: "Briefs professionnels, projets concrets et retours exigeants de formateurs issus directement du secteur créatif.",
   },
   {
     number: "04",
     title: "Obtenez votre attestation",
-    description: "À la fin des 60 jours, recevez une attestation officielle et intégrez notre réseau d'alumni.",
+    description: "À l'issue des 60 jours, recevez une attestation officielle et intégrez un réseau d'alumni actifs dans les industries créatives.",
   },
 ];
 
@@ -307,7 +307,7 @@ const Index = () => {
               Comment ça marche ?
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-              De l'inscription à la certification, un programme pensé pour vous emmener loin en 60 jours.
+              De l'inscription à la certification, un parcours structuré pour faire de votre créativité un atout professionnel durable.
             </p>
           </div>
 
@@ -323,7 +323,7 @@ const Index = () => {
                 style={{ transitionDelay: howVisible ? `${i * 100}ms` : "0ms" }}
               >
                 {/* Big number */}
-                <p className="mb-6 font-display text-7xl font-black leading-none text-foreground/8 select-none">
+                <p className="mb-6 font-display text-7xl font-black leading-none text-accent/[0.12] select-none">
                   {step.number}
                 </p>
                 {/* Short accent bar */}
@@ -349,7 +349,7 @@ const Index = () => {
               Nos formations
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-              Choisissez la cohorte qui correspond à votre planning. Places limitées à 25 étudiants.
+              Choisissez la session qui correspond à votre agenda. Effectifs volontairement limités à 25 apprenants par cohorte.
             </p>
 
             {/* Filière filter pills */}
@@ -395,7 +395,10 @@ const Index = () => {
               <Loader2 className="h-8 w-8 animate-spin text-accent" />
             </div>
           ) : activeCohorts.length === 0 ? (
-            <p className="py-16 text-center text-muted-foreground">Aucune cohorte disponible pour le moment.</p>
+            <div className="py-16 text-center">
+              <p className="font-display text-xl font-semibold text-foreground">Aucune session ouverte pour le moment.</p>
+              <p className="mt-2 text-sm text-muted-foreground">De nouvelles cohortes arrivent prochainement. Revenez bientôt ou inscrivez-vous pour être informé en priorité.</p>
+            </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {activeCohorts.map((cohort, i) => {
@@ -459,7 +462,10 @@ const Index = () => {
                         {isFull ? (
                           <span className="font-semibold text-destructive">Complet</span>
                         ) : isAlmostFull ? (
-                          <span className="font-semibold text-amber-500">⚡ {spotsLeft} place{spotsLeft > 1 ? "s" : ""} restante{spotsLeft > 1 ? "s" : ""}</span>
+                          <span className="inline-flex items-center gap-1 font-semibold text-accent">
+                            <Zap className="h-3 w-3 fill-current" />
+                            {spotsLeft} place{spotsLeft > 1 ? "s" : ""} restante{spotsLeft > 1 ? "s" : ""}
+                          </span>
                         ) : (
                           <span>{spotsLeft} places disponibles</span>
                         )}
@@ -600,33 +606,30 @@ const Index = () => {
       )}
 
       {/* ===== SECTION 5 — CTA FINAL ===== */}
-      <section className="relative overflow-hidden py-28">
-        {/* Animated gradient background */}
+      <section className="relative overflow-hidden bg-[#0E1B2E] py-28">
+        {/* Subtle gold radial glow from below */}
         <div
-          className="absolute inset-0"
-          style={{
-            background: "linear-gradient(135deg, #0f172a 0%, #1d4ed8 35%, #06B6D4 65%, #4f46e5 100%)",
-            backgroundSize: "300% 300%",
-            animation: "gradient-shift 8s ease infinite",
-          }}
+          className="absolute inset-0 pointer-events-none"
+          style={{ backgroundImage: "radial-gradient(75% 55% at 50% 110%, rgba(197,160,90,0.20), transparent 60%)" }}
         />
-        {/* Dark overlay for text contrast */}
-        <div className="absolute inset-0 bg-black/50" />
+        {/* Fine gold top border */}
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#C5A05A]/35 to-transparent" />
 
         <div className="relative z-10 container mx-auto px-4 text-center">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-accent">Passez à l'action</p>
           <h2 className="mb-4 font-display text-3xl font-bold text-white md:text-5xl">
-            Prêt(e) à transformer votre carrière ?
+            Prêts à transformer votre trajectoire ?
           </h2>
-          <p className="mx-auto mb-10 max-w-xl text-white/70 md:text-lg">
-            Rejoignez des centaines de créatifs qui ont osé investir 60 jours pour changer leur trajectoire professionnelle.
+          <p className="mx-auto mb-10 max-w-xl text-white/65 md:text-lg">
+            Rejoignez des centaines de créatifs qui ont consacré 60 jours à faire de leur passion un véritable métier.
           </p>
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link to="/register">
               <Button
                 size="lg"
-                className="rounded-full bg-white text-black hover:bg-white/90 font-bold px-10 shadow-xl"
+                className="rounded-full bg-accent px-10 font-bold text-accent-foreground shadow-lg shadow-[#C5A05A]/25 transition-all hover:bg-[#d4b06a] hover:shadow-[#C5A05A]/40"
               >
-                Commencer l'aventure
+                Commencer maintenant
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
@@ -634,26 +637,17 @@ const Index = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="rounded-full border-white/40 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20 font-semibold px-10"
+                className="rounded-full border-white/25 bg-white/5 px-10 font-semibold text-white backdrop-blur-sm transition-all hover:border-white/50 hover:bg-white/10"
               >
                 J'ai déjà un compte
               </Button>
             </Link>
           </div>
         </div>
-
-        {/* Inline keyframe via style tag */}
-        <style>{`
-          @keyframes gradient-shift {
-            0%   { background-position: 0% 50%; }
-            50%  { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-          }
-        `}</style>
       </section>
 
       {/* ===== SECTION 6 — FOOTER ===== */}
-      <footer className="border-t border-border bg-[#0a0a0a] text-white">
+      <footer className="border-t border-white/10 bg-[#0E1B2E] text-white">
         <div className="container mx-auto px-4 py-14">
           <div className="grid gap-10 md:grid-cols-3">
             {/* Col 1 — Logo + tagline */}
@@ -666,7 +660,7 @@ const Index = () => {
                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent">
                       <span className="font-display text-xs font-bold text-accent-foreground">60</span>
                     </div>
-                    <span className="font-display text-lg font-bold">60 jours</span>
+                    <span className="font-display text-lg font-semibold text-white">60 jours</span>
                   </>
                 )}
               </div>
@@ -677,7 +671,7 @@ const Index = () => {
               <div className="mt-5 flex gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-[#8B5CF6]" title="Graphisme" />
                 <span className="h-2.5 w-2.5 rounded-full bg-[#F97316]" title="Motion Design" />
-                <span className="h-2.5 w-2.5 rounded-full bg-[#06B6D4]" title="Vibecoding" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[#0D9488]" title="Vibecoding" />
               </div>
             </div>
 
@@ -717,7 +711,7 @@ const Index = () => {
           {/* Bottom bar */}
           <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-white/30 sm:flex-row">
             <span>© 2026 60 jours de formation. Tous droits réservés.</span>
-            <span>Fait avec passion au Sénégal 🇸🇳</span>
+            <span>Conçu au Sénégal</span>
           </div>
         </div>
       </footer>
