@@ -426,6 +426,8 @@ export type Database = {
           registration_fee: number
           slug: string
           total_price: number
+          tranche_1_amount: number
+          tranche_2_amount: number
           updated_at: string
         }
         Insert: {
@@ -448,6 +450,8 @@ export type Database = {
           registration_fee?: number
           slug: string
           total_price?: number
+          tranche_1_amount?: number
+          tranche_2_amount?: number
           updated_at?: string
         }
         Update: {
@@ -470,6 +474,8 @@ export type Database = {
           registration_fee?: number
           slug?: string
           total_price?: number
+          tranche_1_amount?: number
+          tranche_2_amount?: number
           updated_at?: string
         }
         Relationships: []

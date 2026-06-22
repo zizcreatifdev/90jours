@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 22 juin 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: attestation : paiement complet + livrable valide requis comme conditions bloquantes
+**Prompt actuel**: paiement par tranches (étape A) : montants par formation + types de paiement + fix discordance 50/60
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -22,7 +22,7 @@
 | Pages | 10 |
 | Hooks custom | 9 |
 | Tables Supabase | 33 |
-| Migrations SQL | 42 |
+| Migrations SQL | 43 |
 | Edge Functions | 7 |
 | Tests | 63 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator + 9 EmptyState) |
 | Couverture tests | ~25% (ProtectedRoute + validate-url + AuthContext + export-csv + PasswordStrengthIndicator + EmptyState) |
@@ -341,3 +341,5 @@
 | nettoyage-lovable | 2026-06-22 | Partie A: suppression toutes traces Lovable (vite.config.ts import+plugin componentTagger, package.json name→"60jours"+lovable-tagger devDep, index.html og:url "https://60jours.vercel.app"/og:image/twitter:image lovable.app→locaux, README.md réécrit, public/placeholder.svg supprimé) — Partie B: NotFound.tsx illustré (SVG 404 géométrique abstrait Fraunces, grille navy, lignes dorées, fond #0E1B2E, bouton doré) — Partie C: OfficialMessageSender emoji labels→Lucide (Globe/Info/PartyPopper/AlertTriangle) — build OK | ✅ Terminé |
 | validation-formulaires | 2026-06-22 | Système de validation uniforme : hook `use-form-validation.ts` (champs requis, isValid global pour le bouton, erreurs par champ, blur/submit) + composants `ui/required-label.tsx` (astérisque rouge accessible aria) et `ui/field-error.tsx` (message destructive sous champ). Appliqué à 22 formulaires : Login, Register, ForgotPassword, ResetPassword, SetupAccount, ProfilePage, StudentProfile, StudentPortfolio (isValidUrl intégré), ContractSign (canSign + validation nom préservés), CohortForm, FormationManager, BriefManager, PaymentManager (montant conditionnel si type=formation), CategoryManager, PromoCodeManager, TaskManager, ContractTemplateEditor, TestimonialsManager, OfficialMessageSender, FormateurMessageSender, FormateurManager, WaitlistForm (consentement obligatoire préservé). AttestationTemplateEditor (formation auto-sélectionnée hors form) et HeroImageSettings (upload seul) : pas de champ requis, inchangés. Vérifs métier/force mdp/Supabase préservées. build OK, 62/62 tests, 0 emoji, 0 tiret long | ✅ Terminé |
 | zero-emoji | 2026-06-22 | Suppression totale des 42 emojis résiduels dans 14 fichiers src/ : toasts (🎉🎓✅✓⚠), push notif titles (💬📝), badges urgence deadline (🔴⚠️→texte seul), fréquence briefs (📅📆→texte), statuts livraison (✓⏳⚠→texte), FormateurMessageSender 🌐→Globe Lucide, StaffDashboard emoji santé (🟢🟠🔴→CSS dots bg-green/orange/red-500), BadgeShowcase emoji→Lucide (PenLine/Flame/Palette/GraduationCap/Zap/Award), TaskManager priorités (🔴🟡🟢→texte), CohortCard ⚡→texte, StudentMessages/AdminMessages ✕→"Annuler", NotFound.tsx police Georgia→Fraunces. grep final : 0 emoji. build OK 62/62 ✅ | ✅ Terminé |
+| attestation-conditions | 2026-06-22 | AttestationIssuer.tsx : paiement complet + livrable validé requis pour émettre (semi-auto). Deux pastilles colorées par étudiant (livrable nommé via deliverable_label dynamique, paiement payé/dû). Bouton individuel actif seulement si paiementComplet ET livrableValide ET !has_attestation. Batch ne prend que les éligibles. Motif de blocage affiché si non éligible. build OK 62/62 ✅ | ✅ Terminé |
+| paiement-tranches-A | 2026-06-22 | DB: migration paiement_tranches (formations.tranche_1_amount + tranche_2_amount integer, backfill cohérent, CHECK reg+t1+t2=total_price, remplacement CHECK payments.payment_type → inscription/tranche_1/tranche_2/formation_complete, 'formation' conservé pour compat) + MIGRATION_PAIEMENT_TRANCHES.sql racine. FormationManager: champs Tranche 1/2 + validation somme=coût total (bouton bloqué sinon) + bandeau récap. PaymentManager: types inscription/tranche 1/tranche 2/formation complète, montant pré-rempli selon type+formation (modifiable), filtre tableau vivant. FIX discordance 50/60: montant dû = total_price partout (AttestationIssuer, AttestationTracker, StudentAttestation). types.ts + use-cohorts.ts synchronisés. build OK 62/62 ✅ | ✅ Terminé |

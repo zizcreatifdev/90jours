@@ -65,7 +65,8 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
         .is("deleted_at", null);
 
       if (paymentsData && cohortData?.formation) {
-        const totalRequired = (cohortData.formation.registration_fee || 10000) + (cohortData.formation.total_price || 50000);
+        // Montant du total = total_price (grand total TTC, inscription incluse).
+        const totalRequired = cohortData.formation.total_price || 50000;
         const totalPaid = paymentsData
           .filter((p: any) => p.status === "paid")
           .reduce((sum: number, p: any) => sum + p.amount, 0);

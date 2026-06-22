@@ -20,6 +20,8 @@ export interface CohortRow {
     level: string;
     registration_fee: number;
     total_price: number;
+    tranche_1_amount: number;
+    tranche_2_amount: number;
     attestation_color: string | null;
     duration_days: number;
   } | null;
@@ -46,7 +48,7 @@ async function fetchCohortsData(): Promise<CohortRow[]> {
     supabase
       .from("cohorts")
       .select(
-        "*, formation:formations(id, name, description, level, registration_fee, total_price, attestation_color, duration_days)"
+        "*, formation:formations(id, name, description, level, registration_fee, total_price, tranche_1_amount, tranche_2_amount, attestation_color, duration_days)"
       )
       .order("start_date"),
     supabase

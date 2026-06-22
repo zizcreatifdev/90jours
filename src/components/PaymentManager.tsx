@@ -37,8 +37,10 @@ interface Payment {
 const WAVE_BASE_URL = "https://pay.wave.com/m/M_mahK9UpbVYCm/c/sn/";
 
 const PAYMENT_TYPES = [
-  { value: "inscription", label: "Inscription (10 000 FCFA)", amount: 10000 },
-  { value: "formation", label: "Formation (montant libre)", amount: 0 },
+  { value: "inscription", label: "Inscription" },
+  { value: "tranche_1", label: "Tranche 1" },
+  { value: "tranche_2", label: "Tranche 2" },
+  { value: "formation_complete", label: "Formation complète (en une fois)" },
 ];
 
 const getWaveLink = (amount: number) => `${WAVE_BASE_URL}?amount=${amount}`;
@@ -97,15 +99,35 @@ const PaymentManager = () => {
       paymentType: { required: "Le type de paiement est requis." },
       paymentStatus: { required: "Le statut est requis." },
       customAmount: {
-        validate: (v, all) =>
-          all.paymentType === "formation" && !(Number(v) > 0) ? "Montant requis (> 0)." : null,
+        validate: (v) => (Number(v) > 0 ? null : "Le montant doit être supérieur à 0."),
       },
     },
   );
 
+  // Formation tarifaire de la cohorte selectionnee (pour pre-remplir les montants)
+  const selectedFormation = cohorts.find(c => c.id === selectedCohort)?.formation ?? null;
+
+  const expectedAmount = (type: string, formation: typeof selectedFormation): number => {
+    if (!formation) return 0;
+    switch (type) {
+      case "inscription": return formation.registration_fee;
+      case "tranche_1": return formation.tranche_1_amount;
+      case "tranche_2": return formation.tranche_2_amount;
+      case "formation_complete": return formation.tranche_1_amount + formation.tranche_2_amount;
+      default: return 0;
+    }
+  };
+
   useEffect(() => {
     if (dialogOpen) reset();
   }, [dialogOpen, reset]);
+
+  // Pre-remplit le montant attendu selon le type et la formation (reste modifiable)
+  useEffect(() => {
+    if (!paymentType || !selectedFormation) return;
+    setCustomAmount(String(expectedAmount(paymentType, selectedFormation)));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentType, selectedCohort]);
 
   const fetchPayments = async () => {
     setLoading(true);
@@ -163,8 +185,7 @@ const PaymentManager = () => {
       return;
     }
 
-    const typeConfig = PAYMENT_TYPES.find(t => t.value === paymentType);
-    const amount = paymentType === "formation" ? (parseInt(customAmount) || 0) : (typeConfig?.amount || 0);
+    const amount = parseInt(customAmount) || 0;
     if (amount <= 0) {
       toast({ title: "Erreur", description: "Le montant doit être supérieur à 0.", variant: "destructive" });
       return;
@@ -420,7 +441,7 @@ const PaymentManager = () => {
                   </div>
                   <div>
                     <RequiredLabel required>Type de paiement</RequiredLabel>
-                    <Select value={paymentType} onValueChange={(v) => { setPaymentType(v); if (v === "inscription") setCustomAmount("10000"); handleBlur("paymentType"); }}>
+                    <Select value={paymentType} onValueChange={(v) => { setPaymentType(v); handleBlur("paymentType"); }}>
                       <SelectTrigger aria-invalid={!!showError("paymentType")}><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                       <SelectContent>
                         {PAYMENT_TYPES.map(t => (
@@ -430,23 +451,24 @@ const PaymentManager = () => {
                     </Select>
                     <FieldError message={showError("paymentType")} />
                   </div>
-                  {paymentType === "formation" && (
-                    <div>
-                      <RequiredLabel required>Montant (FCFA)</RequiredLabel>
-                      <Input
-                        type="number"
-                        value={customAmount}
-                        onChange={e => setCustomAmount(e.target.value)}
-                        onBlur={() => handleBlur("customAmount")}
-                        aria-invalid={!!showError("customAmount")}
-                        placeholder="Ex: 25000"
-                        min={1}
-                        max={50000}
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">Formation totale: 50 000 FCFA. Saisissez le montant de cette tranche.</p>
-                      <FieldError message={showError("customAmount")} />
-                    </div>
-                  )}
+                  <div>
+                    <RequiredLabel required>Montant (FCFA)</RequiredLabel>
+                    <Input
+                      type="number"
+                      value={customAmount}
+                      onChange={e => setCustomAmount(e.target.value)}
+                      onBlur={() => handleBlur("customAmount")}
+                      aria-invalid={!!showError("customAmount")}
+                      placeholder="Ex: 20000"
+                      min={1}
+                    />
+                    {selectedFormation && paymentType && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Montant attendu pour ce type : {expectedAmount(paymentType, selectedFormation).toLocaleString("fr-FR")} FCFA (modifiable).
+                      </p>
+                    )}
+                    <FieldError message={showError("customAmount")} />
+                  </div>
                   <div>
                     <RequiredLabel required>Statut</RequiredLabel>
                     <Select value={paymentStatus} onValueChange={(v) => { setPaymentStatus(v); handleBlur("paymentStatus"); }}>

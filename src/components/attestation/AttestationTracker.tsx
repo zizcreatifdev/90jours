@@ -92,7 +92,8 @@ const AttestationTracker = () => {
       const key = `${e.user_id}_${e.cohort_id}`;
       const portfolioStatus = portfolioMap.get(key) || null;
       const formation = cohort?.formation;
-      const requiredTotal = formation ? (formation.registration_fee || 10000) + (formation.total_price || 50000) : 60000;
+      // Montant du total = total_price (grand total TTC, inscription incluse).
+      const requiredTotal = formation?.total_price || 50000;
       const paymentsTotal = paymentMap.get(key) || 0;
       const paymentOk = paymentsTotal >= requiredTotal;
       const attestation = attestationMap.get(key);

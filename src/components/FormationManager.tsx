@@ -30,6 +30,8 @@ interface Formation {
   created_at: string;
   registration_fee: number;
   total_price: number;
+  tranche_1_amount: number;
+  tranche_2_amount: number;
   duration_days: number;
 }
 
@@ -46,6 +48,8 @@ const emptyForm = {
   level: "debutant",
   registration_fee: 10000,
   total_price: 50000,
+  tranche_1_amount: 20000,
+  tranche_2_amount: 20000,
   duration_days: 60,
 };
 
@@ -68,6 +72,8 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
           level: formation.level || "debutant",
           registration_fee: formation.registration_fee ?? 10000,
           total_price: formation.total_price ?? 50000,
+          tranche_1_amount: formation.tranche_1_amount ?? 20000,
+          tranche_2_amount: formation.tranche_2_amount ?? 20000,
           duration_days: formation.duration_days ?? 60,
         }
       : { ...emptyForm }
@@ -81,6 +87,8 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
       duration_days: form.duration_days,
       registration_fee: form.registration_fee,
       total_price: form.total_price,
+      tranche_1_amount: form.tranche_1_amount,
+      tranche_2_amount: form.tranche_2_amount,
       deliverable_label: form.deliverable_label,
     },
     {
@@ -90,9 +98,20 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
       duration_days: { required: true, validate: (v) => Number(v) > 0 ? null : "La durée doit être supérieure à 0." },
       registration_fee: { required: "Les frais d'inscription sont requis." },
       total_price: { required: "Le coût total est requis." },
-      deliverable_label: { required: "Le nom du livrable est requis." },
+      tranche_1_amount: { required: "Le montant de la tranche 1 est requis." },
+      tranche_2_amount: {
+        required: "Le montant de la tranche 2 est requis.",
+        validate: (_v, all) =>
+          Number(all.registration_fee) + Number(all.tranche_1_amount) + Number(all.tranche_2_amount) === Number(all.total_price)
+            ? null
+            : "Inscription + Tranche 1 + Tranche 2 doit égaler le coût total.",
+      },
     },
   );
+
+  const tarifSum =
+    Number(form.registration_fee) + Number(form.tranche_1_amount) + Number(form.tranche_2_amount);
+  const tarifOk = tarifSum === Number(form.total_price);
 
   useEffect(() => {
     if (open) reset();
@@ -184,10 +203,24 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
                 <FieldError message={showError("registration_fee")} />
               </div>
               <div>
-                <RequiredLabel htmlFor="tprice" required>Coût total (FCFA)</RequiredLabel>
+                <RequiredLabel htmlFor="tprice" required>Coût total TTC (FCFA)</RequiredLabel>
                 <Input id="tprice" type="number" min={0} value={form.total_price} onChange={e => setForm({ ...form, total_price: parseInt(e.target.value) || 0 })} onBlur={() => handleBlur("total_price")} aria-invalid={!!showError("total_price")} />
                 <FieldError message={showError("total_price")} />
               </div>
+              <div>
+                <RequiredLabel htmlFor="tr1" required>Tranche 1 (FCFA)</RequiredLabel>
+                <Input id="tr1" type="number" min={0} value={form.tranche_1_amount} onChange={e => setForm({ ...form, tranche_1_amount: parseInt(e.target.value) || 0 })} onBlur={() => handleBlur("tranche_1_amount")} aria-invalid={!!showError("tranche_1_amount")} />
+                <FieldError message={showError("tranche_1_amount")} />
+              </div>
+              <div>
+                <RequiredLabel htmlFor="tr2" required>Tranche 2 (FCFA)</RequiredLabel>
+                <Input id="tr2" type="number" min={0} value={form.tranche_2_amount} onChange={e => setForm({ ...form, tranche_2_amount: parseInt(e.target.value) || 0 })} onBlur={() => handleBlur("tranche_2_amount")} aria-invalid={!!showError("tranche_2_amount")} />
+                <FieldError message={showError("tranche_2_amount")} />
+              </div>
+            </div>
+            <div className={`mt-3 rounded-lg px-3 py-2 text-xs ${tarifOk ? "bg-accent/10 text-accent" : "bg-destructive/10 text-destructive"}`}>
+              Inscription + Tranche 1 + Tranche 2 doivent égaler le coût total.
+              {" "}Actuel : {tarifSum.toLocaleString("fr-FR")} / {Number(form.total_price).toLocaleString("fr-FR")} FCFA.
             </div>
           </div>
 
