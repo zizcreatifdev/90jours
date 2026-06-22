@@ -4,6 +4,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation } from "@/hooks/use-form-validation";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -67,6 +70,14 @@ const ContractTemplateEditor = () => {
   const [saving, setSaving] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
 
+  const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
+    { name: formName, content: formContent },
+    {
+      name: { required: "Le nom du template est requis." },
+      content: { required: "Le contenu HTML est requis." },
+    },
+  );
+
   const fetchTemplates = async () => {
     const { data } = await supabase
       .from("contract_templates")
@@ -78,16 +89,18 @@ const ContractTemplateEditor = () => {
 
   useEffect(() => { fetchTemplates(); }, []);
 
-  const resetForm = () => { setEditingId(null); setFormName(""); setFormDescription(""); setFormContent(""); };
+  const resetForm = () => { setEditingId(null); setFormName(""); setFormDescription(""); setFormContent(""); reset(); };
 
   const handleEdit = (t: ContractTemplate) => {
     setEditingId(t.id);
     setFormName(t.name);
     setFormDescription(t.description || "");
     setFormContent(t.content);
+    reset();
   };
 
   const handleSave = async () => {
+    if (!validateAll()) return;
     if (!formName.trim() || !formContent.trim()) {
       toast({ title: "Erreur", description: "Nom et contenu requis.", variant: "destructive" });
       return;
@@ -146,7 +159,7 @@ const ContractTemplateEditor = () => {
             <FileSignature className="h-4 w-4" /> Templates de contrat ({templates.length})
           </h2>
           {!isEditing && (
-            <Button size="sm" onClick={() => setEditingId("")}>
+            <Button size="sm" onClick={() => { setEditingId(""); reset(); }}>
               <Plus className="mr-1 h-4 w-4" /> Nouveau template
             </Button>
           )}
@@ -228,12 +241,15 @@ const ContractTemplateEditor = () => {
             {/* Form (left 2/3) */}
             <div className="lg:col-span-2 space-y-4">
               <div>
-                <Label>Nom du template</Label>
+                <RequiredLabel required>Nom du template</RequiredLabel>
                 <Input
                   value={formName}
                   onChange={e => setFormName(e.target.value)}
+                  onBlur={() => handleBlur("name")}
+                  aria-invalid={!!showError("name")}
                   placeholder="Ex: Contrat standard 60 jours"
                 />
+                <FieldError message={showError("name")} />
               </div>
               <div>
                 <Label>Description <span className="text-muted-foreground font-normal">(usage interne)</span></Label>
@@ -247,17 +263,20 @@ const ContractTemplateEditor = () => {
                 <p className="mt-1 text-xs text-muted-foreground">{formDescription.length}/300</p>
               </div>
               <div>
-                <Label>Contenu HTML</Label>
+                <RequiredLabel required>Contenu HTML</RequiredLabel>
                 <Textarea
                   value={formContent}
                   onChange={e => setFormContent(e.target.value)}
+                  onBlur={() => handleBlur("content")}
+                  aria-invalid={!!showError("content")}
                   rows={20}
                   className="font-mono text-xs"
                   placeholder="<html>...</html>"
                 />
+                <FieldError message={showError("content")} />
               </div>
               <div className="flex gap-3">
-                <Button onClick={handleSave} disabled={saving}>
+                <Button onClick={handleSave} disabled={saving || !isValid}>
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   {editingId ? "Enregistrer les modifications" : "Créer le template"}
                 </Button>

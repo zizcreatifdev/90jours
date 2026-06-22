@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation } from "@/hooks/use-form-validation";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -70,11 +73,37 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
       : { ...emptyForm }
   );
 
+  const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
+    {
+      name: form.name,
+      slug: form.slug,
+      level: form.level,
+      duration_days: form.duration_days,
+      registration_fee: form.registration_fee,
+      total_price: form.total_price,
+      deliverable_label: form.deliverable_label,
+    },
+    {
+      name: { required: "Le nom de la formation est requis." },
+      slug: { required: "Le slug est requis." },
+      level: { required: "Le niveau est requis." },
+      duration_days: { required: true, validate: (v) => Number(v) > 0 ? null : "La durée doit être supérieure à 0." },
+      registration_fee: { required: "Les frais d'inscription sont requis." },
+      total_price: { required: "Le coût total est requis." },
+      deliverable_label: { required: "Le nom du livrable est requis." },
+    },
+  );
+
+  useEffect(() => {
+    if (open) reset();
+  }, [open, reset]);
+
   const generateSlug = (name: string) =>
     name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
     setSaving(true);
     try {
       const payload = { ...form, slug: form.slug || generateSlug(form.name) };
@@ -116,42 +145,48 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div>
-            <Label htmlFor="fname">Nom de la formation</Label>
-            <Input id="fname" required value={form.name} onChange={e => { setForm({ ...form, name: e.target.value, slug: generateSlug(e.target.value) }); }} placeholder="60 jours en motion" />
+            <RequiredLabel htmlFor="fname" required>Nom de la formation</RequiredLabel>
+            <Input id="fname" value={form.name} onChange={e => { setForm({ ...form, name: e.target.value, slug: generateSlug(e.target.value) }); }} onBlur={() => handleBlur("name")} aria-invalid={!!showError("name")} placeholder="60 jours en motion" />
+            <FieldError message={showError("name")} />
           </div>
           <div>
-            <Label htmlFor="fslug">Slug (identifiant URL)</Label>
-            <Input id="fslug" required value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} placeholder="motion" />
+            <RequiredLabel htmlFor="fslug" required>Slug (identifiant URL)</RequiredLabel>
+            <Input id="fslug" value={form.slug} onChange={e => setForm({ ...form, slug: e.target.value })} onBlur={() => handleBlur("slug")} aria-invalid={!!showError("slug")} placeholder="motion" />
+            <FieldError message={showError("slug")} />
           </div>
           <div>
             <Label htmlFor="fdesc">Description</Label>
             <Textarea id="fdesc" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Décrivez cette formation..." rows={2} />
           </div>
           <div>
-            <Label>Niveau</Label>
-            <Select value={form.level} onValueChange={v => setForm({ ...form, level: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <RequiredLabel required>Niveau</RequiredLabel>
+            <Select value={form.level} onValueChange={v => { setForm({ ...form, level: v }); handleBlur("level"); }}>
+              <SelectTrigger aria-invalid={!!showError("level")}><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="debutant">Débutant</SelectItem>
                 <SelectItem value="avance">Avancé</SelectItem>
               </SelectContent>
             </Select>
+            <FieldError message={showError("level")} />
           </div>
           <div>
-            <Label htmlFor="fduration">Durée (en jours)</Label>
-            <Input id="fduration" type="number" min={1} required value={form.duration_days} onChange={e => setForm({ ...form, duration_days: parseInt(e.target.value) || 60 })} placeholder="60" />
+            <RequiredLabel htmlFor="fduration" required>Durée (en jours)</RequiredLabel>
+            <Input id="fduration" type="number" min={1} value={form.duration_days} onChange={e => setForm({ ...form, duration_days: parseInt(e.target.value) || 60 })} onBlur={() => handleBlur("duration_days")} aria-invalid={!!showError("duration_days")} placeholder="60" />
+            <FieldError message={showError("duration_days")} />
           </div>
 
           <div className="border-t border-border pt-4">
             <h4 className="font-display text-sm font-semibold mb-3">Tarification</h4>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="regfee">Frais d'inscription (FCFA)</Label>
-                <Input id="regfee" type="number" min={0} required value={form.registration_fee} onChange={e => setForm({ ...form, registration_fee: parseInt(e.target.value) || 0 })} />
+                <RequiredLabel htmlFor="regfee" required>Frais d'inscription (FCFA)</RequiredLabel>
+                <Input id="regfee" type="number" min={0} value={form.registration_fee} onChange={e => setForm({ ...form, registration_fee: parseInt(e.target.value) || 0 })} onBlur={() => handleBlur("registration_fee")} aria-invalid={!!showError("registration_fee")} />
+                <FieldError message={showError("registration_fee")} />
               </div>
               <div>
-                <Label htmlFor="tprice">Coût total (FCFA)</Label>
-                <Input id="tprice" type="number" min={0} required value={form.total_price} onChange={e => setForm({ ...form, total_price: parseInt(e.target.value) || 0 })} />
+                <RequiredLabel htmlFor="tprice" required>Coût total (FCFA)</RequiredLabel>
+                <Input id="tprice" type="number" min={0} value={form.total_price} onChange={e => setForm({ ...form, total_price: parseInt(e.target.value) || 0 })} onBlur={() => handleBlur("total_price")} aria-invalid={!!showError("total_price")} />
+                <FieldError message={showError("total_price")} />
               </div>
             </div>
           </div>
@@ -159,8 +194,9 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
           <div className="border-t border-border pt-4">
             <h4 className="font-display text-sm font-semibold mb-3">Livrable de fin de formation</h4>
             <div>
-              <Label htmlFor="dlabel">Nom du livrable</Label>
-              <Input id="dlabel" required value={form.deliverable_label} onChange={e => setForm({ ...form, deliverable_label: e.target.value })} placeholder="Portfolio, Showreel, Projet..." />
+              <RequiredLabel htmlFor="dlabel" required>Nom du livrable</RequiredLabel>
+              <Input id="dlabel" value={form.deliverable_label} onChange={e => setForm({ ...form, deliverable_label: e.target.value })} onBlur={() => handleBlur("deliverable_label")} aria-invalid={!!showError("deliverable_label")} placeholder="Portfolio, Showreel, Projet..." />
+              <FieldError message={showError("deliverable_label")} />
             </div>
             <div className="mt-2">
               <Label htmlFor="ddesc">Instructions pour l'étudiant</Label>
@@ -192,7 +228,7 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
             <Label>Formation active</Label>
           </div>
 
-          <Button type="submit" disabled={saving} className="w-full">
+          <Button type="submit" disabled={saving || !isValid} className="w-full">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {formation ? "Enregistrer" : "Créer"}
           </Button>

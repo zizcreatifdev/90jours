@@ -5,7 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
 import { Loader2, ArrowDown, CheckCircle2, FileSignature } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -344,27 +345,28 @@ const ContractSign = () => {
                   />
                   <span className={cn(!scrolledToBottom && "opacity-40")}>
                     J'ai lu et j'accepte l'intégralité de ce contrat de formation.
+                    <span className="ml-0.5 text-destructive" aria-hidden="true">*</span>
+                    <span className="sr-only"> (requis)</span>
                   </span>
                 </label>
               </div>
 
               {/* Step 3 : Name */}
               <div className="space-y-2">
-                <Label htmlFor="sig-name" className={cn(!accepted && "opacity-40")}>
+                <RequiredLabel htmlFor="sig-name" required className={cn(!accepted && "opacity-40")}>
                   Votre nom complet (signature numérique)
-                </Label>
+                </RequiredLabel>
                 <Input
                   id="sig-name"
                   value={sigName}
                   onChange={e => setSigName(e.target.value)}
                   disabled={!accepted}
                   placeholder={fullName || "Prénom Nom"}
+                  aria-invalid={accepted && sigName.trim() !== "" && sigName.trim().toLowerCase() !== fullName.toLowerCase()}
                   className={cn(!accepted && "opacity-40")}
                 />
                 {accepted && sigName.trim() !== "" && sigName.trim().toLowerCase() !== fullName.toLowerCase() && (
-                  <p className="text-xs text-destructive">
-                    Doit correspondre à : <strong>{fullName}</strong>
-                  </p>
+                  <FieldError message={`Doit correspondre à : ${fullName}`} />
                 )}
                 {accepted && sigName.trim().toLowerCase() === fullName.toLowerCase() && sigName.trim() !== "" && (
                   <p className="text-xs text-green-600 dark:text-green-400">Signature valide</p>

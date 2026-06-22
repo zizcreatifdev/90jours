@@ -3,6 +3,9 @@ import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Upload, X, Loader2, Qu
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation } from "@/hooks/use-form-validation";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -48,6 +51,15 @@ const TestimonialsManager = () => {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
+  const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
+    { name: form.name, role: form.role, content: form.content },
+    {
+      name: { required: "Le nom est requis." },
+      role: { required: "Le rôle est requis." },
+      content: { required: "Le contenu est requis." },
+    },
+  );
+
   // supabase typed as any throughout this component because "testimonials"
   // is a new table not yet in the auto-generated types file.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -71,12 +83,14 @@ const TestimonialsManager = () => {
   const openAdd = () => {
     setEditing(null);
     setForm(EMPTY_FORM);
+    reset();
     setDialogOpen(true);
   };
 
   const openEdit = (t: Testimonial) => {
     setEditing(t);
     setForm({ name: t.name, role: t.role, content: t.content, photo_url: t.photo_url || "" });
+    reset();
     setDialogOpen(true);
   };
 
@@ -98,6 +112,7 @@ const TestimonialsManager = () => {
 
   // ── Save (insert or update) ──────────────────────────────────────────────
   const handleSave = async () => {
+    if (!validateAll()) return;
     if (!form.name.trim() || !form.role.trim() || !form.content.trim()) {
       toast({ title: "Champs requis", description: "Nom, rôle et contenu sont obligatoires.", variant: "destructive" });
       return;
@@ -317,37 +332,46 @@ const TestimonialsManager = () => {
           <div className="space-y-4 pt-2">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="t-name">Nom *</Label>
+                <RequiredLabel htmlFor="t-name" required>Nom</RequiredLabel>
                 <Input
                   id="t-name"
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  onBlur={() => handleBlur("name")}
+                  aria-invalid={!!showError("name")}
                   placeholder="Aminata Diallo"
                   maxLength={80}
                 />
+                <FieldError message={showError("name")} />
               </div>
               <div>
-                <Label htmlFor="t-role">Rôle / Formation *</Label>
+                <RequiredLabel htmlFor="t-role" required>Rôle / Formation</RequiredLabel>
                 <Input
                   id="t-role"
                   value={form.role}
                   onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+                  onBlur={() => handleBlur("role")}
+                  aria-invalid={!!showError("role")}
                   placeholder="Alumni Graphisme 2025"
                   maxLength={100}
                 />
+                <FieldError message={showError("role")} />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="t-content">Témoignage *</Label>
+              <RequiredLabel htmlFor="t-content" required>Témoignage</RequiredLabel>
               <Textarea
                 id="t-content"
                 rows={4}
                 maxLength={600}
                 value={form.content}
                 onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
+                onBlur={() => handleBlur("content")}
+                aria-invalid={!!showError("content")}
                 placeholder="Cette formation a complètement changé ma façon de..."
               />
+              <FieldError message={showError("content")} />
               <p className="mt-1 text-xs text-muted-foreground">{form.content.length}/600</p>
             </div>
 
@@ -427,7 +451,7 @@ const TestimonialsManager = () => {
               <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>
                 Annuler
               </Button>
-              <Button onClick={handleSave} disabled={saving || uploading}>
+              <Button onClick={handleSave} disabled={saving || uploading || !isValid}>
                 {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enregistrement...</> : "Enregistrer"}
               </Button>
             </div>

@@ -4,7 +4,9 @@ import logoDark from "@/assets/logo-dark.png";
 import logoWhite from "@/assets/logo-white.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation, isValidEmail } from "@/hooks/use-form-validation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -15,8 +17,20 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const { showError, handleBlur, isValid, validateAll } = useFormValidation(
+    { email, password },
+    {
+      email: {
+        required: "L'email est requis.",
+        validate: (v) => (isValidEmail(String(v)) ? null : "Format d'email invalide."),
+      },
+      password: { required: "Le mot de passe est requis." },
+    },
+  );
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
@@ -64,12 +78,13 @@ const Login = () => {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <Label htmlFor="login-email">Email</Label>
-              <Input id="login-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="votre@email.com" />
+              <RequiredLabel htmlFor="login-email" required>Email</RequiredLabel>
+              <Input id="login-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => handleBlur("email")} aria-invalid={!!showError("email")} placeholder="votre@email.com" />
+              <FieldError message={showError("email")} />
             </div>
             <div>
               <div className="flex items-center justify-between">
-                <Label htmlFor="login-password">Mot de passe</Label>
+                <RequiredLabel htmlFor="login-password" required>Mot de passe</RequiredLabel>
                 <Link
                   to="/forgot-password"
                   className="text-xs text-muted-foreground hover:text-foreground hover:underline"
@@ -77,9 +92,10 @@ const Login = () => {
                   Mot de passe oublié ?
                 </Link>
               </div>
-              <Input id="login-password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+              <Input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} onBlur={() => handleBlur("password")} aria-invalid={!!showError("password")} placeholder="••••••••" />
+              <FieldError message={showError("password")} />
             </div>
-            <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
+            <Button type="submit" disabled={loading || !isValid} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
               {loading ? "Connexion..." : "Se connecter"}
             </Button>
           </form>

@@ -3,6 +3,9 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation, isValidEmail, type ValidationRules } from "@/hooks/use-form-validation";
 import { Textarea } from "@/components/ui/textarea";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -57,8 +60,37 @@ const Register = () => {
   const toutesPleines = !cohortsLoading && openCohorts.length > 0 &&
     openCohorts.every((c) => (c.enrollment_count ?? 0) >= c.capacity);
 
+  const validationRules: ValidationRules = {
+    selectedCohort: { required: "Veuillez sélectionner une cohorte." },
+    ...(!user
+      ? {
+          firstName: { required: "Le prénom est requis." },
+          lastName: { required: "Le nom est requis." },
+          email: {
+            required: "L'email est requis.",
+            validate: (v) => (isValidEmail(String(v)) ? null : "Format d'email invalide."),
+          },
+          password: { required: "Le mot de passe est requis." },
+          phone: { required: "Le téléphone est requis." },
+        }
+      : {}),
+  };
+
+  const { showError, handleBlur, isValid, validateAll } = useFormValidation(
+    {
+      selectedCohort,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      password: formData.password,
+      phone: formData.phone,
+    },
+    validationRules,
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
     if (!selectedCohort) {
       toast({ title: "Erreur", description: "Veuillez sélectionner une cohorte.", variant: "destructive" });
       return;
@@ -177,7 +209,8 @@ const Register = () => {
             <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-4 sm:p-8 shadow-card">
               {/* Cohort selection */}
               <div className="mb-8">
-                <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Choisir une cohorte</h2>
+                <h2 className="mb-1 font-display text-lg font-semibold text-foreground">Choisir une cohorte</h2>
+                <FieldError message={showError("selectedCohort")} className="mb-3" />
                 <div className="grid gap-3">
                   {openCohorts.map((cohort) => {
                     const enrolled = cohort.enrollment_count ?? 0;
@@ -200,7 +233,12 @@ const Register = () => {
                         <button
                           type="button"
                           disabled={isDisabled}
-                          onClick={() => !isDisabled && setSelectedCohort(cohort.id)}
+                          onClick={() => {
+                            if (!isDisabled) {
+                              setSelectedCohort(cohort.id);
+                              handleBlur("selectedCohort");
+                            }
+                          }}
                           className={`flex-1 text-left ${isDisabled ? "cursor-default opacity-60" : "cursor-pointer"}`}
                         >
                           <div className="flex flex-wrap items-center gap-2">
@@ -254,26 +292,31 @@ const Register = () => {
                   <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Créer votre compte</h2>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
-                      <Label htmlFor="firstName">Prénom</Label>
-                      <Input id="firstName" required maxLength={50} value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} placeholder="Aminata" />
+                      <RequiredLabel htmlFor="firstName" required>Prénom</RequiredLabel>
+                      <Input id="firstName" maxLength={50} value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} onBlur={() => handleBlur("firstName")} aria-invalid={!!showError("firstName")} placeholder="Aminata" />
+                      <FieldError message={showError("firstName")} />
                     </div>
                     <div>
-                      <Label htmlFor="lastName">Nom</Label>
-                      <Input id="lastName" required maxLength={50} value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} placeholder="Diallo" />
+                      <RequiredLabel htmlFor="lastName" required>Nom</RequiredLabel>
+                      <Input id="lastName" maxLength={50} value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} onBlur={() => handleBlur("lastName")} aria-invalid={!!showError("lastName")} placeholder="Diallo" />
+                      <FieldError message={showError("lastName")} />
                     </div>
                   </div>
                   <div className="mt-4">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" required maxLength={100} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="aminata@email.com" />
+                    <RequiredLabel htmlFor="email" required>Email</RequiredLabel>
+                    <Input id="email" type="email" maxLength={100} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} onBlur={() => handleBlur("email")} aria-invalid={!!showError("email")} placeholder="aminata@email.com" />
+                    <FieldError message={showError("email")} />
                   </div>
                   <div className="mt-4">
-                    <Label htmlFor="password">Mot de passe</Label>
-                    <Input id="password" type="password" required minLength={8} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="••••••••" />
+                    <RequiredLabel htmlFor="password" required>Mot de passe</RequiredLabel>
+                    <Input id="password" type="password" minLength={8} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} onBlur={() => handleBlur("password")} aria-invalid={!!showError("password")} placeholder="••••••••" />
+                    <FieldError message={showError("password")} />
                     <PasswordStrengthIndicator password={formData.password} />
                   </div>
                   <div className="mt-4">
-                    <Label htmlFor="phone">Téléphone</Label>
-                    <Input id="phone" type="tel" required maxLength={20} value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+221 77 000 00 00" />
+                    <RequiredLabel htmlFor="phone" required>Téléphone</RequiredLabel>
+                    <Input id="phone" type="tel" maxLength={20} value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} onBlur={() => handleBlur("phone")} aria-invalid={!!showError("phone")} placeholder="+221 77 000 00 00" />
+                    <FieldError message={showError("phone")} />
                   </div>
                 </>
               )}
@@ -294,7 +337,7 @@ const Register = () => {
                 <p className="mt-1 text-xs text-muted-foreground">{formData.motivation.length}/1000 caractères</p>
               </div>
 
-              <Button type="submit" size="lg" disabled={submitting} className="mt-8 w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
+              <Button type="submit" size="lg" disabled={submitting || !isValid} className="mt-8 w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
                 {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Inscription en cours...</> : "Confirmer l'inscription"}
               </Button>
             </form>

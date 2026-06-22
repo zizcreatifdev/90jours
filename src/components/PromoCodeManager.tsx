@@ -5,6 +5,9 @@ import { useCohorts } from "@/hooks/use-cohorts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation } from "@/hooks/use-form-validation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -50,6 +53,15 @@ const PromoCodeManager = () => {
   const [saving, setSaving] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
+  const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
+    { code: form.code, discount_type: form.discount_type, discount_value: form.discount_value },
+    {
+      code: { required: "Le code est requis." },
+      discount_type: { required: "Le type de réduction est requis." },
+      discount_value: { required: true, validate: (v) => Number(v) > 0 ? null : "La valeur doit être supérieure à 0." },
+    },
+  );
+
   const fetchCodes = async () => {
     const { data, error } = await supabase
       .from("promo_codes")
@@ -73,6 +85,7 @@ const PromoCodeManager = () => {
     setEditingId(null);
     setForm(defaultForm);
     generateCode();
+    reset();
     setOpen(true);
   };
 
@@ -89,10 +102,12 @@ const PromoCodeManager = () => {
       early_bird_deadline: c.early_bird_deadline ? c.early_bird_deadline.slice(0, 16) : "",
       is_active: c.is_active,
     });
+    reset();
     setOpen(true);
   };
 
   const handleSave = async () => {
+    if (!validateAll()) return;
     if (!form.code.trim()) {
       toast({ title: "Code requis", variant: "destructive" });
       return;
@@ -164,11 +179,12 @@ const PromoCodeManager = () => {
             </DialogHeader>
             <div className="space-y-4 pt-2">
               <div>
-                <Label>Code</Label>
+                <RequiredLabel required>Code</RequiredLabel>
                 <div className="flex gap-2">
-                  <Input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))} placeholder="PROMO-XXXX" />
+                  <Input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))} onBlur={() => handleBlur("code")} aria-invalid={!!showError("code")} placeholder="PROMO-XXXX" />
                   <Button variant="outline" size="sm" onClick={generateCode} type="button">Générer</Button>
                 </div>
+                <FieldError message={showError("code")} />
               </div>
               <div>
                 <Label>Description</Label>
@@ -176,18 +192,20 @@ const PromoCodeManager = () => {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label>Type de réduction</Label>
-                  <Select value={form.discount_type} onValueChange={v => setForm(f => ({ ...f, discount_type: v }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
+                  <RequiredLabel required>Type de réduction</RequiredLabel>
+                  <Select value={form.discount_type} onValueChange={v => { setForm(f => ({ ...f, discount_type: v })); handleBlur("discount_type"); }}>
+                    <SelectTrigger aria-invalid={!!showError("discount_type")}><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="percentage">Pourcentage (%)</SelectItem>
                       <SelectItem value="fixed">Montant fixe (FCFA)</SelectItem>
                     </SelectContent>
                   </Select>
+                  <FieldError message={showError("discount_type")} />
                 </div>
                 <div>
-                  <Label>Valeur</Label>
-                  <Input type="number" min={1} value={form.discount_value} onChange={e => setForm(f => ({ ...f, discount_value: parseInt(e.target.value) || 0 }))} />
+                  <RequiredLabel required>Valeur</RequiredLabel>
+                  <Input type="number" min={1} value={form.discount_value} onChange={e => setForm(f => ({ ...f, discount_value: parseInt(e.target.value) || 0 }))} onBlur={() => handleBlur("discount_value")} aria-invalid={!!showError("discount_value")} />
+                  <FieldError message={showError("discount_value")} />
                 </div>
               </div>
               <div>
@@ -221,7 +239,7 @@ const PromoCodeManager = () => {
                 <Label>Actif</Label>
                 <Switch checked={form.is_active} onCheckedChange={v => setForm(f => ({ ...f, is_active: v }))} />
               </div>
-              <Button onClick={handleSave} disabled={saving} className="w-full">
+              <Button onClick={handleSave} disabled={saving || !isValid} className="w-full">
                 {saving ? "Enregistrement..." : editingId ? "Modifier" : "Créer le code"}
               </Button>
             </div>

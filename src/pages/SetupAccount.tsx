@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation } from "@/hooks/use-form-validation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle } from "lucide-react";
@@ -16,6 +18,17 @@ const SetupAccount = () => {
   const [loading, setLoading] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
   const [checking, setChecking] = useState(true);
+
+  const { showError, handleBlur, isValid, validateAll } = useFormValidation(
+    { password, confirmPassword },
+    {
+      password: { required: "Le mot de passe est requis." },
+      confirmPassword: {
+        required: "La confirmation du mot de passe est requise.",
+        validate: (v, all) => (v === all.password ? null : "Les mots de passe ne correspondent pas."),
+      },
+    },
+  );
 
   useEffect(() => {
     // When the user arrives from the invite link, Supabase auto-signs them in
@@ -40,6 +53,7 @@ const SetupAccount = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
 
     if (getPasswordStrength(password) === "weak") {
       toast({ title: "Mot de passe trop faible", description: "Ajoutez une majuscule, un chiffre et un caractère spécial (8 caractères minimum).", variant: "destructive" });
@@ -115,31 +129,35 @@ const SetupAccount = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-card">
           <div>
-            <Label htmlFor="password">Mot de passe</Label>
+            <RequiredLabel htmlFor="password" required>Mot de passe</RequiredLabel>
             <Input
               id="password"
               type="password"
-              required
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onBlur={() => handleBlur("password")}
+              aria-invalid={!!showError("password")}
               placeholder="••••••••"
             />
+            <FieldError message={showError("password")} />
             <PasswordStrengthIndicator password={password} />
           </div>
           <div>
-            <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
+            <RequiredLabel htmlFor="confirm-password" required>Confirmer le mot de passe</RequiredLabel>
             <Input
               id="confirm-password"
               type="password"
-              required
               minLength={8}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              onBlur={() => handleBlur("confirmPassword")}
+              aria-invalid={!!showError("confirmPassword")}
               placeholder="••••••••"
             />
+            <FieldError message={showError("confirmPassword")} />
           </div>
-          <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
+          <Button type="submit" disabled={loading || !isValid} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
             {loading ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Configuration...</>
             ) : (

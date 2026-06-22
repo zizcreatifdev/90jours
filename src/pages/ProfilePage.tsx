@@ -5,7 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation } from "@/hooks/use-form-validation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, Camera, Save, ArrowLeft, LogOut, Menu } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -23,6 +25,15 @@ const ProfilePage = () => {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const { showError, handleBlur, isValid, validateAll } = useFormValidation(
+    { firstName, lastName, phone },
+    {
+      firstName: { required: "Le prénom est requis." },
+      lastName: { required: "Le nom est requis." },
+      phone: { required: "Le téléphone est requis." },
+    }
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -141,6 +152,7 @@ const ProfilePage = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
     if (!user) return;
     setSaving(true);
     const { error } = await supabase
@@ -222,23 +234,26 @@ const ProfilePage = () => {
           <form onSubmit={handleSave} className="space-y-5">
             <div className="grid gap-5 sm:grid-cols-2">
               <div>
-                <Label htmlFor="prof-fn">Prénom</Label>
-                <Input id="prof-fn" required value={firstName} onChange={e => setFirstName(e.target.value)} />
+                <RequiredLabel htmlFor="prof-fn" required>Prénom</RequiredLabel>
+                <Input id="prof-fn" value={firstName} onChange={e => setFirstName(e.target.value)} onBlur={() => handleBlur("firstName")} aria-invalid={!!showError("firstName")} />
+                <FieldError message={showError("firstName")} />
               </div>
               <div>
-                <Label htmlFor="prof-ln">Nom</Label>
-                <Input id="prof-ln" required value={lastName} onChange={e => setLastName(e.target.value)} />
+                <RequiredLabel htmlFor="prof-ln" required>Nom</RequiredLabel>
+                <Input id="prof-ln" value={lastName} onChange={e => setLastName(e.target.value)} onBlur={() => handleBlur("lastName")} aria-invalid={!!showError("lastName")} />
+                <FieldError message={showError("lastName")} />
               </div>
             </div>
             <div>
-              <Label htmlFor="prof-phone">Téléphone <span className="text-destructive">*</span></Label>
-              <Input id="prof-phone" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="+221..." />
+              <RequiredLabel htmlFor="prof-phone" required>Téléphone</RequiredLabel>
+              <Input id="prof-phone" value={phone} onChange={e => setPhone(e.target.value)} onBlur={() => handleBlur("phone")} aria-invalid={!!showError("phone")} placeholder="+221..." />
+              <FieldError message={showError("phone")} />
             </div>
             <div className="rounded-xl bg-secondary p-4 text-sm text-muted-foreground">
               <p><span className="font-medium text-foreground">Email :</span> {user?.email}</p>
               <p className="mt-1"><span className="font-medium text-foreground">Rôle :</span> {role === "admin" ? "Administrateur" : role === "staff" ? "Staff" : "Étudiant"}</p>
             </div>
-            <Button type="submit" disabled={saving} className="w-full gap-2">
+            <Button type="submit" disabled={saving || !isValid} className="w-full gap-2">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               Enregistrer
             </Button>

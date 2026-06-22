@@ -4,6 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation, isValidEmail } from "@/hooks/use-form-validation";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,6 +36,24 @@ const WaitlistForm = ({ preselectedFormationId, onSuccess }: WaitlistFormProps) 
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const { showError, handleBlur, isValid, validateAll } = useFormValidation(
+    {
+      full_name: formData.full_name,
+      phone: formData.phone,
+      email: formData.email,
+      consentMarketing,
+    },
+    {
+      full_name: { required: "Le nom complet est requis." },
+      phone: { required: "Le téléphone est requis." },
+      email: {
+        required: "L'email est requis.",
+        validate: (v) => isValidEmail(String(v ?? "")) ? null : "Email invalide.",
+      },
+      consentMarketing: { required: "Vous devez accepter pour continuer." },
+    },
+  );
+
   const { data: formations = [] } = useQuery<Formation[]>({
     queryKey: ["formations-active"],
     queryFn: async () => {
@@ -48,6 +69,7 @@ const WaitlistForm = ({ preselectedFormationId, onSuccess }: WaitlistFormProps) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
     setError(null);
     setSubmitting(true);
 
@@ -99,41 +121,47 @@ const WaitlistForm = ({ preselectedFormationId, onSuccess }: WaitlistFormProps) 
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <Label htmlFor="wl-name">Nom complet</Label>
+          <RequiredLabel htmlFor="wl-name" required>Nom complet</RequiredLabel>
           <Input
             id="wl-name"
-            required
             maxLength={100}
             value={formData.full_name}
             onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+            onBlur={() => handleBlur("full_name")}
+            aria-invalid={!!showError("full_name")}
             placeholder="Aminata Diallo"
           />
+          <FieldError message={showError("full_name")} />
         </div>
         <div>
-          <Label htmlFor="wl-phone">Telephone</Label>
+          <RequiredLabel htmlFor="wl-phone" required>Telephone</RequiredLabel>
           <Input
             id="wl-phone"
             type="tel"
-            required
             maxLength={20}
             value={formData.phone}
             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            onBlur={() => handleBlur("phone")}
+            aria-invalid={!!showError("phone")}
             placeholder="+221 77 000 00 00"
           />
+          <FieldError message={showError("phone")} />
         </div>
       </div>
 
       <div>
-        <Label htmlFor="wl-email">Email</Label>
+        <RequiredLabel htmlFor="wl-email" required>Email</RequiredLabel>
         <Input
           id="wl-email"
           type="email"
-          required
           maxLength={100}
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          onBlur={() => handleBlur("email")}
+          aria-invalid={!!showError("email")}
           placeholder="aminata@email.com"
         />
+        <FieldError message={showError("email")} />
       </div>
 
       <div>
@@ -183,16 +211,20 @@ const WaitlistForm = ({ preselectedFormationId, onSuccess }: WaitlistFormProps) 
         <p className="mt-1 text-xs text-muted-foreground">{formData.message.length}/800</p>
       </div>
 
-      <div className="flex items-start gap-3">
-        <Checkbox
-          id="wl-consent"
-          checked={consentMarketing}
-          onCheckedChange={(v) => setConsentMarketing(!!v)}
-          className="mt-0.5 shrink-0"
-        />
-        <label htmlFor="wl-consent" className="cursor-pointer text-sm text-muted-foreground leading-snug">
-          J'accepte d'etre recontacte(e) par 60jours au sujet des formations.
-        </label>
+      <div>
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="wl-consent"
+            checked={consentMarketing}
+            onCheckedChange={(v) => { setConsentMarketing(!!v); handleBlur("consentMarketing"); }}
+            aria-invalid={!!showError("consentMarketing")}
+            className="mt-0.5 shrink-0"
+          />
+          <label htmlFor="wl-consent" className="cursor-pointer text-sm text-muted-foreground leading-snug">
+            J'accepte d'etre recontacte(e) par 60jours au sujet des formations.
+          </label>
+        </div>
+        <FieldError message={showError("consentMarketing")} />
       </div>
 
       {error && (
@@ -201,7 +233,7 @@ const WaitlistForm = ({ preselectedFormationId, onSuccess }: WaitlistFormProps) 
 
       <Button
         type="submit"
-        disabled={submitting || !consentMarketing}
+        disabled={submitting || !consentMarketing || !isValid}
         className="w-full bg-[#C5A05A] text-white hover:bg-[#b08d49] font-semibold disabled:opacity-50"
       >
         {submitting ? (

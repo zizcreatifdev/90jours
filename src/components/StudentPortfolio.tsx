@@ -5,7 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { isValidUrl } from "@/lib/validate-url";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation } from "@/hooks/use-form-validation";
 import { Badge } from "@/components/ui/badge";
 import { Briefcase, CheckCircle2, XCircle, Clock, Loader2, ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,6 +27,19 @@ const StudentPortfolio = ({ cohortId, formationName, formationColor }: StudentPo
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const { showError, handleBlur, isValid, validateAll } = useFormValidation(
+    { url },
+    {
+      url: {
+        required: "L'URL du portfolio est requise.",
+        validate: (v) =>
+          isValidUrl(String(v))
+            ? null
+            : "Veuillez entrer une URL valide commençant par http:// ou https://",
+      },
+    }
+  );
+
   useEffect(() => {
     if (!user || !cohortId) return;
     const fetch = async () => {
@@ -42,12 +57,8 @@ const StudentPortfolio = ({ cohortId, formationName, formationColor }: StudentPo
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
     if (!user || !cohortId) return;
-
-    if (!isValidUrl(url)) {
-      toast({ title: "URL invalide", description: "Veuillez entrer une URL valide commençant par http:// ou https://", variant: "destructive" });
-      return;
-    }
 
     setSaving(true);
 
@@ -115,22 +126,26 @@ const StudentPortfolio = ({ cohortId, formationName, formationColor }: StudentPo
           </a>
 
           {portfolio.status === "pending" && (
-            <form onSubmit={handleSubmit} className="flex gap-2">
-              <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://..." required className="flex-1" />
-              <Button type="submit" size="sm" disabled={saving}>
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Modifier"}
-              </Button>
+            <form onSubmit={handleSubmit} className="space-y-2">
+              <div className="flex gap-2">
+                <Input value={url} onChange={e => setUrl(e.target.value)} onBlur={() => handleBlur("url")} aria-invalid={!!showError("url")} placeholder="https://..." className="flex-1" />
+                <Button type="submit" size="sm" disabled={saving || !isValid}>
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Modifier"}
+                </Button>
+              </div>
+              <FieldError message={showError("url")} />
             </form>
           )}
           {portfolio.status === "rejected" && (
             <form onSubmit={handleSubmit} className="space-y-2">
               <p className="text-xs text-muted-foreground">Vous pouvez soumettre une nouvelle version :</p>
               <div className="flex gap-2">
-                <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://..." required className="flex-1" />
-                <Button type="submit" size="sm" disabled={saving}>
+                <Input value={url} onChange={e => setUrl(e.target.value)} onBlur={() => handleBlur("url")} aria-invalid={!!showError("url")} placeholder="https://..." className="flex-1" />
+                <Button type="submit" size="sm" disabled={saving || !isValid}>
                   {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Resoumettre"}
                 </Button>
               </div>
+              <FieldError message={showError("url")} />
             </form>
           )}
         </div>
@@ -144,10 +159,11 @@ const StudentPortfolio = ({ cohortId, formationName, formationColor }: StudentPo
           />
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <Label>URL du portfolio</Label>
-              <Input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://monportfolio.com" required type="url" />
+              <RequiredLabel htmlFor="portfolio-url" required>URL du portfolio</RequiredLabel>
+              <Input id="portfolio-url" value={url} onChange={e => setUrl(e.target.value)} onBlur={() => handleBlur("url")} aria-invalid={!!showError("url")} placeholder="https://monportfolio.com" type="url" />
+              <FieldError message={showError("url")} />
             </div>
-            <Button type="submit" disabled={saving} className="w-full">
+            <Button type="submit" disabled={saving || !isValid} className="w-full">
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Briefcase className="mr-2 h-4 w-4" />}
               Soumettre mon portfolio
             </Button>

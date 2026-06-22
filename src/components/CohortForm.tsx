@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation } from "@/hooks/use-form-validation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +39,29 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
     formation_id: (cohort as any)?.formation_id || "",
   });
 
+  const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
+    {
+      formation_id: form.formation_id,
+      name: form.name,
+      start_date: form.start_date,
+      capacity: form.capacity,
+      status: form.status,
+      cohort_type: form.cohort_type,
+    },
+    {
+      formation_id: { required: "La formation est requise." },
+      name: { required: "Le nom de la cohorte est requis." },
+      start_date: { required: "La date de début est requise." },
+      capacity: { required: true, validate: (v) => Number(v) > 0 ? null : "La capacité doit être supérieure à 0." },
+      status: { required: "Le statut est requis." },
+      cohort_type: { required: "Le type de cohorte est requis." },
+    },
+  );
+
+  useEffect(() => {
+    if (open) reset();
+  }, [open, reset]);
+
   useEffect(() => {
     const fetchFormations = async () => {
       const { data } = await supabase.from("formations").select("id, name, duration_days").eq("is_active", true).order("name");
@@ -57,6 +83,7 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
     setSaving(true);
     try {
       const payload = {
@@ -100,19 +127,21 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div>
-            <Label>Formation</Label>
-            <Select value={form.formation_id} onValueChange={v => setForm({ ...form, formation_id: v })}>
-              <SelectTrigger><SelectValue placeholder="Choisir une formation" /></SelectTrigger>
+            <RequiredLabel required>Formation</RequiredLabel>
+            <Select value={form.formation_id} onValueChange={v => { setForm({ ...form, formation_id: v }); handleBlur("formation_id"); }}>
+              <SelectTrigger aria-invalid={!!showError("formation_id")}><SelectValue placeholder="Choisir une formation" /></SelectTrigger>
               <SelectContent>
                 {formations.map(f => (
                   <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <FieldError message={showError("formation_id")} />
           </div>
           <div>
-            <Label htmlFor="name">Nom de la cohorte</Label>
-            <Input id="name" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Ex: Janvier 2026" />
+            <RequiredLabel htmlFor="name" required>Nom de la cohorte</RequiredLabel>
+            <Input id="name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} onBlur={() => handleBlur("name")} aria-invalid={!!showError("name")} placeholder="Ex: Janvier 2026" />
+            <FieldError message={showError("name")} />
           </div>
           <div>
             <Label htmlFor="desc">Description</Label>
@@ -120,8 +149,9 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="start">Date début</Label>
-              <Input id="start" type="date" required value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} />
+              <RequiredLabel htmlFor="start" required>Date début</RequiredLabel>
+              <Input id="start" type="date" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} onBlur={() => handleBlur("start_date")} aria-invalid={!!showError("start_date")} />
+              <FieldError message={showError("start_date")} />
             </div>
             <div>
               <Label htmlFor="end">Date fin (auto)</Label>
@@ -130,32 +160,35 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="cap">Capacité max</Label>
-              <Input id="cap" type="number" min={1} required value={form.capacity} onChange={e => setForm({ ...form, capacity: parseInt(e.target.value) || 25 })} />
+              <RequiredLabel htmlFor="cap" required>Capacité max</RequiredLabel>
+              <Input id="cap" type="number" min={1} value={form.capacity} onChange={e => setForm({ ...form, capacity: parseInt(e.target.value) || 25 })} onBlur={() => handleBlur("capacity")} aria-invalid={!!showError("capacity")} />
+              <FieldError message={showError("capacity")} />
             </div>
             <div>
-              <Label>Statut</Label>
-              <Select value={form.status} onValueChange={v => setForm({ ...form, status: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <RequiredLabel required>Statut</RequiredLabel>
+              <Select value={form.status} onValueChange={v => { setForm({ ...form, status: v }); handleBlur("status"); }}>
+                <SelectTrigger aria-invalid={!!showError("status")}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="upcoming">À venir</SelectItem>
                   <SelectItem value="active">En cours</SelectItem>
                   <SelectItem value="archived">Terminée</SelectItem>
                 </SelectContent>
               </Select>
+              <FieldError message={showError("status")} />
             </div>
           </div>
           <div>
-            <Label>Type de cohorte</Label>
-            <Select value={form.cohort_type} onValueChange={v => setForm({ ...form, cohort_type: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <RequiredLabel required>Type de cohorte</RequiredLabel>
+            <Select value={form.cohort_type} onValueChange={v => { setForm({ ...form, cohort_type: v }); handleBlur("cohort_type"); }}>
+              <SelectTrigger aria-invalid={!!showError("cohort_type")}><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="standard">Standard (60 jours)</SelectItem>
                 <SelectItem value="initiation">Initiation</SelectItem>
               </SelectContent>
             </Select>
+            <FieldError message={showError("cohort_type")} />
           </div>
-          <Button type="submit" disabled={saving} className="w-full">
+          <Button type="submit" disabled={saving || !isValid} className="w-full">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {cohort ? "Enregistrer" : "Créer"}
           </Button>

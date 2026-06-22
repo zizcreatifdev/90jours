@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation, isValidEmail } from "@/hooks/use-form-validation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -26,6 +29,18 @@ const FormateurManager = () => {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ email: "", first_name: "", last_name: "", formation_id: "" });
+
+  const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
+    { first_name: form.first_name, last_name: form.last_name, email: form.email },
+    {
+      first_name: { required: "Le prénom est requis." },
+      last_name: { required: "Le nom est requis." },
+      email: {
+        required: "L'email est requis.",
+        validate: (v) => isValidEmail(String(v ?? "")) ? null : "Email invalide.",
+      },
+    },
+  );
 
   const fetchData = async () => {
     setLoading(true);
@@ -95,6 +110,7 @@ const FormateurManager = () => {
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
     setSaving(true);
 
     try {
@@ -120,6 +136,7 @@ const FormateurManager = () => {
 
       setOpen(false);
       setForm({ email: "", first_name: "", last_name: "", formation_id: "" });
+      reset();
       fetchData();
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
@@ -193,17 +210,20 @@ const FormateurManager = () => {
             <form onSubmit={handleInvite} className="space-y-4 pt-2">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="inv-first">Prénom</Label>
-                  <Input id="inv-first" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} placeholder="Prénom" />
+                  <RequiredLabel htmlFor="inv-first" required>Prénom</RequiredLabel>
+                  <Input id="inv-first" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} onBlur={() => handleBlur("first_name")} aria-invalid={!!showError("first_name")} placeholder="Prénom" />
+                  <FieldError message={showError("first_name")} />
                 </div>
                 <div>
-                  <Label htmlFor="inv-last">Nom</Label>
-                  <Input id="inv-last" value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} placeholder="Nom" />
+                  <RequiredLabel htmlFor="inv-last" required>Nom</RequiredLabel>
+                  <Input id="inv-last" value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} onBlur={() => handleBlur("last_name")} aria-invalid={!!showError("last_name")} placeholder="Nom" />
+                  <FieldError message={showError("last_name")} />
                 </div>
               </div>
               <div>
-                <Label htmlFor="inv-email">Email</Label>
-                <Input id="inv-email" type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="staff@email.com" />
+                <RequiredLabel htmlFor="inv-email" required>Email</RequiredLabel>
+                <Input id="inv-email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} onBlur={() => handleBlur("email")} aria-invalid={!!showError("email")} placeholder="staff@email.com" />
+                <FieldError message={showError("email")} />
               </div>
               <div>
                 <Label>Formation à assigner <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
@@ -219,7 +239,7 @@ const FormateurManager = () => {
               <p className="text-xs text-muted-foreground">
                 Sans formation assignée, le membre sera ajouté comme assistant. Avec une formation, il sera formateur pour celle-ci.
               </p>
-              <Button type="submit" disabled={saving} className="w-full">
+              <Button type="submit" disabled={saving || !isValid} className="w-full">
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
                 Inviter
               </Button>

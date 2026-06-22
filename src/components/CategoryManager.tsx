@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation } from "@/hooks/use-form-validation";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { Plus, Loader2, Trash2, Tag } from "lucide-react";
 
@@ -20,6 +22,11 @@ const CategoryManager = () => {
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
+    { name },
+    { name: { required: "Le nom de la catégorie est requis." } },
+  );
+
   const fetchCategories = async () => {
     const { data } = await supabase.from("brief_categories").select("*").order("name");
     if (data) setCategories(data as Category[]);
@@ -30,6 +37,7 @@ const CategoryManager = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
     if (!name.trim()) return;
     setSaving(true);
     const { error } = await supabase.from("brief_categories").insert({ name: name.trim() } as any);
@@ -39,6 +47,7 @@ const CategoryManager = () => {
     } else {
       toast({ title: "Catégorie créée" });
       setName("");
+      reset();
       fetchCategories();
     }
   };
@@ -58,10 +67,11 @@ const CategoryManager = () => {
 
       <form onSubmit={handleCreate} className="flex items-end gap-3">
         <div className="flex-1">
-          <Label>Nouvelle catégorie</Label>
-          <Input value={name} onChange={e => setName(e.target.value)} placeholder="Ex: Création de flyer" required />
+          <RequiredLabel required>Nouvelle catégorie</RequiredLabel>
+          <Input value={name} onChange={e => setName(e.target.value)} onBlur={() => handleBlur("name")} aria-invalid={!!showError("name")} placeholder="Ex: Création de flyer" />
+          <FieldError message={showError("name")} />
         </div>
-        <Button type="submit" disabled={saving} size="sm">
+        <Button type="submit" disabled={saving || !isValid} size="sm">
           {saving ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Plus className="mr-1 h-4 w-4" />}
           Ajouter
         </Button>

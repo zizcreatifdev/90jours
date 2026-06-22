@@ -7,6 +7,9 @@ import { useCohorts } from "@/hooks/use-cohorts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation } from "@/hooks/use-form-validation";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -80,6 +83,30 @@ const PaymentManager = () => {
   // Users for dropdown
   const [allUsers, setAllUsers] = useState<{ user_id: string; first_name: string; last_name: string }[]>([]);
 
+  const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
+    {
+      selectedUser,
+      selectedCohort,
+      paymentType,
+      paymentStatus,
+      customAmount,
+    },
+    {
+      selectedUser: { required: "L'étudiant est requis." },
+      selectedCohort: { required: "La cohorte est requise." },
+      paymentType: { required: "Le type de paiement est requis." },
+      paymentStatus: { required: "Le statut est requis." },
+      customAmount: {
+        validate: (v, all) =>
+          all.paymentType === "formation" && !(Number(v) > 0) ? "Montant requis (> 0)." : null,
+      },
+    },
+  );
+
+  useEffect(() => {
+    if (dialogOpen) reset();
+  }, [dialogOpen, reset]);
+
   const fetchPayments = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -130,6 +157,7 @@ const PaymentManager = () => {
   }, []);
 
   const handleAddPayment = async () => {
+    if (!validateAll()) return;
     if (!selectedUser || !selectedCohort || !paymentType) {
       toast({ title: "Erreur", description: "Veuillez remplir tous les champs obligatoires.", variant: "destructive" });
       return;
@@ -367,61 +395,68 @@ const PaymentManager = () => {
                 </DialogHeader>
                 <div className="space-y-4 mt-2">
                   <div>
-                    <Label>Étudiant *</Label>
-                    <Select value={selectedUser} onValueChange={setSelectedUser}>
-                      <SelectTrigger><SelectValue placeholder="Sélectionner un étudiant" /></SelectTrigger>
+                    <RequiredLabel required>Étudiant</RequiredLabel>
+                    <Select value={selectedUser} onValueChange={(v) => { setSelectedUser(v); handleBlur("selectedUser"); }}>
+                      <SelectTrigger aria-invalid={!!showError("selectedUser")}><SelectValue placeholder="Sélectionner un étudiant" /></SelectTrigger>
                       <SelectContent>
                         {allUsers.map(u => (
                           <SelectItem key={u.user_id} value={u.user_id}>{u.first_name} {u.last_name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    <FieldError message={showError("selectedUser")} />
                   </div>
                   <div>
-                    <Label>Cohorte *</Label>
-                    <Select value={selectedCohort} onValueChange={setSelectedCohort}>
-                      <SelectTrigger><SelectValue placeholder="Sélectionner une cohorte" /></SelectTrigger>
+                    <RequiredLabel required>Cohorte</RequiredLabel>
+                    <Select value={selectedCohort} onValueChange={(v) => { setSelectedCohort(v); handleBlur("selectedCohort"); }}>
+                      <SelectTrigger aria-invalid={!!showError("selectedCohort")}><SelectValue placeholder="Sélectionner une cohorte" /></SelectTrigger>
                       <SelectContent>
                         {cohorts.filter(c => c.status !== "archived").map(c => (
                           <SelectItem key={c.id} value={c.id}>Cohorte {c.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    <FieldError message={showError("selectedCohort")} />
                   </div>
                   <div>
-                    <Label>Type de paiement *</Label>
-                    <Select value={paymentType} onValueChange={(v) => { setPaymentType(v); if (v === "inscription") setCustomAmount("10000"); }}>
-                      <SelectTrigger><SelectValue placeholder="Sélectionner" /></SelectTrigger>
+                    <RequiredLabel required>Type de paiement</RequiredLabel>
+                    <Select value={paymentType} onValueChange={(v) => { setPaymentType(v); if (v === "inscription") setCustomAmount("10000"); handleBlur("paymentType"); }}>
+                      <SelectTrigger aria-invalid={!!showError("paymentType")}><SelectValue placeholder="Sélectionner" /></SelectTrigger>
                       <SelectContent>
                         {PAYMENT_TYPES.map(t => (
                           <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    <FieldError message={showError("paymentType")} />
                   </div>
                   {paymentType === "formation" && (
                     <div>
-                      <Label>Montant (FCFA) *</Label>
+                      <RequiredLabel required>Montant (FCFA)</RequiredLabel>
                       <Input
                         type="number"
                         value={customAmount}
                         onChange={e => setCustomAmount(e.target.value)}
+                        onBlur={() => handleBlur("customAmount")}
+                        aria-invalid={!!showError("customAmount")}
                         placeholder="Ex: 25000"
                         min={1}
                         max={50000}
                       />
                       <p className="text-xs text-muted-foreground mt-1">Formation totale: 50 000 FCFA. Saisissez le montant de cette tranche.</p>
+                      <FieldError message={showError("customAmount")} />
                     </div>
                   )}
                   <div>
-                    <Label>Statut</Label>
-                    <Select value={paymentStatus} onValueChange={setPaymentStatus}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <RequiredLabel required>Statut</RequiredLabel>
+                    <Select value={paymentStatus} onValueChange={(v) => { setPaymentStatus(v); handleBlur("paymentStatus"); }}>
+                      <SelectTrigger aria-invalid={!!showError("paymentStatus")}><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="paid">Payé</SelectItem>
                         <SelectItem value="pending">En attente</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FieldError message={showError("paymentStatus")} />
                   </div>
                   <div>
                     <Label>Référence transaction Wave</Label>
@@ -431,7 +466,7 @@ const PaymentManager = () => {
                     <Label>Notes</Label>
                     <Textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes optionnelles..." rows={2} />
                   </div>
-                  <Button onClick={handleAddPayment} disabled={submitting} className="w-full">
+                  <Button onClick={handleAddPayment} disabled={submitting || !isValid} className="w-full">
                     {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enregistrement...</> : "Enregistrer le paiement"}
                   </Button>
                 </div>

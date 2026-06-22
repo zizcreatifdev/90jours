@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation } from "@/hooks/use-form-validation";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -71,6 +74,15 @@ const TaskManager = () => {
     cohort_id: "",
     deadline: "",
   });
+
+  const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
+    { title: form.title, priority: form.priority, assigned_to: form.assigned_to },
+    {
+      title: { required: "Le titre est requis." },
+      priority: { required: "La priorité est requise." },
+      assigned_to: { required: "Veuillez choisir un membre du staff." },
+    },
+  );
 
   const fetchData = async () => {
     setLoading(true);
@@ -167,6 +179,7 @@ const TaskManager = () => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
     if (!user) return;
     setSaving(true);
 
@@ -197,6 +210,7 @@ const TaskManager = () => {
       toast({ title: "Tâche créée !" });
       setOpen(false);
       setForm({ title: "", description: "", priority: "medium", assigned_to: "", cohort_id: "", deadline: "" });
+      reset();
       fetchData();
     }
     setSaving(false);
@@ -300,8 +314,9 @@ const TaskManager = () => {
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4 pt-2">
                 <div>
-                  <Label>Titre *</Label>
-                  <Input required value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Ex: Corriger les briefs semaine 3" />
+                  <RequiredLabel required>Titre</RequiredLabel>
+                  <Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} onBlur={() => handleBlur("title")} aria-invalid={!!showError("title")} placeholder="Ex: Corriger les briefs semaine 3" />
+                  <FieldError message={showError("title")} />
                 </div>
                 <div>
                   <Label>Description</Label>
@@ -309,26 +324,28 @@ const TaskManager = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label>Assigné à *</Label>
-                    <Select value={form.assigned_to} onValueChange={v => setForm({ ...form, assigned_to: v })}>
-                      <SelectTrigger><SelectValue placeholder="Choisir un staff" /></SelectTrigger>
+                    <RequiredLabel required>Assigné à</RequiredLabel>
+                    <Select value={form.assigned_to} onValueChange={v => { setForm({ ...form, assigned_to: v }); handleBlur("assigned_to"); }}>
+                      <SelectTrigger aria-invalid={!!showError("assigned_to")}><SelectValue placeholder="Choisir un staff" /></SelectTrigger>
                       <SelectContent>
                         {staffMembers.map(s => (
                           <SelectItem key={s.user_id} value={s.user_id}>{s.first_name} {s.last_name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    <FieldError message={showError("assigned_to")} />
                   </div>
                   <div>
-                    <Label>Priorité</Label>
-                    <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <RequiredLabel required>Priorité</RequiredLabel>
+                    <Select value={form.priority} onValueChange={v => { setForm({ ...form, priority: v }); handleBlur("priority"); }}>
+                      <SelectTrigger aria-invalid={!!showError("priority")}><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="high">Haute</SelectItem>
                         <SelectItem value="medium">Moyenne</SelectItem>
                         <SelectItem value="low">Basse</SelectItem>
                       </SelectContent>
                     </Select>
+                    <FieldError message={showError("priority")} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -348,7 +365,7 @@ const TaskManager = () => {
                     <Input type="datetime-local" value={form.deadline} onChange={e => setForm({ ...form, deadline: e.target.value })} />
                   </div>
                 </div>
-                <Button type="submit" disabled={saving || !form.assigned_to} className="w-full">
+                <Button type="submit" disabled={saving || !isValid} className="w-full">
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
                   Créer la tâche
                 </Button>

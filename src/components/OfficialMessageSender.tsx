@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation } from "@/hooks/use-form-validation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Send, Loader2, MessageSquarePlus, PartyPopper, Info, AlertTriangle, Globe } from "lucide-react";
@@ -30,8 +33,17 @@ const OfficialMessageSender = () => {
   const [type, setType] = useState("official");
   const [cohortId, setCohortId] = useState("all");
 
+  const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
+    { title, message },
+    {
+      title: { required: "Le titre est requis." },
+      message: { required: "Le message est requis." },
+    },
+  );
+
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
     if (!user) return;
     setSending(true);
 
@@ -73,6 +85,7 @@ const OfficialMessageSender = () => {
       setMessage("");
       setType("official");
       setCohortId("all");
+      reset();
       setOpen(false);
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
@@ -130,14 +143,16 @@ const OfficialMessageSender = () => {
             </div>
           </div>
           <div>
-            <Label htmlFor="msg-title">Titre</Label>
-            <Input id="msg-title" required maxLength={200} value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Joyeuse fête de Tabaski !" />
+            <RequiredLabel htmlFor="msg-title" required>Titre</RequiredLabel>
+            <Input id="msg-title" maxLength={200} value={title} onChange={e => setTitle(e.target.value)} onBlur={() => handleBlur("title")} aria-invalid={!!showError("title")} placeholder="Ex: Joyeuse fête de Tabaski !" />
+            <FieldError message={showError("title")} />
           </div>
           <div>
-            <Label htmlFor="msg-content">Message</Label>
-            <Textarea id="msg-content" required maxLength={2000} rows={4} value={message} onChange={e => setMessage(e.target.value)} placeholder="Rédigez votre message..." />
+            <RequiredLabel htmlFor="msg-content" required>Message</RequiredLabel>
+            <Textarea id="msg-content" maxLength={2000} rows={4} value={message} onChange={e => setMessage(e.target.value)} onBlur={() => handleBlur("message")} aria-invalid={!!showError("message")} placeholder="Rédigez votre message..." />
+            <FieldError message={showError("message")} />
           </div>
-          <Button type="submit" disabled={sending} className="w-full">
+          <Button type="submit" disabled={sending || !isValid} className="w-full">
             {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
             Envoyer à {cohortId === "all" ? "tous les étudiants" : "la cohorte"}
           </Button>

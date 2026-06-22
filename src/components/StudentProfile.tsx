@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation } from "@/hooks/use-form-validation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +20,14 @@ const StudentProfile = () => {
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+
+  const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
+    { firstName, lastName },
+    {
+      firstName: { required: "Le prénom est requis." },
+      lastName: { required: "Le nom est requis." },
+    }
+  );
 
   const loadProfile = async () => {
     if (!user || loaded) return;
@@ -35,6 +46,7 @@ const StudentProfile = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
     if (!user) return;
     setSaving(true);
     const { error } = await supabase
@@ -51,7 +63,7 @@ const StudentProfile = () => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) loadProfile(); }}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) { reset(); loadProfile(); } }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <UserCircle className="h-4 w-4" /> Mon profil
@@ -63,12 +75,14 @@ const StudentProfile = () => {
         </DialogHeader>
         <form onSubmit={handleSave} className="space-y-4 pt-2">
           <div>
-            <Label htmlFor="prof-fn">Prénom</Label>
-            <Input id="prof-fn" required value={firstName} onChange={e => setFirstName(e.target.value)} />
+            <RequiredLabel htmlFor="prof-fn" required>Prénom</RequiredLabel>
+            <Input id="prof-fn" value={firstName} onChange={e => setFirstName(e.target.value)} onBlur={() => handleBlur("firstName")} aria-invalid={!!showError("firstName")} />
+            <FieldError message={showError("firstName")} />
           </div>
           <div>
-            <Label htmlFor="prof-ln">Nom</Label>
-            <Input id="prof-ln" required value={lastName} onChange={e => setLastName(e.target.value)} />
+            <RequiredLabel htmlFor="prof-ln" required>Nom</RequiredLabel>
+            <Input id="prof-ln" value={lastName} onChange={e => setLastName(e.target.value)} onBlur={() => handleBlur("lastName")} aria-invalid={!!showError("lastName")} />
+            <FieldError message={showError("lastName")} />
           </div>
           <div>
             <Label htmlFor="prof-phone">Téléphone</Label>
@@ -77,7 +91,7 @@ const StudentProfile = () => {
           <div className="text-xs text-muted-foreground">
             Email : {user?.email}
           </div>
-          <Button type="submit" disabled={saving} className="w-full">
+          <Button type="submit" disabled={saving || !isValid} className="w-full">
             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Enregistrer
           </Button>

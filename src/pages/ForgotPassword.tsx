@@ -4,7 +4,9 @@ import logoDark from "@/assets/logo-dark.png";
 import logoWhite from "@/assets/logo-white.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation, isValidEmail } from "@/hooks/use-form-validation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
@@ -15,8 +17,19 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
+  const { showError, handleBlur, isValid, validateAll } = useFormValidation(
+    { email },
+    {
+      email: {
+        required: "L'email est requis.",
+        validate: (v) => (isValidEmail(String(v)) ? null : "Format d'email invalide."),
+      },
+    },
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
     setLoading(true);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -107,20 +120,22 @@ const ForgotPassword = () => {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="email">Adresse email</Label>
+                  <RequiredLabel htmlFor="email" required>Adresse email</RequiredLabel>
                   <Input
                     id="email"
                     type="email"
-                    required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onBlur={() => handleBlur("email")}
+                    aria-invalid={!!showError("email")}
                     placeholder="votre@email.com"
                     autoFocus
                   />
+                  <FieldError message={showError("email")} />
                 </div>
                 <Button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !isValid}
                   className="w-full bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
                 >
                   {loading ? "Envoi en cours..." : "Envoyer le lien"}

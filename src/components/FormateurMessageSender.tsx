@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation } from "@/hooks/use-form-validation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Send, Loader2, MessageSquare, Globe } from "lucide-react";
@@ -23,6 +26,14 @@ const FormateurMessageSender = () => {
   const [cohortId, setCohortId] = useState("");
   const [recipientId, setRecipientId] = useState("all");
   const [students, setStudents] = useState<{ user_id: string; first_name: string; last_name: string }[]>([]);
+
+  const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
+    { cohortId, content },
+    {
+      cohortId: { required: "Veuillez choisir une cohorte." },
+      content: { required: "Le message est requis." },
+    },
+  );
 
   // Fetch students when cohort changes
   useEffect(() => {
@@ -47,6 +58,7 @@ const FormateurMessageSender = () => {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
     if (!user || !cohortId) return;
     setSending(true);
 
@@ -88,6 +100,7 @@ const FormateurMessageSender = () => {
       setTitle("");
       setContent("");
       setRecipientId("all");
+      reset();
       setOpen(false);
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
@@ -111,8 +124,8 @@ const FormateurMessageSender = () => {
         <form onSubmit={handleSend} className="space-y-4 pt-2">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Cohorte</Label>
-              <Select value={cohortId} onValueChange={setCohortId}>
+              <RequiredLabel required>Cohorte</RequiredLabel>
+              <Select value={cohortId} onValueChange={(v) => { setCohortId(v); handleBlur("cohortId"); }}>
                 <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
                 <SelectContent>
                   {cohorts.map(c => (
@@ -120,6 +133,7 @@ const FormateurMessageSender = () => {
                   ))}
                 </SelectContent>
               </Select>
+              <FieldError message={showError("cohortId")} />
             </div>
             <div>
               <Label>Destinataire</Label>
@@ -146,10 +160,11 @@ const FormateurMessageSender = () => {
             <Input id="fmt-title" maxLength={200} value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Retour sur le brief de la semaine" />
           </div>
           <div>
-            <Label htmlFor="fmt-content">Message</Label>
-            <Textarea id="fmt-content" required maxLength={2000} rows={4} value={content} onChange={e => setContent(e.target.value)} placeholder="Rédigez votre message..." />
+            <RequiredLabel htmlFor="fmt-content" required>Message</RequiredLabel>
+            <Textarea id="fmt-content" maxLength={2000} rows={4} value={content} onChange={e => setContent(e.target.value)} onBlur={() => handleBlur("content")} aria-invalid={!!showError("content")} placeholder="Rédigez votre message..." />
+            <FieldError message={showError("content")} />
           </div>
-          <Button type="submit" disabled={sending || !cohortId || !content.trim()} className="w-full">
+          <Button type="submit" disabled={sending || !isValid} className="w-full">
             {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
             Envoyer {recipientId === "all" ? "à toute la cohorte" : "à l'étudiant"}
           </Button>

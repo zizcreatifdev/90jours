@@ -7,6 +7,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import RequiredLabel from "@/components/ui/required-label";
+import FieldError from "@/components/ui/field-error";
+import { useFormValidation } from "@/hooks/use-form-validation";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -71,6 +74,18 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
   const [feedbackEdits, setFeedbackEdits] = useState<Record<string, string>>({});
   const [savingFeedback, setSavingFeedback] = useState<Set<string>>(new Set());
 
+  const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
+    { title, deadline },
+    {
+      title: { required: "Le titre est requis." },
+      deadline: { required: "La date limite est requise." },
+    },
+  );
+
+  useEffect(() => {
+    if (open) reset();
+  }, [open, reset]);
+
   useEffect(() => {
     supabase.from("brief_categories").select("*").order("name").then(({ data }) => {
       if (data) setCategories(data as BriefCategory[]);
@@ -110,6 +125,7 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateAll()) return;
     if (!selectedCohort || !user) return;
     setSaving(true);
     const { data: newBrief, error } = await supabase.from("briefs").insert({
@@ -224,8 +240,9 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
                 </DialogHeader>
                 <form onSubmit={handleCreate} className="space-y-4 pt-2">
                   <div>
-                    <Label>Titre</Label>
-                    <Input required value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Création d'un logo" />
+                    <RequiredLabel required>Titre</RequiredLabel>
+                    <Input value={title} onChange={e => setTitle(e.target.value)} onBlur={() => handleBlur("title")} aria-invalid={!!showError("title")} placeholder="Ex: Création d'un logo" />
+                    <FieldError message={showError("title")} />
                   </div>
                   <div>
                     <Label>Description</Label>
@@ -260,10 +277,11 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
                     <p className="text-xs text-muted-foreground mt-1">Laisser vide pour publier immédiatement</p>
                   </div>
                   <div>
-                    <Label>Date limite</Label>
-                    <Input type="datetime-local" required value={deadline} onChange={e => setDeadline(e.target.value)} />
+                    <RequiredLabel required>Date limite</RequiredLabel>
+                    <Input type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)} onBlur={() => handleBlur("deadline")} aria-invalid={!!showError("deadline")} />
+                    <FieldError message={showError("deadline")} />
                   </div>
-                  <Button type="submit" disabled={saving} className="w-full">
+                  <Button type="submit" disabled={saving || !isValid} className="w-full">
                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Publier
                   </Button>
