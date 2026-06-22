@@ -17,6 +17,7 @@ interface SiteSettingsPanelProps {
     footer_email: string | null;
     footer_phone: string | null;
     footer_text: string | null;
+    wave_payment_url: string | null;
   };
   onUpdated: () => void;
 }
@@ -33,6 +34,7 @@ const SiteSettingsPanel = ({ settings, onUpdated }: SiteSettingsPanelProps) => {
   const [footerEmail, setFooterEmail] = useState(settings.footer_email || "");
   const [footerPhone, setFooterPhone] = useState(settings.footer_phone || "");
   const [footerText, setFooterText] = useState(settings.footer_text || "");
+  const [wavePaymentUrl, setWavePaymentUrl] = useState(settings.wave_payment_url || "");
 
   useEffect(() => {
     setHeroTitle(settings.hero_title || "");
@@ -40,7 +42,10 @@ const SiteSettingsPanel = ({ settings, onUpdated }: SiteSettingsPanelProps) => {
     setFooterEmail(settings.footer_email || "");
     setFooterPhone(settings.footer_phone || "");
     setFooterText(settings.footer_text || "");
+    setWavePaymentUrl(settings.wave_payment_url || "");
   }, [settings]);
+
+  const waveUrlValid = wavePaymentUrl.trim() === "" || /^https?:\/\/.+/i.test(wavePaymentUrl.trim());
 
   const updateField = async (fields: Record<string, any>) => {
     const { error } = await supabase
@@ -98,6 +103,7 @@ const SiteSettingsPanel = ({ settings, onUpdated }: SiteSettingsPanelProps) => {
         footer_email: footerEmail,
         footer_phone: footerPhone,
         footer_text: footerText,
+        wave_payment_url: wavePaymentUrl.trim(),
       });
       toast({ title: "Paramètres sauvegardés" });
       onUpdated();
@@ -205,8 +211,31 @@ const SiteSettingsPanel = ({ settings, onUpdated }: SiteSettingsPanelProps) => {
         </div>
       </div>
 
+      {/* Wave payment link */}
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+        <h3 className="mb-4 font-display text-lg font-semibold text-foreground">Paiement Wave</h3>
+        <div>
+          <Label htmlFor="wave-url">Lien de paiement Wave</Label>
+          <Input
+            id="wave-url"
+            value={wavePaymentUrl}
+            onChange={(e) => setWavePaymentUrl(e.target.value)}
+            placeholder="https://pay.wave.com/m/..."
+            className="mt-1.5"
+            aria-invalid={!waveUrlValid}
+          />
+          {!waveUrlValid ? (
+            <p className="mt-1.5 text-xs text-destructive">Le lien doit commencer par http:// ou https://.</p>
+          ) : (
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Lien marchand Wave utilisé par les boutons de paiement. Le montant exact est ajouté automatiquement par l'application.
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* Save button */}
-      <Button onClick={handleSaveText} disabled={saving} className="gap-2">
+      <Button onClick={handleSaveText} disabled={saving || !waveUrlValid} className="gap-2">
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
         Sauvegarder les textes
       </Button>

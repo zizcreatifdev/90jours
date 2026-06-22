@@ -4,6 +4,7 @@ import { sendPushToUsers } from "@/hooks/use-push-notifications";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCohorts } from "@/hooks/use-cohorts";
+import { useSiteSettings, WAVE_PAYMENT_URL_FALLBACK } from "@/hooks/use-site-settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,16 +35,12 @@ interface Payment {
   cohort?: { name: string };
 }
 
-const WAVE_BASE_URL = "https://pay.wave.com/m/M_mahK9UpbVYCm/c/sn/";
-
 const PAYMENT_TYPES = [
   { value: "inscription", label: "Inscription" },
   { value: "tranche_1", label: "Tranche 1" },
   { value: "tranche_2", label: "Tranche 2" },
   { value: "formation_complete", label: "Formation complète (en une fois)" },
 ];
-
-const getWaveLink = (amount: number) => `${WAVE_BASE_URL}?amount=${amount}`;
 
 const TYPE_LABELS: Record<string, string> = {
   inscription: "Inscription",
@@ -62,6 +59,8 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; cl
 const PaymentManager = () => {
   const { toast } = useToast();
   const { cohorts } = useCohorts();
+  const { settings } = useSiteSettings();
+  const waveBaseUrl = settings.wave_payment_url || WAVE_PAYMENT_URL_FALLBACK;
   const [payments, setPayments] = useState<Payment[]>([]);
   const [trashedPayments, setTrashedPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -282,7 +281,7 @@ const PaymentManager = () => {
   };
 
   const copyWaveLink = (amount: number) => {
-    navigator.clipboard.writeText(getWaveLink(amount));
+    navigator.clipboard.writeText(`${waveBaseUrl}?amount=${amount}`);
     toast({ title: "Lien Wave copié !" });
   };
 

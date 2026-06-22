@@ -1018,6 +1018,7 @@ export type Database = {
           id: string
           logo_url: string | null
           updated_at: string
+          wave_payment_url: string | null
         }
         Insert: {
           footer_email?: string | null
@@ -1029,6 +1030,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           updated_at?: string
+          wave_payment_url?: string | null
         }
         Update: {
           footer_email?: string | null
@@ -1040,6 +1042,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           updated_at?: string
+          wave_payment_url?: string | null
         }
         Relationships: []
       }
