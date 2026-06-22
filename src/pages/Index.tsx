@@ -1,42 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowRight, ChevronDown, Loader2, Quote, Zap } from "lucide-react";
+import { ArrowRight, Bell, ChevronDown, Loader2, Quote, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCohorts } from "@/hooks/use-cohorts";
+import type { CohortRow } from "@/hooks/use-cohorts";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 import { useHeroSlides } from "@/hooks/use-hero-slides";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-
-// ── Filière colour map ────────────────────────────────────────────────────────
-const FILIERE_COLORS: Record<string, { accent: string; glow: string; text: string; bg: string }> = {
-  graphisme: {
-    accent: "#8B5CF6",
-    glow: "rgba(139,92,246,0.35)",
-    text: "text-[#8B5CF6]",
-    bg: "bg-[#8B5CF6]",
-  },
-  motion: {
-    accent: "#F97316",
-    glow: "rgba(249,115,22,0.35)",
-    text: "text-[#F97316]",
-    bg: "bg-[#F97316]",
-  },
-  vibecoding: {
-    accent: "#0D9488",
-    glow: "rgba(13,148,136,0.35)",
-    text: "text-[#0D9488]",
-    bg: "bg-[#0D9488]",
-  },
-};
-
-const getFiliereKey = (name = ""): keyof typeof FILIERE_COLORS => {
-  const n = name.toLowerCase();
-  if (n.includes("motion")) return "motion";
-  if (n.includes("vibe") || n.includes("code") || n.includes("coding")) return "vibecoding";
-  return "graphisme";
-};
+import WaitlistForm from "@/components/WaitlistForm";
 
 // ── Testimonial type ──────────────────────────────────────────────────────────
 interface Testimonial {
@@ -71,6 +45,116 @@ const HOW_STEPS = [
   },
 ];
 
+// ── Public cohort card ────────────────────────────────────────────────────────
+interface PublicCohortCardProps {
+  cohort: CohortRow;
+  index: number;
+  formationsVisible: boolean;
+  onWaitlist: (formationId: string | null) => void;
+}
+
+const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: PublicCohortCardProps) => {
+  const enrolled = cohort.enrollment_count ?? 0;
+  const spotsLeft = cohort.capacity - enrolled;
+  const isFull = spotsLeft === 0;
+  const isAlmostFull = spotsLeft > 0 && spotsLeft <= 3;
+
+  return (
+    <div
+      className={cn(
+        "group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-white dark:bg-[#111111] transition-all duration-500 hover:-translate-y-1",
+        formationsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+      )}
+      style={{ transitionDelay: formationsVisible ? `${index * 80}ms` : "0ms" }}
+    >
+      {/* Navy header */}
+      <div className="flex items-center justify-between bg-[#0E1B2E] px-5 py-3">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C5A05A]">
+          {cohort.formation?.name ?? "Formation"}
+        </p>
+        <span
+          className={cn(
+            "rounded-full px-2.5 py-0.5 text-[10px] font-semibold",
+            cohort.formation?.level === "avance"
+              ? "bg-[#C5A05A]/25 text-[#d4b06a]"
+              : "bg-white/10 text-[#C5A05A]"
+          )}
+        >
+          {cohort.formation?.level === "avance" ? "Perfectionnement" : "Initiation"}
+        </span>
+      </div>
+
+      {/* Card body */}
+      <div className="flex flex-1 flex-col px-5 pt-5 pb-5">
+        {/* Cohort name */}
+        <h3 className="font-display text-xl font-black leading-tight text-foreground">
+          {cohort.name}
+        </h3>
+
+        {/* Description */}
+        {cohort.formation?.description && (
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground line-clamp-2">
+            {cohort.formation.description}
+          </p>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Bottom: dates, places, price, CTA */}
+        <div className="mt-4 space-y-2 border-t border-border pt-4">
+          {/* Dates */}
+          <p className="text-xs text-muted-foreground">
+            {new Date(cohort.start_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+            <span className="mx-1.5">-</span>
+            {new Date(cohort.end_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+          </p>
+          {/* Places + CTA */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-xs">
+              {isFull ? (
+                <span className="font-semibold text-destructive">Complet</span>
+              ) : isAlmostFull ? (
+                <span className="inline-flex items-center gap-1 font-semibold text-accent">
+                  <Zap className="h-3 w-3 fill-current" />
+                  {spotsLeft} place{spotsLeft > 1 ? "s" : ""} restante{spotsLeft > 1 ? "s" : ""}
+                </span>
+              ) : (
+                <span className="text-muted-foreground">{spotsLeft} places disponibles</span>
+              )}
+            </div>
+            <div className="flex shrink-0 items-center gap-3">
+              {cohort.formation?.total_price != null && (
+                <span className="text-sm font-bold text-foreground">
+                  {cohort.formation.total_price.toLocaleString("fr-FR")}{" "}
+                  <span className="text-[10px] font-normal uppercase tracking-widest text-muted-foreground">FCFA</span>
+                </span>
+              )}
+              {isFull ? (
+                <button
+                  onClick={() => onWaitlist(cohort.formation_id ?? null)}
+                  className="inline-flex items-center gap-1 rounded-lg border border-[#C5A05A] px-3 py-1.5 text-[11px] font-semibold text-[#C5A05A] transition-colors hover:bg-[#C5A05A]/10"
+                >
+                  <Bell className="h-3 w-3" />
+                  Me prévenir
+                </button>
+              ) : (
+                <Link to={`/register?cohort=${cohort.id}`}>
+                  <span className="inline-flex items-center gap-1.5 text-sm font-bold text-[#C5A05A] transition-all hover:gap-2.5">
+                    S'inscrire
+                    <ArrowRight className="h-4 w-4" />
+                  </span>
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Page component ────────────────────────────────────────────────────────────
 const Index = () => {
   const { cohorts, loading } = useCohorts();
   const { settings, loading: settingsLoading } = useSiteSettings();
@@ -80,9 +164,9 @@ const Index = () => {
   const heroTitle = settings.hero_title || "Révélez votre potentiel créatif en 60 jours";
   const heroSubtitle = settings.hero_subtitle || "Que vous soyez en reconversion, en quête de perfectionnement ou simplement curieux d'apprendre, nos formations intensives transforment votre créativité.";
 
-  const [formations, setFormations] = useState<{ id: string; name: string }[]>([]);
-  const [selectedFormation, setSelectedFormation] = useState<string>("all");
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
+  const [waitlistFormationId, setWaitlistFormationId] = useState<string | null>(null);
 
   // Testimonials
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
@@ -94,7 +178,7 @@ const Index = () => {
   const [howVisible, setHowVisible] = useState(false);
   const [formationsVisible, setFormationsVisible] = useState(false);
 
-  // Carousel images: use slides from DB. When empty, the hero shows a navy gradient fallback (no stock photo).
+  // Carousel images: use slides from DB. When empty, the hero shows a navy gradient fallback.
   const carouselImages = slides.map((s) => s.image_url);
   const isHeroReady = !slidesLoading && !settingsLoading;
 
@@ -113,15 +197,7 @@ const Index = () => {
     const interval = setInterval(() => {
       setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
     }, 5000);
-    return () => clearInterval(interval);
   }, [testimonials.length]);
-
-  // Load formations
-  useEffect(() => {
-    supabase.from("formations").select("id, name").eq("is_active", true).order("name").then(({ data }) => {
-      if (data) setFormations(data);
-    });
-  }, []);
 
   // Load visible testimonials
   useEffect(() => {
@@ -158,9 +234,10 @@ const Index = () => {
     return () => obs.disconnect();
   }, []);
 
-  const activeCohorts = cohorts
-    .filter((c) => c.status !== "archived")
-    .filter((c) => selectedFormation === "all" || c.formation_id === selectedFormation);
+  const activeCohorts = cohorts.filter((c) => c.status !== "archived");
+  const initiation = activeCohorts.filter((c) => c.formation?.level !== "avance");
+  const perfectionnement = activeCohorts.filter((c) => c.formation?.level === "avance");
+  const aucuneCohorteOuverte = !loading && activeCohorts.length === 0;
 
   const handleDashboard = () => {
     if (roles.includes("super_admin")) return "/admin";
@@ -351,169 +428,66 @@ const Index = () => {
             <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
               Choisissez la session qui correspond à votre agenda. Effectifs volontairement limités à 25 apprenants par cohorte.
             </p>
-
-            {/* Filière filter pills */}
-            {formations.length > 1 && (
-              <div className="mt-8 flex flex-wrap justify-center gap-2">
-                <button
-                  onClick={() => setSelectedFormation("all")}
-                  className={cn(
-                    "rounded-full px-5 py-2 text-sm font-semibold transition-all",
-                    selectedFormation === "all"
-                      ? "bg-accent text-accent-foreground shadow-md"
-                      : "bg-white dark:bg-[#1a1a1a] border border-border text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Toutes
-                </button>
-                {formations.map((f) => {
-                  const key = getFiliereKey(f.name);
-                  const colors = FILIERE_COLORS[key];
-                  return (
-                    <button
-                      key={f.id}
-                      onClick={() => setSelectedFormation(f.id)}
-                      style={selectedFormation === f.id ? { backgroundColor: colors.accent, color: "#fff" } : {}}
-                      className={cn(
-                        "rounded-full px-5 py-2 text-sm font-semibold transition-all",
-                        selectedFormation === f.id
-                          ? "shadow-md"
-                          : "bg-white dark:bg-[#1a1a1a] border border-border text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      {f.name}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
           </div>
 
-          {/* Cohort cards : editorial grid */}
           {loading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-accent" />
             </div>
-          ) : activeCohorts.length === 0 ? (
+          ) : aucuneCohorteOuverte ? (
             <div className="py-16 text-center">
               <p className="font-display text-xl font-semibold text-foreground">Aucune session ouverte pour le moment.</p>
-              <p className="mt-2 text-sm text-muted-foreground">De nouvelles cohortes arrivent prochainement. Revenez bientôt ou inscrivez-vous pour être informé en priorité.</p>
+              <p className="mt-2 text-sm text-muted-foreground">De nouvelles cohortes arrivent prochainement.</p>
+              <button
+                onClick={() => { setWaitlistFormationId(null); setWaitlistOpen(true); }}
+                className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#C5A05A] px-6 py-2.5 text-sm font-semibold text-[#C5A05A] transition-colors hover:bg-[#C5A05A]/10"
+              >
+                Rejoindre la liste d'attente
+              </button>
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {activeCohorts.map((cohort, i) => {
-                const key = getFiliereKey(cohort.formation?.name);
-                const colors = FILIERE_COLORS[key];
-                const enrolled = cohort.enrollment_count ?? 0;
-                const spotsLeft = cohort.capacity - enrolled;
-                const isFull = spotsLeft === 0;
-                const isAlmostFull = spotsLeft > 0 && spotsLeft <= 3;
-
-                return (
-                  <div
-                    key={cohort.id}
-                    className={cn(
-                      "group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-white dark:bg-[#111111] transition-all duration-500 hover:-translate-y-1",
-                      formationsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-                    )}
-                    style={{ transitionDelay: formationsVisible ? `${i * 80}ms` : "0ms" }}
-                  >
-                    {/* Bold left accent bar */}
-                    <div
-                      className="absolute left-0 top-0 bottom-0 w-[3px]"
-                      style={{ backgroundColor: colors.accent }}
-                    />
-
-                    <div className="flex flex-1 flex-col pl-7 pr-6 pt-6 pb-6">
-                      {/* Formation label : no pill, just colored small-caps text */}
-                      {cohort.formation && (
-                        <p
-                          className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em]"
-                          style={{ color: colors.accent }}
-                        >
-                          {cohort.formation.name}
-                        </p>
-                      )}
-
-                      {/* Cohort name : big, typographic */}
-                      <h3 className="font-display text-2xl font-black leading-tight text-foreground">
-                        {cohort.name}
-                      </h3>
-
-                      {/* Thin separator */}
-                      <div className="my-4 h-px w-10" style={{ backgroundColor: colors.accent }} />
-
-                      {/* Formation description */}
-                      {cohort.formation?.description && (
-                        <p className="mb-4 text-sm leading-relaxed text-muted-foreground line-clamp-2">
-                          {cohort.formation.description}
-                        </p>
-                      )}
-
-                      {/* Dates */}
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(cohort.start_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
-                        <span className="mx-1.5 text-border">→</span>
-                        {new Date(cohort.end_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
-                      </p>
-
-                      {/* Spots + level */}
-                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                        {isFull ? (
-                          <span className="font-semibold text-destructive">Complet</span>
-                        ) : isAlmostFull ? (
-                          <span className="inline-flex items-center gap-1 font-semibold text-accent">
-                            <Zap className="h-3 w-3 fill-current" />
-                            {spotsLeft} place{spotsLeft > 1 ? "s" : ""} restante{spotsLeft > 1 ? "s" : ""}
-                          </span>
-                        ) : (
-                          <span>{spotsLeft} places disponibles</span>
-                        )}
-                        {cohort.level && (
-                          <>
-                            <span className="text-border">·</span>
-                            <span>{cohort.level}</span>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Spacer */}
-                      <div className="flex-1" />
-
-                      {/* Price + CTA row */}
-                      <div className="mt-6 flex items-end justify-between gap-2">
-                        {cohort.total_price != null ? (
-                          <div>
-                            <p className="text-xl font-black text-foreground">
-                              {cohort.total_price.toLocaleString("fr-FR")}
-                            </p>
-                            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">FCFA</p>
-                          </div>
-                        ) : <div />}
-
-                        <Link
-                          to={isFull ? "#" : `/register?cohort=${cohort.id}`}
-                          aria-disabled={isFull}
-                          tabIndex={isFull ? -1 : undefined}
-                        >
-                          <span
-                            className={cn(
-                              "inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-bold transition-all",
-                              isFull
-                                ? "cursor-not-allowed text-muted-foreground"
-                                : "hover:gap-2.5"
-                            )}
-                            style={isFull ? {} : { color: colors.accent }}
-                          >
-                            {isFull ? "Complet" : "S'inscrire"}
-                            {!isFull && <ArrowRight className="h-4 w-4" />}
-                          </span>
-                        </Link>
-                      </div>
-                    </div>
+            <div className="space-y-14">
+              {/* Zone Initiation */}
+              {initiation.length > 0 && (
+                <div>
+                  <div className="mb-6 flex items-center gap-4">
+                    <h3 className="font-display text-2xl font-bold text-foreground">Initiation</h3>
+                    <div className="h-px flex-1 bg-border" />
                   </div>
-                );
-              })}
+                  <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {initiation.map((cohort, i) => (
+                      <PublicCohortCard
+                        key={cohort.id}
+                        cohort={cohort}
+                        index={i}
+                        formationsVisible={formationsVisible}
+                        onWaitlist={(formationId) => { setWaitlistFormationId(formationId); setWaitlistOpen(true); }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Zone Perfectionnement */}
+              {perfectionnement.length > 0 && (
+                <div>
+                  <div className="mb-6 flex items-center gap-4">
+                    <h3 className="font-display text-2xl font-bold text-foreground">Perfectionnement</h3>
+                    <div className="h-px flex-1 bg-border" />
+                  </div>
+                  <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {perfectionnement.map((cohort, i) => (
+                      <PublicCohortCard
+                        key={cohort.id}
+                        cohort={cohort}
+                        index={i}
+                        formationsVisible={formationsVisible}
+                        onWaitlist={(formationId) => { setWaitlistFormationId(formationId); setWaitlistOpen(true); }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -667,12 +641,7 @@ const Index = () => {
               <p className="text-sm leading-relaxed text-white/60 max-w-xs">
                 {settings.footer_text || "Des formations intensives qui transforment votre créativité en 60 jours."}
               </p>
-              {/* Filière colour dots */}
-              <div className="mt-5 flex gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#8B5CF6]" title="Graphisme" />
-                <span className="h-2.5 w-2.5 rounded-full bg-[#F97316]" title="Motion Design" />
-                <span className="h-2.5 w-2.5 rounded-full bg-[#0D9488]" title="Vibecoding" />
-              </div>
+              <div className="mt-5 h-px w-12 bg-[#C5A05A]/40" />
             </div>
 
             {/* Col 2 : Navigation */}
@@ -715,6 +684,19 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      {/* Waitlist dialog */}
+      <Dialog open={waitlistOpen} onOpenChange={setWaitlistOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl font-bold text-foreground">Liste d'attente</DialogTitle>
+          </DialogHeader>
+          <WaitlistForm
+            preselectedFormationId={waitlistFormationId}
+            onSuccess={() => setTimeout(() => setWaitlistOpen(false), 2500)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
