@@ -17,7 +17,7 @@ const defaults: SiteSettings = {
   hero_subtitle: "Des formations intensives qui transforment votre créativité en 60 jours.",
   logo_url: null,
   footer_email: "info@60jours.com",
-  footer_phone: "+225 07 00 00 00 00",
+  footer_phone: "+221 77 000 00 00",
   footer_text: "Des formations intensives qui transforment votre créativité en 60 jours.",
 };
 

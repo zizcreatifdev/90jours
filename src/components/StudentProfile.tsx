@@ -72,7 +72,7 @@ const StudentProfile = () => {
           </div>
           <div>
             <Label htmlFor="prof-phone">Téléphone</Label>
-            <Input id="prof-phone" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+225..." />
+            <Input id="prof-phone" value={phone} onChange={e => setPhone(e.target.value)} placeholder="+221..." />
           </div>
           <div className="text-xs text-muted-foreground">
             Email : {user?.email}

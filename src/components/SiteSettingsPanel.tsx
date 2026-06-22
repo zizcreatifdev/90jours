@@ -197,7 +197,7 @@ const SiteSettingsPanel = ({ settings, onUpdated }: SiteSettingsPanelProps) => {
                 id="footer-phone"
                 value={footerPhone}
                 onChange={(e) => setFooterPhone(e.target.value)}
-                placeholder="+225 07 00 00 00 00"
+                placeholder="+221 77 000 00 00"
                 className="mt-1.5"
               />
             </div>

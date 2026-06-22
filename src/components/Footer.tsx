@@ -36,7 +36,7 @@ const Footer = () => {
           <div>
             <h4 className="mb-3 font-display text-sm font-semibold uppercase tracking-wider opacity-60">Contact</h4>
             <p className="text-sm opacity-80">{settings.footer_email || "info@60jours.com"}</p>
-            <p className="text-sm opacity-80">{settings.footer_phone || "+225 07 00 00 00 00"}</p>
+            <p className="text-sm opacity-80">{settings.footer_phone || "+221 77 000 00 00"}</p>
           </div>
         </div>
         <div className="mt-8 border-t border-primary-foreground/10 pt-6 text-center text-xs opacity-50">

@@ -132,6 +132,8 @@ const Register = () => {
     }
   };
 
+  const showWaitlistOnly = aucuneCohorteOuverte || toutesPleines;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -139,23 +141,43 @@ const Register = () => {
         <div className="mx-auto max-w-2xl">
           <div className="mb-8 text-center">
             <h1 className="mb-3 font-display text-3xl font-bold text-foreground">Inscription</h1>
-            <p className="text-muted-foreground">Rejoignez notre prochaine cohorte, 60 jours de formation.</p>
+            <p className="text-muted-foreground">
+              {showWaitlistOnly
+                ? "Rejoignez notre liste d'attente pour etre notifie en priorite."
+                : "Rejoignez notre prochaine cohorte, 60 jours de formation."}
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-4 sm:p-8 shadow-card">
-            {/* Cohort selection */}
-            <div className="mb-8">
-              <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Choisir une cohorte</h2>
-              {cohortsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-accent" />
-                </div>
-              ) : aucuneCohorteOuverte ? (
-                <div className="rounded-xl border border-border bg-muted/40 p-6 text-center">
-                  <p className="font-display font-semibold text-foreground">Aucune cohorte ouverte pour le moment</p>
-                  <p className="mt-1 text-sm text-muted-foreground">Inscrivez-vous sur la liste d'attente pour etre notifie en priorite.</p>
-                </div>
-              ) : (
+          {/* ── Chargement ── */}
+          {cohortsLoading && (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-accent" />
+            </div>
+          )}
+
+          {/* ── Waitlist uniquement (aucune cohorte ou toutes pleines) ── */}
+          {!cohortsLoading && showWaitlistOnly && (
+            <div className="rounded-2xl border border-[#C5A05A]/30 bg-card p-4 sm:p-8 shadow-card">
+              <div className="mb-6 rounded-xl bg-[#C5A05A]/8 px-5 py-4 text-center">
+                <p className="font-display font-bold text-foreground">
+                  {aucuneCohorteOuverte
+                    ? "Pas de cohorte ouverte en ce moment"
+                    : "Toutes les cohortes sont completes"}
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Laissez vos coordonnees et nous vous contacterons en priorite a l'ouverture de la prochaine session.
+                </p>
+              </div>
+              <WaitlistForm preselectedFormationId={null} />
+            </div>
+          )}
+
+          {/* ── Formulaire d'inscription (au moins une cohorte disponible) ── */}
+          {!cohortsLoading && !showWaitlistOnly && (
+            <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-4 sm:p-8 shadow-card">
+              {/* Cohort selection */}
+              <div className="mb-8">
+                <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Choisir une cohorte</h2>
                 <div className="grid gap-3">
                   {openCohorts.map((cohort) => {
                     const enrolled = cohort.enrollment_count ?? 0;
@@ -224,86 +246,64 @@ const Register = () => {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Personal info */}
+              {!user && (
+                <>
+                  <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Créer votre compte</h2>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <Label htmlFor="firstName">Prénom</Label>
+                      <Input id="firstName" required maxLength={50} value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} placeholder="Aminata" />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName">Nom</Label>
+                      <Input id="lastName" required maxLength={50} value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} placeholder="Diallo" />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" required maxLength={100} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="aminata@email.com" />
+                  </div>
+                  <div className="mt-4">
+                    <Label htmlFor="password">Mot de passe</Label>
+                    <Input id="password" type="password" required minLength={8} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="••••••••" />
+                    <PasswordStrengthIndicator password={formData.password} />
+                  </div>
+                  <div className="mt-4">
+                    <Label htmlFor="phone">Téléphone</Label>
+                    <Input id="phone" type="tel" required maxLength={20} value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+221 77 000 00 00" />
+                  </div>
+                </>
               )}
-            </div>
 
-            {/* Personal info */}
-            {!user && (
-              <>
-                <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Créer votre compte</h2>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <Label htmlFor="firstName">Prénom</Label>
-                    <Input id="firstName" required maxLength={50} value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} placeholder="Aminata" />
-                  </div>
-                  <div>
-                    <Label htmlFor="lastName">Nom</Label>
-                    <Input id="lastName" required maxLength={50} value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} placeholder="Diallo" />
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" required maxLength={100} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="aminata@email.com" />
-                </div>
-                <div className="mt-4">
-                  <Label htmlFor="password">Mot de passe</Label>
-                  <Input id="password" type="password" required minLength={8} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="••••••••" />
-                  <PasswordStrengthIndicator password={formData.password} />
-                </div>
-                <div className="mt-4">
-                  <Label htmlFor="phone">Téléphone</Label>
-                  <Input id="phone" type="tel" required maxLength={20} value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+225 07 00 00 00 00" />
-                </div>
-              </>
-            )}
+              {/* Motivation */}
+              <div className="mt-6">
+                <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Votre motivation</h2>
+                <Label htmlFor="motivation">Pourquoi souhaitez-vous rejoindre cette formation ?</Label>
+                <Textarea
+                  id="motivation"
+                  maxLength={1000}
+                  rows={4}
+                  value={formData.motivation}
+                  onChange={(e) => setFormData({ ...formData, motivation: e.target.value })}
+                  placeholder="Parlez-nous de votre parcours, vos objectifs et ce qui vous motive à apprendre le graphisme..."
+                  className="mt-1"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">{formData.motivation.length}/1000 caractères</p>
+              </div>
 
-            {/* Motivation */}
-            <div className="mt-6">
-              <h2 className="mb-4 font-display text-lg font-semibold text-foreground">Votre motivation</h2>
-              <Label htmlFor="motivation">Pourquoi souhaitez-vous rejoindre cette formation ?</Label>
-              <Textarea
-                id="motivation"
-                maxLength={1000}
-                rows={4}
-                value={formData.motivation}
-                onChange={(e) => setFormData({ ...formData, motivation: e.target.value })}
-                placeholder="Parlez-nous de votre parcours, vos objectifs et ce qui vous motive à apprendre le graphisme..."
-                className="mt-1"
-              />
-              <p className="mt-1 text-xs text-muted-foreground">{formData.motivation.length}/1000 caractères</p>
-            </div>
-
-            <Button type="submit" size="lg" disabled={submitting} className="mt-8 w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
-              {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Inscription en cours...</> : "Confirmer l'inscription"}
-            </Button>
-          </form>
-
-          {/* Waitlist CTA when no cohorts available or all full */}
-          {(aucuneCohorteOuverte || toutesPleines) && (
-            <div className="mt-6 rounded-2xl border border-[#C5A05A]/30 bg-[#C5A05A]/5 p-6 text-center">
-              <p className="font-display font-semibold text-foreground">
-                {aucuneCohorteOuverte
-                  ? "Pas de cohorte ouverte en ce moment"
-                  : "Toutes les cohortes sont completes"}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Inscrivez-vous sur la liste d'attente et nous vous contacterons en priorite.
-              </p>
-              <Button
-                type="button"
-                onClick={() => { setWaitlistFormationId(null); setWaitlistOpen(true); }}
-                className="mt-4 bg-[#C5A05A] text-white hover:bg-[#b08d49] font-semibold"
-              >
-                <Bell className="mr-2 h-4 w-4" />
-                Rejoindre la liste d'attente
+              <Button type="submit" size="lg" disabled={submitting} className="mt-8 w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">
+                {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Inscription en cours...</> : "Confirmer l'inscription"}
               </Button>
-            </div>
+            </form>
           )}
         </div>
       </div>
       <Footer />
 
-      {/* Waitlist dialog */}
+      {/* Waitlist dialog for individual full-cohort "Me prevenir" buttons */}
       <Dialog open={waitlistOpen} onOpenChange={setWaitlistOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>

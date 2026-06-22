@@ -704,7 +704,7 @@ const Index = () => {
             <div>
               <h4 className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/40">Contact</h4>
               <p className="text-sm text-white/60">{settings.footer_email || "info@60jours.com"}</p>
-              <p className="mt-1 text-sm text-white/60">{settings.footer_phone || "+225 07 00 00 00 00"}</p>
+              <p className="mt-1 text-sm text-white/60">{settings.footer_phone || "+221 77 000 00 00"}</p>
             </div>
           </div>
 

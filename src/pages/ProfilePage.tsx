@@ -232,7 +232,7 @@ const ProfilePage = () => {
             </div>
             <div>
               <Label htmlFor="prof-phone">Téléphone <span className="text-destructive">*</span></Label>
-              <Input id="prof-phone" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="+225..." />
+              <Input id="prof-phone" required value={phone} onChange={e => setPhone(e.target.value)} placeholder="+221..." />
             </div>
             <div className="rounded-xl bg-secondary p-4 text-sm text-muted-foreground">
               <p><span className="font-medium text-foreground">Email :</span> {user?.email}</p>

@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 22 juin 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: charte (suppression de tous les tirets longs em-dash et demi-cadratin)
+**Prompt actuel**: fix (liste d'attente exclusive sur /register + indicatif +221 Senegal)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
