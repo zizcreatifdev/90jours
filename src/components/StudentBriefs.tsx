@@ -137,7 +137,7 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
         toast({ title: "Erreur", description: error.message, variant: "destructive" });
       }
     } else {
-      toast({ title: isLate ? `Brief réalisé avec ${delayDays} jour(s) de retard` : "Brief marqué comme réalisé ✓" });
+      toast({ title: isLate ? `Brief réalisé avec ${delayDays} jour(s) de retard` : "Brief marqué comme réalisé." });
       await refreshSubmissions();
     }
   };
@@ -152,7 +152,7 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: submission.is_late ? `Brief livré avec ${submission.delay_days} jour(s) de retard` : "Brief livré avec succès ! 🎉" });
+      toast({ title: submission.is_late ? `Brief livré avec ${submission.delay_days} jour(s) de retard` : "Brief livré avec succès." });
 
       if (submission.is_late) {
         const { data: admins } = await supabase.from("user_roles").select("user_id").eq("role", "super_admin");
@@ -161,7 +161,7 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
           const studentName = profile ? `${profile.first_name} ${profile.last_name}` : user.email;
           const notifications = admins.map((a: any) => ({
             user_id: a.user_id,
-            title: "⚠️ Brief livré en retard",
+            title: "Brief livré en retard",
             message: `${studentName} a livré le brief "${brief.title}" avec ${submission.delay_days} jour(s) de retard.`,
             type: "urgent",
             created_by: user.id,
@@ -274,9 +274,7 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
                             ? "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400"
                             : "bg-orange-100 text-orange-700 dark:bg-orange-950/50 dark:text-orange-400"
                         )}>
-                          {isCritical
-                            ? `🔴 ${Math.round(hoursUntilDeadline)}h`
-                            : `⚠️ ${Math.round(hoursUntilDeadline)}h`}
+                          {Math.round(hoursUntilDeadline)}h
                         </span>
                       )}
 
@@ -290,7 +288,7 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
                       {/* Fréquence */}
                       {brief.brief_frequency && (
                         <Badge variant="outline" className="text-xs">
-                          {brief.brief_frequency === "daily" ? "📅 Journalier" : "📆 Hebdomadaire"}
+                          {brief.brief_frequency === "daily" ? "Journalier" : "Hebdomadaire"}
                         </Badge>
                       )}
                     </div>
@@ -319,20 +317,20 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
                     <div className="ml-6 flex items-center gap-3 text-xs text-muted-foreground mt-1">
                       <span>Deadline : {deadlineDate.toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
                       {sub?.is_late && (
-                        <span className="text-orange-500 font-medium">⚠ {sub.delay_days} jour(s) de retard</span>
+                        <span className="text-orange-500 font-medium">{sub.delay_days} jour(s) de retard</span>
                       )}
                       {isDelivered && !sub?.is_late && (
-                        <span className="text-green-600 font-medium">✓ Livré à temps</span>
+                        <span className="text-green-600 font-medium">Livré à temps</span>
                       )}
                       {isCompleted && (
-                        <span className="text-blue-500 font-medium">⏳ En attente de livraison</span>
+                        <span className="text-blue-500 font-medium">En attente de livraison</span>
                       )}
                     </div>
 
                     {/* Feedback formateur */}
                     {sub?.feedback && (
                       <div className="ml-6 mt-2 rounded-lg border border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20 px-3 py-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400 mb-0.5">💬 Feedback formateur</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400 mb-0.5">Feedback formateur</p>
                         <p className="text-xs text-foreground/80">{sub.feedback}</p>
                       </div>
                     )}

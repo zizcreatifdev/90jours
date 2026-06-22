@@ -122,7 +122,7 @@ const Register = () => {
         toast({ title: "Inscription enregistrée !", description: "Veuillez lire et signer votre contrat de formation." });
         setTimeout(() => navigate(`/contract-sign?cohort_id=${selectedCohort}`), 1200);
       } else {
-        toast({ title: "Inscription réussie ! 🎉", description: "Bienvenue dans votre espace étudiant." });
+        toast({ title: "Inscription réussie !", description: "Bienvenue dans votre espace étudiant." });
         setTimeout(() => navigate("/student"), 2000);
       }
     } catch (err: any) {

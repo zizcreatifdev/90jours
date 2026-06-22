@@ -83,7 +83,7 @@ const CohortCard = ({ cohort }: CohortCardProps) => {
 
       {!isFull && spotsLeft <= 3 && (
         <p className="mb-1.5 text-xs font-semibold text-orange-600 dark:text-orange-400 animate-pulse">
-          ⚡ Plus que {spotsLeft} place{spotsLeft > 1 ? "s" : ""} disponible{spotsLeft > 1 ? "s" : ""} !
+          Plus que {spotsLeft} place{spotsLeft > 1 ? "s" : ""} disponible{spotsLeft > 1 ? "s" : ""} !
         </p>
       )}
       <div className="mb-2 flex items-center justify-between text-sm">

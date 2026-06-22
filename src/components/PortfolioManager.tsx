@@ -72,7 +72,7 @@ const PortfolioManager = ({ filterCohortIds }: PortfolioManagerProps = {}) => {
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: status === "validated" ? "Portfolio validé ✓" : "Portfolio rejeté" });
+      toast({ title: status === "validated" ? "Portfolio validé" : "Portfolio rejeté" });
       setReviewOpen(false);
       setPortfolios(prev => prev.map(p => p.id === currentPortfolio.id ? { ...p, status, admin_notes: adminNotes, validated_at: status === "validated" ? new Date().toISOString() : null } : p));
     }

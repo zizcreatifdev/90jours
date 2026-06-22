@@ -506,7 +506,7 @@ const StudentDashboard = () => {
                           <div className="flex items-center gap-2 rounded-xl bg-green-50 dark:bg-green-950/20 px-3 py-2.5 text-sm text-green-700 dark:text-green-400">
                             <Award className="h-4 w-4 shrink-0" />
                             <div>
-                              <p className="font-semibold">Contrat signé ✅</p>
+                              <p className="font-semibold">Contrat signé</p>
                               <p className="text-xs opacity-80">
                                 Le {new Date(contract.signed_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
                               </p>
@@ -522,7 +522,7 @@ const StudentDashboard = () => {
                         <div className="space-y-3">
                           <div className="flex items-center gap-2 rounded-xl bg-amber-50 dark:bg-amber-950/20 px-3 py-2.5 text-sm text-amber-700 dark:text-amber-400">
                             <FileSignature className="h-4 w-4 shrink-0" />
-                            <p className="font-medium">Contrat non signé ⚠️</p>
+                            <p className="font-medium">Contrat non signé</p>
                           </div>
                           <Link to={`/contract-sign?cohort_id=${cohort.id}`}>
                             <Button size="sm" className="w-full">Signer mon contrat</Button>

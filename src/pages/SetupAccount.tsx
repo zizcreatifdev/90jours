@@ -58,7 +58,7 @@ const SetupAccount = () => {
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Compte configuré ! 🎉", description: "Vous pouvez maintenant accéder à votre espace." });
+      toast({ title: "Compte configuré !", description: "Vous pouvez maintenant accéder à votre espace." });
       // Redirect based on role
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {

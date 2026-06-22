@@ -217,7 +217,7 @@ const ContractSign = () => {
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Contrat signé ✅", description: "Votre inscription est confirmée. Bienvenue !" });
+      toast({ title: "Contrat signé.", description: "Votre inscription est confirmée. Bienvenue !" });
       navigate("/student");
     }
   };
@@ -367,7 +367,7 @@ const ContractSign = () => {
                   </p>
                 )}
                 {accepted && sigName.trim().toLowerCase() === fullName.toLowerCase() && sigName.trim() !== "" && (
-                  <p className="text-xs text-green-600 dark:text-green-400">✓ Signature valide</p>
+                  <p className="text-xs text-green-600 dark:text-green-400">Signature valide</p>
                 )}
               </div>
 

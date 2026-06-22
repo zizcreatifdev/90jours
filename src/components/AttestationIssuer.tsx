@@ -286,7 +286,7 @@ const AttestationIssuer = () => {
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Attestation délivrée ! 🎓" });
+      toast({ title: "Attestation délivrée." });
       setStudents(prev => prev.map(s => s.user_id === studentId ? { ...s, has_attestation: true } : s));
     }
     setIssuing(null);
@@ -327,7 +327,7 @@ const AttestationIssuer = () => {
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: `${eligible.length} attestation(s) délivrée(s) ! 🎓` });
+      toast({ title: `${eligible.length} attestation(s) délivrée(s).` });
       setStudents(prev => prev.map(s =>
         eligible.find(e => e.user_id === s.user_id) ? { ...s, has_attestation: true } : s
       ));

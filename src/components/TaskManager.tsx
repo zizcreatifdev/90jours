@@ -324,9 +324,9 @@ const TaskManager = () => {
                     <Select value={form.priority} onValueChange={v => setForm({ ...form, priority: v })}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="high">🔴 Haute</SelectItem>
-                        <SelectItem value="medium">🟡 Moyenne</SelectItem>
-                        <SelectItem value="low">🟢 Basse</SelectItem>
+                        <SelectItem value="high">Haute</SelectItem>
+                        <SelectItem value="medium">Moyenne</SelectItem>
+                        <SelectItem value="low">Basse</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Send, Loader2, MessageSquare } from "lucide-react";
+import { Send, Loader2, MessageSquare, Globe } from "lucide-react";
 
 const FormateurMessageSender = () => {
   const { user } = useAuth();
@@ -74,17 +74,17 @@ const FormateurMessageSender = () => {
           user_id: uid,
           cohort_id: cohortId,
           type: "official" as string,
-          title: `💬 Message du formateur : ${title || "Nouveau message"}`,
+          title: `Message du formateur : ${title || "Nouveau message"}`,
           message: content.substring(0, 200),
           created_by: user.id,
         }));
         await supabase.from("notifications").insert(notifications);
 
         // Send push notifications
-        sendPushToUsers(targetIds, `💬 Message du formateur : ${title || "Nouveau message"}`, content.substring(0, 200));
+        sendPushToUsers(targetIds, `Message du formateur : ${title || "Nouveau message"}`, content.substring(0, 200));
       }
 
-      toast({ title: `Message envoyé ! 🎉` });
+      toast({ title: "Message envoyé." });
       setTitle("");
       setContent("");
       setRecipientId("all");
@@ -126,7 +126,12 @@ const FormateurMessageSender = () => {
               <Select value={recipientId} onValueChange={setRecipientId}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">🌐 Toute la cohorte</SelectItem>
+                  <SelectItem value="all">
+                    <span className="flex items-center gap-2">
+                      <Globe className="h-4 w-4 shrink-0" />
+                      Toute la cohorte
+                    </span>
+                  </SelectItem>
                   {students.map(s => (
                     <SelectItem key={s.user_id} value={s.user_id}>
                       {s.first_name} {s.last_name}

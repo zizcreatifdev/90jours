@@ -186,7 +186,7 @@ const PaymentManager = () => {
       if (newStatus === "paid" && payment) {
         sendPushToUsers(
           [payment.user_id],
-          "✅ Paiement validé",
+          "Paiement validé",
           `Votre paiement de ${payment.amount.toLocaleString("fr-FR")} FCFA a été validé.`
         );
       }

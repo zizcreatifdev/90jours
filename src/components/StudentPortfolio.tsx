@@ -64,7 +64,7 @@ const StudentPortfolio = ({ cohortId, formationName, formationColor }: StudentPo
       }).select().single();
       setSaving(false);
       if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-      else { toast({ title: "Portfolio soumis ! 🎉" }); setPortfolio(data); }
+      else { toast({ title: "Portfolio soumis." }); setPortfolio(data); }
     }
   };
 

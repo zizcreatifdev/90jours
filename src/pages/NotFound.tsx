@@ -38,7 +38,7 @@ const NotFound = () => {
         <text
           x="64"
           y="210"
-          fontFamily="Georgia, 'Times New Roman', serif"
+          fontFamily="Fraunces, Georgia, serif"
           fontSize="200"
           fontWeight="bold"
           fill="none"
@@ -51,7 +51,7 @@ const NotFound = () => {
         <text
           x="64"
           y="210"
-          fontFamily="Georgia, 'Times New Roman', serif"
+          fontFamily="Fraunces, Georgia, serif"
           fontSize="200"
           fontWeight="bold"
           fill="#C5A05A"
@@ -64,7 +64,7 @@ const NotFound = () => {
         <text
           x="186"
           y="210"
-          fontFamily="Georgia, 'Times New Roman', serif"
+          fontFamily="Fraunces, Georgia, serif"
           fontSize="200"
           fontWeight="bold"
           fill="none"
@@ -77,7 +77,7 @@ const NotFound = () => {
         <text
           x="186"
           y="210"
-          fontFamily="Georgia, 'Times New Roman', serif"
+          fontFamily="Fraunces, Georgia, serif"
           fontSize="200"
           fontWeight="bold"
           fill="#C5A05A"
@@ -90,7 +90,7 @@ const NotFound = () => {
         <text
           x="344"
           y="210"
-          fontFamily="Georgia, 'Times New Roman', serif"
+          fontFamily="Fraunces, Georgia, serif"
           fontSize="200"
           fontWeight="bold"
           fill="none"
@@ -103,7 +103,7 @@ const NotFound = () => {
         <text
           x="344"
           y="210"
-          fontFamily="Georgia, 'Times New Roman', serif"
+          fontFamily="Fraunces, Georgia, serif"
           fontSize="200"
           fontWeight="bold"
           fill="#C5A05A"

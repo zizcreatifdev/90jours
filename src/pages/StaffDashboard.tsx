@@ -223,17 +223,17 @@ const StaffDashboard = () => {
     const expectedPct = (daysPassed / totalDays) * 100;
     if (expectedPct < 10) return null;
     const ratio = progress / expectedPct;
-    if (ratio >= 0.75) return { label: "En bonne voie", emoji: "🟢", color: "text-green-700 dark:text-green-400", bg: "bg-green-50 dark:bg-green-950/30" };
-    if (ratio >= 0.4) return { label: "Attention", emoji: "🟠", color: "text-orange-700 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-950/30" };
-    return { label: "En difficulté", emoji: "🔴", color: "text-red-700 dark:text-red-400", bg: "bg-red-50 dark:bg-red-950/30" };
+    if (ratio >= 0.75) return { label: "En bonne voie", level: "green", dot: "bg-green-500", color: "text-green-700 dark:text-green-400", bg: "bg-green-50 dark:bg-green-950/30" };
+    if (ratio >= 0.4) return { label: "Attention", level: "orange", dot: "bg-orange-500", color: "text-orange-700 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-950/30" };
+    return { label: "En difficulté", level: "red", dot: "bg-red-500", color: "text-red-700 dark:text-red-400", bg: "bg-red-50 dark:bg-red-950/30" };
   };
 
   const healthCounts = filteredStudents.reduce(
     (acc: { green: number; orange: number; red: number; unknown: number }, s: any) => {
       const h = getStudentHealth(s.progress);
       if (!h) acc.unknown++;
-      else if (h.emoji === "🟢") acc.green++;
-      else if (h.emoji === "🟠") acc.orange++;
+      else if (h.level === "green") acc.green++;
+      else if (h.level === "orange") acc.orange++;
       else acc.red++;
       return acc;
     },
@@ -341,9 +341,9 @@ const StaffDashboard = () => {
                   <h2 className="font-display text-lg font-semibold text-foreground">Étudiants inscrits</h2>
                   {(healthCounts.green + healthCounts.orange + healthCounts.red) > 0 && (
                     <div className="flex items-center gap-3 mt-1">
-                      <span className="text-[11px] font-medium text-green-600 dark:text-green-400">🟢 {healthCounts.green}</span>
-                      <span className="text-[11px] font-medium text-orange-600 dark:text-orange-400">🟠 {healthCounts.orange}</span>
-                      <span className="text-[11px] font-medium text-red-600 dark:text-red-400">🔴 {healthCounts.red}</span>
+                      <span className="flex items-center gap-1 text-[11px] font-medium text-green-600 dark:text-green-400"><span className="inline-block h-2 w-2 rounded-full bg-green-500" />{healthCounts.green}</span>
+                      <span className="flex items-center gap-1 text-[11px] font-medium text-orange-600 dark:text-orange-400"><span className="inline-block h-2 w-2 rounded-full bg-orange-500" />{healthCounts.orange}</span>
+                      <span className="flex items-center gap-1 text-[11px] font-medium text-red-600 dark:text-red-400"><span className="inline-block h-2 w-2 rounded-full bg-red-500" />{healthCounts.red}</span>
                     </div>
                   )}
                 </div>
@@ -399,8 +399,8 @@ const StaffDashboard = () => {
                               const h = getStudentHealth(s.progress);
                               if (!h) return <span className="text-xs text-muted-foreground/50">-</span>;
                               return (
-                                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${h.color} ${h.bg}`}>
-                                  {h.emoji} {h.label}
+                                <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold ${h.color} ${h.bg}`}>
+                                  <span className={`inline-block h-1.5 w-1.5 rounded-full ${h.dot}`} />{h.label}
                                 </span>
                               );
                             })()}

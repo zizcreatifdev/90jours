@@ -281,7 +281,7 @@ const StudentMessages = ({ cohortId }: StudentMessagesProps) => {
                             {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                           </Button>
                           <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyContent(""); }}>
-                            ✕
+                            Annuler
                           </Button>
                         </div>
                       </div>

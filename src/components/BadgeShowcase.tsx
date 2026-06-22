@@ -1,56 +1,49 @@
-/**
- * BadgeShowcase.tsx
- *
- * Grid of 5 student achievement badges: earned ones are colored,
- * unearned ones are locked (grayscale). When `newBadge` is set,
- * a confetti burst plays for ~2.5 s.
- */
-
 import { useState, useEffect } from "react";
-import { Lock } from "lucide-react";
+import { Lock, PenLine, Flame, Palette, GraduationCap, Zap, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BadgeType, StudentBadge } from "@/hooks/use-student-badges";
+import type { LucideIcon } from "lucide-react";
 
 // ── Badge definitions ─────────────────────────────────────────────────────────
 
 interface BadgeDef {
-  emoji: string;
+  Icon: LucideIcon;
   label: string;
   description: string;
-  earned: string;   // Tailwind classes when earned
+  earned: string;
 }
 
 const BADGE_DEFS: Record<BadgeType, BadgeDef> = {
   first_brief: {
-    emoji: "✍️",
+    Icon: PenLine,
     label: "Premier pas",
     description: "Soumettre son premier brief",
     earned:
       "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800",
   },
   streak_7: {
-    emoji: "🔥",
+    Icon: Flame,
     label: "Flamme 7j",
     description: "Actif 7 jours consécutifs",
     earned:
       "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800",
   },
   portfolio_validated: {
-    emoji: "🎨",
-    label: "Portfolio ✓",
+    Icon: Palette,
+    label: "Portfolio",
     description: "Portfolio approuvé par un formateur",
     earned:
       "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-800",
   },
   cohort_completed: {
-    emoji: "🎓",
+    Icon: GraduationCap,
     label: "Diplômé",
     description: "Cohorte terminée avec succès",
     earned:
       "bg-green-100 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-400 dark:border-green-800",
   },
   early_payment: {
-    emoji: "⚡",
+    Icon: Zap,
     label: "Early bird",
     description: "Paiement effectué avant la rentrée",
     earned:
@@ -115,7 +108,6 @@ const Confetti = () => {
           }}
         />
       ))}
-      {/* Scoped keyframes injected once per mount */}
       <style>{`
         @keyframes badge-confetti-fall {
           0%   { transform: translateY(0)    rotate(0deg);   opacity: 1; }
@@ -159,7 +151,7 @@ const BadgeShowcase = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-            <span aria-hidden>🏅</span> Mes badges
+            <Award className="h-5 w-5 text-accent" aria-hidden="true" /> Mes badges
           </h2>
           <span className="rounded-full bg-secondary px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
             {earnedCount}/{BADGE_ORDER.length}
@@ -199,13 +191,14 @@ const BadgeShowcase = ({
                         : "border-border bg-muted/20 opacity-40"
                     )}
                   >
-                    {/* Icon / emoji */}
+                    {/* Icon */}
                     <span
-                      className="text-2xl leading-none"
+                      className="flex h-7 w-7 items-center justify-center"
                       aria-hidden="true"
-                      style={{ filter: earned ? "none" : "grayscale(100%)" }}
                     >
-                      {earned ? def.emoji : <Lock className="h-5 w-5 mx-auto text-muted-foreground" />}
+                      {earned
+                        ? <def.Icon className="h-6 w-6" />
+                        : <Lock className="h-5 w-5 text-muted-foreground" />}
                     </span>
 
                     {/* Label */}
@@ -238,7 +231,7 @@ const BadgeShowcase = ({
             </div>
             {earnedCount === BADGE_ORDER.length && (
               <p className="mt-1.5 text-center text-xs font-semibold text-green-600 dark:text-green-400">
-                🎉 Tous les badges débloqués !
+                Tous les badges débloqués !
               </p>
             )}
           </div>

@@ -131,7 +131,7 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
       // Send push to enrolled students if published now
       if (!publishAt || new Date(publishAt) <= new Date()) {
         const studentIds = students.map((s: any) => s.user_id);
-        sendPushToUsers(studentIds, `📝 Nouveau brief : ${title}`, description?.substring(0, 200) || "Un nouveau brief a été ajouté.");
+        sendPushToUsers(studentIds, `Nouveau brief : ${title}`, description?.substring(0, 200) || "Un nouveau brief a été ajouté.");
       }
 
       setTitle(""); setDescription(""); setDeadline(""); setPublishAt(""); setCategoryId(""); setBriefFrequency(""); setOpen(false);
@@ -166,7 +166,7 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
       if (feedback.trim()) {
         await supabase.from("notifications").insert({
           user_id: userId,
-          title: "💬 Nouveau feedback formateur",
+          title: "Feedback formateur",
           message: `Votre formateur a laissé un commentaire sur le brief "${briefTitle}".`,
           type: "feedback",
           created_by: user?.id,
@@ -301,7 +301,7 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
                           )}
                           {brief.brief_frequency && (
                             <Badge variant="outline" className="text-xs">
-                              {brief.brief_frequency === "daily" ? "📅 Journalier" : "📆 Hebdomadaire"}
+                              {brief.brief_frequency === "daily" ? "Journalier" : "Hebdomadaire"}
                             </Badge>
                           )}
                         </div>
@@ -309,7 +309,7 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
                         <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                           {new Date(brief.publish_at) > now && (
                             <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 px-2 py-0.5 font-medium">
-                              📅 Programmé : {new Date(brief.publish_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                              Programmé : {new Date(brief.publish_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                             </span>
                           )}
                           <span>Deadline : {deadlineDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
@@ -370,7 +370,7 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
                                             ? "bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400"
                                             : "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400"
                                         }`}>
-                                          {sub.status === "delivered" ? "✓ Livré" : "⏳ Réalisé"}
+                                          {sub.status === "delivered" ? "Livré" : "Réalisé"}
                                         </span>
                                       ) : (
                                         <span className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-muted text-muted-foreground">

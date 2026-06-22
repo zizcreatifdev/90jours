@@ -90,7 +90,7 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
       link.download = `attestation-${cohort?.name || "formation"}.png`;
       link.href = canvas.toDataURL("image/png");
       link.click();
-      toast({ title: "Attestation téléchargée ! 🎓" });
+      toast({ title: "Attestation téléchargée." });
     } catch {
       toast({ title: "Erreur lors du téléchargement", variant: "destructive" });
     }
@@ -114,7 +114,7 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
       {isEligible ? (
         <div className="space-y-4">
           <div className="rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 p-3">
-            <p className="text-sm text-green-700 dark:text-green-400 font-medium">🎓 Félicitations ! Votre attestation est disponible.</p>
+            <p className="text-sm text-green-700 dark:text-green-400 font-medium">Félicitations ! Votre attestation est disponible.</p>
             <p className="text-xs text-green-600 dark:text-green-500 mt-1">N° {attestation.certificate_number}</p>
           </div>
 
