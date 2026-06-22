@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle, Loader2 } from "lucide-react";
 
 interface WaitlistFormProps {
@@ -27,6 +28,7 @@ const WaitlistForm = ({ preselectedFormationId, onSuccess }: WaitlistFormProps) 
     formation_other: "",
     message: "",
   });
+  const [consentMarketing, setConsentMarketing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +57,7 @@ const WaitlistForm = ({ preselectedFormationId, onSuccess }: WaitlistFormProps) 
         email: formData.email.trim().toLowerCase(),
         phone: formData.phone.trim(),
         message: formData.message.trim() || null,
+        consent_marketing: true,
       };
 
       if (formData.formation_id && formData.formation_id !== "other") {
@@ -180,14 +183,26 @@ const WaitlistForm = ({ preselectedFormationId, onSuccess }: WaitlistFormProps) 
         <p className="mt-1 text-xs text-muted-foreground">{formData.message.length}/800</p>
       </div>
 
+      <div className="flex items-start gap-3">
+        <Checkbox
+          id="wl-consent"
+          checked={consentMarketing}
+          onCheckedChange={(v) => setConsentMarketing(!!v)}
+          className="mt-0.5 shrink-0"
+        />
+        <label htmlFor="wl-consent" className="cursor-pointer text-sm text-muted-foreground leading-snug">
+          J'accepte d'etre recontacte(e) par 60jours au sujet des formations.
+        </label>
+      </div>
+
       {error && (
         <p className="rounded-lg bg-destructive/10 px-4 py-2 text-sm text-destructive">{error}</p>
       )}
 
       <Button
         type="submit"
-        disabled={submitting}
-        className="w-full bg-[#C5A05A] text-white hover:bg-[#b08d49] font-semibold"
+        disabled={submitting || !consentMarketing}
+        className="w-full bg-[#C5A05A] text-white hover:bg-[#b08d49] font-semibold disabled:opacity-50"
       >
         {submitting ? (
           <>

@@ -18,6 +18,7 @@ interface WaitlistRow {
   formation_other: string | null;
   message: string | null;
   status: "pending" | "contacted" | "converted";
+  consent_marketing: boolean;
   created_at: string;
   formation?: { name: string } | null;
 }
@@ -106,6 +107,7 @@ const WaitlistManager = () => {
       { key: "formation_other", label: "Autre formation" },
       { key: "status", label: "Statut" },
       { key: "message", label: "Message" },
+      { key: "consent_marketing", label: "Consentement" },
       { key: "created_at", label: "Date" },
     ]);
   };
@@ -188,6 +190,7 @@ const WaitlistManager = () => {
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Nom</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Contact</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Formation</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Consentement</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Date</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-widest text-muted-foreground">Statut</th>
                 </tr>
@@ -217,6 +220,16 @@ const WaitlistManager = () => {
                       {row.formation?.name ?? row.formation_other ?? (
                         <span className="italic opacity-60">Non precise</span>
                       )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={cn(
+                        "rounded-full px-2 py-0.5 text-xs font-semibold",
+                        row.consent_marketing
+                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                          : "bg-muted text-muted-foreground"
+                      )}>
+                        {row.consent_marketing ? "Oui" : "Non"}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                       <span className="flex items-center gap-1.5">

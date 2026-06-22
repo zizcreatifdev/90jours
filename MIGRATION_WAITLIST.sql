@@ -10,9 +10,10 @@ CREATE TABLE IF NOT EXISTS public.waitlist (
   formation_id    UUID NULL REFERENCES public.formations(id) ON DELETE SET NULL,
   formation_other TEXT NULL,
   message         TEXT NULL,
-  status          TEXT NOT NULL DEFAULT 'pending'
-                    CHECK (status IN ('pending', 'contacted', 'converted')),
-  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+  status              TEXT NOT NULL DEFAULT 'pending'
+                        CHECK (status IN ('pending', 'contacted', 'converted')),
+  consent_marketing   BOOLEAN NOT NULL DEFAULT false,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- ─── Indexes ─────────────────────────────────────────────────────────────────
