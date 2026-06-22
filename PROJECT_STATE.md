@@ -1,8 +1,8 @@
 # PROJECT_STATE.md — État du Projet
 
-**Dernière mise à jour**: 21 juin 2026
+**Dernière mise à jour**: 22 juin 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: restyle-public-1 (palette nuit+doré, Fraunces, hero premium)
+**Prompt actuel**: fix-superadmin-cta (masquer S'inscrire pour super_admin sur la page d'accueil)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.

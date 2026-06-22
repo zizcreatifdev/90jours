@@ -76,6 +76,7 @@ const Index = () => {
   const { settings, loading: settingsLoading } = useSiteSettings();
   const { slides, loading: slidesLoading } = useHeroSlides();
   const { user, roles } = useAuth();
+  const isSuperAdmin = roles.includes("super_admin");
   const heroTitle = settings.hero_title || "Révélez votre potentiel créatif en 60 jours";
   const heroSubtitle = settings.hero_subtitle || "Que vous soyez en reconversion, en quête de perfectionnement ou simplement curieux d'apprendre, nos formations intensives transforment votre créativité.";
 
@@ -202,15 +203,17 @@ const Index = () => {
 
           {/* Nav links */}
           <div className="flex items-center gap-3">
-            <Link to="/register">
-              <Button
-                size="sm"
-                variant="outline"
-                className="rounded-full border border-white/20 bg-white/5 text-white backdrop-blur-sm transition-colors hover:border-accent/60 hover:text-accent text-xs md:text-sm px-4 md:px-5"
-              >
-                S'inscrire
-              </Button>
-            </Link>
+            {!isSuperAdmin && (
+              <Link to="/register">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-full border border-white/20 bg-white/5 text-white backdrop-blur-sm transition-colors hover:border-accent/60 hover:text-accent text-xs md:text-sm px-4 md:px-5"
+                >
+                  S'inscrire
+                </Button>
+              </Link>
+            )}
             {user ? (
               <Link to={handleDashboard()}>
                 <Button
@@ -244,14 +247,25 @@ const Index = () => {
             {heroSubtitle}
           </p>
           <div className="mt-6">
-            <Link to="/register">
-              <Button
-                size="lg"
-                className="rounded-full bg-accent px-8 font-semibold text-accent-foreground shadow-lg shadow-[#C5A05A]/25 transition-all hover:bg-[#d4b06a] hover:shadow-[#C5A05A]/40"
-              >
-                S'inscrire maintenant
-              </Button>
-            </Link>
+            {isSuperAdmin ? (
+              <Link to="/admin">
+                <Button
+                  size="lg"
+                  className="rounded-full bg-accent px-8 font-semibold text-accent-foreground shadow-lg shadow-[#C5A05A]/25 transition-all hover:bg-[#d4b06a] hover:shadow-[#C5A05A]/40"
+                >
+                  Mon espace
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/register">
+                <Button
+                  size="lg"
+                  className="rounded-full bg-accent px-8 font-semibold text-accent-foreground shadow-lg shadow-[#C5A05A]/25 transition-all hover:bg-[#d4b06a] hover:shadow-[#C5A05A]/40"
+                >
+                  S'inscrire maintenant
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
