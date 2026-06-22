@@ -26,7 +26,13 @@ interface CohortRow {
   start_date: string;
   end_date: string;
   formation_id: string | null;
-  formations: { name: string; price: number | null } | null;
+  formations: {
+    name: string;
+    price: number | null;
+    registration_fee: number | null;
+    total_price: number | null;
+    deliverable_label: string | null;
+  } | null;
 }
 
 interface TemplateRow {
@@ -79,7 +85,7 @@ const ContractSign = () => {
       // 2. Fetch cohort + formation
       const { data: cohort } = await supabase
         .from("cohorts")
-        .select("id, name, start_date, end_date, formation_id, formations:formation_id(name, price)")
+        .select("id, name, start_date, end_date, formation_id, formations:formation_id(name, price, registration_fee, total_price, deliverable_label)")
         .eq("id", cohortId)
         .maybeSingle();
 
@@ -154,7 +160,16 @@ const ContractSign = () => {
         }),
         montant: formation?.price != null
           ? `${formation.price.toLocaleString("fr-FR")} FCFA`
+          : formation?.total_price != null
+            ? `${formation.total_price.toLocaleString("fr-FR")} FCFA`
+            : "À définir",
+        frais_inscription: formation?.registration_fee != null
+          ? `${formation.registration_fee.toLocaleString("fr-FR")} FCFA`
           : "À définir",
+        cout_total: formation?.total_price != null
+          ? `${formation.total_price.toLocaleString("fr-FR")} FCFA`
+          : "À définir",
+        livrable: formation?.deliverable_label?.trim() || "le livrable final",
         date_signature: now.toLocaleDateString("fr-FR", {
           day: "numeric", month: "long", year: "numeric",
         }),

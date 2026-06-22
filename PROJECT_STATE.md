@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 22 juin 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: paiement-B2 : retard soft non bloquant + fix bugs payment-reminders
+**Prompt actuel**: refonte-contrat : nouveau design premium + contenu rédigé + variables livrable/dates
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -22,7 +22,7 @@
 | Pages | 10 |
 | Hooks custom | 9 |
 | Tables Supabase | 33 |
-| Migrations SQL | 43 |
+| Migrations SQL | 44 |
 | Edge Functions | 7 |
 | Tests | 63 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator + 9 EmptyState) |
 | Couverture tests | ~25% (ProtectedRoute + validate-url + AuthContext + export-csv + PasswordStrengthIndicator + EmptyState) |
@@ -347,3 +347,4 @@
 | vercel-spa-rewrite | 2026-06-22 | Création vercel.json (rewrite `/(.*) -> /index.html`) : corrige le 404 Vercel générique sur rafraîchissement et accès direct aux routes non-racine (ex. /admin?tab=overview). netlify.toml conservé sans modification. build OK | ✅ Terminé |
 | paiement-etudiant-B1 | 2026-06-22 | DB: migration wave_link (site_settings.wave_payment_url TEXT défaut = lien marchand historique) + MIGRATION_WAVE_LINK.sql racine. Lien Wave éditable depuis l'admin: use-site-settings expose wave_payment_url (+ repli WAVE_PAYMENT_URL_FALLBACK), SiteSettingsPanel champ "Lien de paiement Wave" (validation http(s)), PaymentManager et StudentPaymentStatus lisent le lien depuis site_settings (constantes codées en dur supprimées). FIX régression comptabilisation: StudentPaymentStatus somme désormais TOUS les types (inscription / tranche_1 / tranche_2 / formation_complete / formation hérité). Vue étudiant: toggle "Payer en 1 fois" / "Payer en 2 tranches" (état d'affichage), échéances J+15 (inscription) / J+30 (formation ou tranche 1) / J+60 (tranche 2) calculées depuis cohort.start_date via date-fns, chaque bouton Wave ouvre `${wave_url}?amount=${montant}` au montant exact de la ligne, bouton solde global au montant restant. Déclaration enregistre le bon payment_type selon la ligne. types.ts site_settings synchronisé. build OK 62/62 ✅ | ✅ Terminé |
 | paiement-B2 | 2026-06-22 | PARTIE A: badge retard soft non bloquant dans StudentPaymentStatus.tsx — `overdueCount(deadlineDays, isPaid)` via differenceInDays date-fns — si date dépassée ET non payé: bandeau amber "En retard depuis X jours" (AlertCircle + bg-yellow-500/10 text-yellow-700) sous la ligne concernée — aucun bouton bloqué — inscription (J+15), formation/tranche1 (J+30), tranche2 (J+60) — si formationFullyPaid: aucune tranche en retard. PARTIE B: Edge Function payment-reminders — FIX bug 1: `amount/100` et colonne `currency` inexistante retirés, affichage `amount.toLocaleString("fr-FR") + " FCFA"` — FIX bug 2: deduplication 7 jours (query notifications WHERE type="payment" AND created_at > now-7j par user_id), skip si deja rappele cette semaine. build OK 62/62 ✅ | ✅ Terminé |
+| refonte-contrat | 2026-06-22 | PARTIE A variables: le moteur réel utilise `{{double_accolade}}` en français (regex ne matche QUE `{{...}}`). Ajout de `{{livrable}}` (formations.deliverable_label), `{{frais_inscription}}` (registration_fee) et `{{cout_total}}` (total_price) dans fillTemplate (ContractSign), chips cliquables + DEMO_VARS (ContractTemplateEditor). La date de signature existe déjà sous `{{date_signature}}` (format d MMMM yyyy, ré-injectée au moment de la signature dans handleSign) et est réutilisée. ContractSign: requête cohort enrichie (registration_fee, total_price, deliverable_label). PARTIE B contenu: nouveau contrat rédigé (parties Organisme/Apprenant + Articles 1 Objet, 2 Engagement Apprenant, 3 Conditions financières, 4 Délivrance attestation 2 conditions, 5 Engagement Organisme, 6 Dispositions générales droit sénégalais + pied "Fait le {{date_signature}}"). PARTIE C design: document premium CSS inline scopé `.contract-doc` (Fraunces serif via @import, filet doré #C5A05A sous titre, numéros d'articles en pastilles dorées, palette navy #0E1B2E sur fond crème #FBFAF8, fin-box prix). Template appliqué via nouvelle migration `20260623120000_contract_template_premium.sql` + `MIGRATION_CONTRAT_PREMIUM.sql` racine (UPDATE template générique actif, fallback INSERT). Logique de signature INTACTE (scroll, case, nom exact, snapshot), SignedContractsPanel non touché. À EXÉCUTER sur Supabase: MIGRATION_CONTRAT_PREMIUM.sql (le contenu vit en base). build OK 62/62 ✅ | ✅ Terminé |
