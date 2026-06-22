@@ -109,17 +109,17 @@ export const useStudentBadges = () => {
         (s: { completed_at: string }) => s.completed_at
       );
 
-      // 1. first_brief — at least one submission exists
+      // 1. first_brief: at least one submission exists
       if (!earnedTypes.has("first_brief") && submissionDates.length > 0) {
         toAward.push({ badge_type: "first_brief", metadata: {} });
       }
 
-      // 2. streak_7 — 7 consecutive active days
+      // 2. streak_7: 7 consecutive active days
       if (!earnedTypes.has("streak_7") && hasStreak7(submissionDates)) {
         toAward.push({ badge_type: "streak_7", metadata: {} });
       }
 
-      // 3. portfolio_validated — any portfolio with status validated
+      // 3. portfolio_validated: any portfolio with status validated
       if (!earnedTypes.has("portfolio_validated")) {
         const { data: pf } = await supabase
           .from("portfolios")
@@ -132,7 +132,7 @@ export const useStudentBadges = () => {
         }
       }
 
-      // 4. cohort_completed — current cohort is completed
+      // 4. cohort_completed: current cohort is completed
       if (!earnedTypes.has("cohort_completed") && cohortStatus === "completed") {
         toAward.push({
           badge_type: "cohort_completed",
@@ -140,7 +140,7 @@ export const useStudentBadges = () => {
         });
       }
 
-      // 5. early_payment — payment confirmed before cohort start date
+      // 5. early_payment: payment confirmed before cohort start date
       if (!earnedTypes.has("early_payment") && cohortStartDate) {
         const { data: ep } = await supabase
           .from("payments")

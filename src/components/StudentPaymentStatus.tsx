@@ -265,7 +265,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
               <p className="text-sm font-medium text-foreground">Formation</p>
               <p className="text-xs text-muted-foreground">
                 {fmt(formationPaid)} / {fmt(formationAmount)}
-                {formationPaid > 0 && formationPaid < formationAmount && ` — Reste ${fmt(formationAmount - formationPaid)}`}
+                {formationPaid > 0 && formationPaid < formationAmount && `, reste ${fmt(formationAmount - formationPaid)}`}
               </p>
             </div>
           </div>
@@ -295,7 +295,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
                   <StatusIcon status={p.status} />
                   <div>
                     <p className="text-xs font-medium text-foreground">
-                      {p.payment_type === "inscription" ? "Inscription" : "Formation"} — {fmt(p.amount)}
+                      {p.payment_type === "inscription" ? "Inscription" : "Formation"} : {fmt(p.amount)}
                     </p>
                     <p className="text-[11px] text-muted-foreground">
                       {p.paid_at

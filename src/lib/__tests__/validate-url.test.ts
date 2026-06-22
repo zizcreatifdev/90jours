@@ -20,7 +20,7 @@ describe("isValidUrl", () => {
     expect(isValidUrl("https://www.behance.net/user/portfolio")).toBe(true);
   });
 
-  // ─── Vecteurs XSS — doivent être rejetés ─────────────────────────────────
+  // ─── Vecteurs XSS, doivent être rejetés ─────────────────────────────────
 
   it("rejette javascript: (XSS classique)", () => {
     expect(isValidUrl("javascript:alert(1)")).toBe(false);

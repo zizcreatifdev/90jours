@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 const fillTemplate = (html: string, vars: Record<string, string>): string =>
   Object.entries(vars).reduce(
-    (acc, [k, v]) => acc.replace(new RegExp(`\\{\\{${k}\\}\\}`, "g"), v || "—"),
+    (acc, [k, v]) => acc.replace(new RegExp(`\\{\\{${k}\\}\\}`, "g"), v || "-"),
     html
   );
 
@@ -114,7 +114,7 @@ const ContractSign = () => {
       }
 
       if (!template) {
-        // No template available — skip contract step
+        // No template available : skip contract step
         navigate("/student");
         return;
       }
@@ -316,7 +316,7 @@ const ContractSign = () => {
                 <FileSignature className="h-4 w-4" /> Signer le contrat
               </h2>
 
-              {/* Step 1 — Scroll */}
+              {/* Step 1 : Scroll */}
               <div className={cn(
                 "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
                 scrolledToBottom
@@ -329,7 +329,7 @@ const ContractSign = () => {
                 Lire l'intégralité du contrat
               </div>
 
-              {/* Step 2 — Checkbox */}
+              {/* Step 2 : Checkbox */}
               <div className={cn(
                 "rounded-xl border p-4 transition-colors",
                 accepted ? "border-green-200 bg-green-50/50 dark:border-green-800/40 dark:bg-green-950/20" : "border-border"
@@ -348,7 +348,7 @@ const ContractSign = () => {
                 </label>
               </div>
 
-              {/* Step 3 — Name */}
+              {/* Step 3 : Name */}
               <div className="space-y-2">
                 <Label htmlFor="sig-name" className={cn(!accepted && "opacity-40")}>
                   Votre nom complet (signature numérique)

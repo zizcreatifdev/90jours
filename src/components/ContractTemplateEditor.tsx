@@ -175,7 +175,7 @@ const ContractTemplateEditor = () => {
                     <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{t.description}</p>
                   )}
                   <p className="text-xs text-muted-foreground/60 mt-0.5">
-                    {t.formation_id ? "Formation spécifique" : "Générique"} — Mis à jour le {new Date(t.updated_at).toLocaleDateString("fr-FR")}
+                    {t.formation_id ? "Formation spécifique" : "Générique"}, mis à jour le {new Date(t.updated_at).toLocaleDateString("fr-FR")}
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">

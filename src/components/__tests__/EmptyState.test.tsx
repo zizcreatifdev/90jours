@@ -27,7 +27,7 @@ describe("EmptyState", () => {
 
   it("n'affiche pas de description quand elle est absente", () => {
     const { container } = render(<EmptyState icon={MessageSquare} title="Titre" />);
-    // Only the heading should have text — no extra paragraph
+    // Only the heading should have text, no extra paragraph
     expect(container.querySelectorAll("p").length).toBe(0);
   });
 

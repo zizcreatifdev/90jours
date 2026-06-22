@@ -1,5 +1,5 @@
 /**
- * payment-reminders — Edge Function (cron)
+ * payment-reminders : Edge Function (cron)
  *
  * Runs every day at 09:00 UTC (configured in supabase/config.toml).
  * Finds payments that have been in "pending" status for more than 30 days, then:

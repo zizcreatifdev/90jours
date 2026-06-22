@@ -201,7 +201,7 @@ const StudentProfilePage = () => {
                     <Calendar className="h-3.5 w-3.5" />
                     Inscrit le {enrollments[0]
                       ? format(new Date(enrollments[0].enrolled_at), "dd MMM yyyy", { locale: fr })
-                      : "—"}
+                      : "-"}
                   </span>
                 </div>
 
@@ -288,7 +288,7 @@ const StudentProfilePage = () => {
                       {submissions.map(s => (
                         <tr key={s.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
                           <td className="px-5 py-3 text-sm font-medium text-foreground">
-                            {s.briefs?.title || "—"}
+                            {s.briefs?.title || "-"}
                           </td>
                           <td className="px-5 py-3">
                             {s.status === "delivered" ? (

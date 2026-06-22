@@ -45,7 +45,7 @@ const COL_TWO = [
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-describe("exportToCsv — headers", () => {
+describe("exportToCsv, headers", () => {
   it("génère le header depuis les labels des colonnes (sans guillemets)", () => {
     exportToCsv("test.csv", [{ val: "x" }], COL_VAL);
     // \uFEFF precedes the header on the first line
@@ -58,14 +58,14 @@ describe("exportToCsv — headers", () => {
   });
 });
 
-describe("exportToCsv — BOM UTF-8", () => {
+describe("exportToCsv, BOM UTF-8", () => {
   it("commence par le BOM UTF-8 (U+FEFF)", () => {
     exportToCsv("test.csv", [], COL_VAL);
     expect(state.csv.charCodeAt(0)).toBe(0xfeff);
   });
 });
 
-describe("exportToCsv — valeurs normales", () => {
+describe("exportToCsv, valeurs normales", () => {
   it("entoure chaque valeur de guillemets doubles", () => {
     exportToCsv("test.csv", [{ val: "Alice" }], COL_VAL);
     expect(state.csv.split("\n")[1]).toBe('"Alice"');
@@ -80,25 +80,25 @@ describe("exportToCsv — valeurs normales", () => {
   });
 });
 
-describe("exportToCsv — caractères spéciaux", () => {
+describe("exportToCsv, caractères spéciaux", () => {
   it("protège les valeurs contenant des virgules (déjà entre guillemets)", () => {
     exportToCsv("test.csv", [{ val: "Martin, Jr." }], COL_VAL);
     expect(state.csv.split("\n")[1]).toBe('"Martin, Jr."');
   });
 
-  it('échappe les guillemets doubles en les doublant — RFC 4180 ("" → """")', () => {
+  it('échappe les guillemets doubles en les doublant, RFC 4180 ("" → """")', () => {
     exportToCsv("test.csv", [{ val: 'say "hi"' }], COL_VAL);
     expect(state.csv.split("\n")[1]).toBe('"say ""hi"""');
   });
 
-  it("préserve les retours à la ligne dans les valeurs (RFC 4180 — champ cité)", () => {
+  it("préserve les retours à la ligne dans les valeurs (RFC 4180, champ cité)", () => {
     exportToCsv("test.csv", [{ val: "ligne1\nligne2" }], COL_VAL);
-    // Ne pas splitter par \n ici — la valeur en contient un
+    // Ne pas splitter par \n ici, la valeur en contient un
     expect(state.csv).toContain('"ligne1\nligne2"');
   });
 });
 
-describe("exportToCsv — null / undefined", () => {
+describe("exportToCsv, null / undefined", () => {
   it("convertit null en cellule vide (\"\")", () => {
     exportToCsv("test.csv", [{ val: null }], COL_VAL);
     expect(state.csv.split("\n")[1]).toBe('""');

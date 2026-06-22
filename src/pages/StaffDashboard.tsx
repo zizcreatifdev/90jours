@@ -387,7 +387,7 @@ const StaffDashboard = () => {
                               </span>
                             </div>
                           </td>
-                          <td className="px-6 py-3 text-sm text-muted-foreground">{s.profiles?.phone || "—"}</td>
+                          <td className="px-6 py-3 text-sm text-muted-foreground">{s.profiles?.phone || "-"}</td>
                           <td className="px-6 py-3">
                             <div className="flex items-center gap-2">
                               <Progress value={s.progress} className="h-1.5 w-16" />
@@ -397,7 +397,7 @@ const StaffDashboard = () => {
                           <td className="px-6 py-3">
                             {(() => {
                               const h = getStudentHealth(s.progress);
-                              if (!h) return <span className="text-xs text-muted-foreground/50">—</span>;
+                              if (!h) return <span className="text-xs text-muted-foreground/50">-</span>;
                               return (
                                 <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${h.color} ${h.bg}`}>
                                   {h.emoji} {h.label}

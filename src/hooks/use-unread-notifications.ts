@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-const STALE_TIME = 60_000; // 1 minute — real-time subscription handles freshness
+const STALE_TIME = 60_000; // 1 minute, real-time subscription handles freshness
 
 async function fetchUnreadCount(userId: string): Promise<number> {
   const { count, error } = await supabase

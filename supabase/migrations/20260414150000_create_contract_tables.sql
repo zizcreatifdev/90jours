@@ -32,7 +32,7 @@ CREATE TRIGGER update_contract_templates_updated_at
   BEFORE UPDATE ON public.contract_templates
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
--- ── RLS — contract_templates ──────────────────────────────────────────────────
+-- ── RLS : contract_templates ──────────────────────────────────────────────────
 
 ALTER TABLE public.contract_templates ENABLE ROW LEVEL SECURITY;
 
@@ -44,7 +44,7 @@ CREATE POLICY "contract_templates_admin_all"
   ON public.contract_templates FOR ALL
   USING (public.has_role(auth.uid(), 'super_admin'));
 
--- ── RLS — student_contracts ───────────────────────────────────────────────────
+-- ── RLS : student_contracts ───────────────────────────────────────────────────
 
 ALTER TABLE public.student_contracts ENABLE ROW LEVEL SECURITY;
 
@@ -107,7 +107,7 @@ INSERT INTO public.contract_templates (name, content, is_active) VALUES (
   <div class="header">
     <div class="logo">90 JOURS</div>
     <div class="doc-title">Contrat de Formation</div>
-    <div class="doc-sub">Document contractuel officiel — à conserver</div>
+    <div class="doc-sub">Document contractuel officiel, à conserver</div>
   </div>
 
   <div class="section">
@@ -175,7 +175,7 @@ INSERT INTO public.contract_templates (name, content, is_active) VALUES (
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:24px">
       <div>
         <div class="sig-line"></div>
-        <div class="sig-label">Signature — {{signature_name}}</div>
+        <div class="sig-label">Signature : {{signature_name}}</div>
         <div style="font-size:13px;color:#374151;margin-top:8px">Signé numériquement le : <strong>{{date_signature}}</strong></div>
         <div style="font-size:13px;color:#374151">à <strong>{{heure_signature}}</strong></div>
       </div>

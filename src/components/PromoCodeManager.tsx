@@ -143,7 +143,7 @@ const PromoCodeManager = () => {
 
   const getCohortName = (cohortId: string | null) => {
     if (!cohortId) return "Toutes";
-    return cohorts.find(c => c.id === cohortId)?.name || "—";
+    return cohorts.find(c => c.id === cohortId)?.name || "-";
   };
 
   return (

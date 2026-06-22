@@ -14,7 +14,7 @@ interface EmptyStateProps {
     label: string;
     onClick: () => void;
   };
-  /** Extra classes applied to the wrapper — use to override card styling */
+  /** Extra classes applied to the wrapper, use to override card styling */
   className?: string;
 }
 

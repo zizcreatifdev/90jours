@@ -468,7 +468,7 @@ const PaymentManager = () => {
                         <span className="text-sm font-medium text-foreground">{p.profile?.first_name} {p.profile?.last_name}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-3.5 text-sm text-muted-foreground">{p.cohort?.name || "—"}</td>
+                    <td className="px-6 py-3.5 text-sm text-muted-foreground">{p.cohort?.name || "-"}</td>
                     <td className="px-6 py-3.5">
                       <Badge variant="outline" className="text-xs">
                         {TYPE_LABELS[p.payment_type] || p.payment_type}
@@ -481,7 +481,7 @@ const PaymentManager = () => {
                         {statusConf.label}
                       </span>
                     </td>
-                    <td className="px-6 py-3.5 text-sm text-muted-foreground">{p.reference || "—"}</td>
+                    <td className="px-6 py-3.5 text-sm text-muted-foreground">{p.reference || "-"}</td>
                     <td className="px-6 py-3.5 text-sm text-muted-foreground">
                       {p.paid_at ? new Date(p.paid_at).toLocaleDateString("fr-FR") : new Date(p.created_at).toLocaleDateString("fr-FR")}
                     </td>
@@ -562,7 +562,7 @@ const PaymentManager = () => {
                       </td>
                       <td className="px-6 py-3.5 text-sm font-semibold text-foreground">{p.amount.toLocaleString("fr-FR")} F</td>
                       <td className="px-6 py-3.5 text-sm text-muted-foreground">
-                        {(p as any).deleted_at ? new Date((p as any).deleted_at).toLocaleDateString("fr-FR") : "—"}
+                        {(p as any).deleted_at ? new Date((p as any).deleted_at).toLocaleDateString("fr-FR") : "-"}
                       </td>
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-1">

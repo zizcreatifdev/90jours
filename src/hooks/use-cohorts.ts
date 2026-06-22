@@ -27,7 +27,7 @@ export interface CohortRow {
 
 export const COHORTS_QUERY_KEY = ["cohorts"] as const;
 
-/** Cache valide 5 minutes — une mutation (archivage, inscription) invalide manuellement */
+/** Cache valide 5 minutes, une mutation (archivage, inscription) invalide manuellement */
 const STALE_TIME = 5 * 60 * 1000;
 
 /**
@@ -61,7 +61,7 @@ async function fetchCohortsData(): Promise<CohortRow[]> {
 
   // ── Étape 2 : COUNT groupé côté serveur ─────────────────────────────────
   // PostgREST 12 aggregate syntax : "alias:colonne.count()"
-  // Retourne une ligne par cohort_id avec le count — O(cohortes) pas O(inscrits)
+  // Retourne une ligne par cohort_id avec le count, O(cohortes) pas O(inscrits)
   const baseCountQuery = supabase
     .from("enrollments")
     .select("cohort_id, count:cohort_id.count()");
@@ -70,7 +70,7 @@ async function fetchCohortsData(): Promise<CohortRow[]> {
     ? baseCountQuery.not("user_id", "in", `(${staffIds.join(",")})`)
     : baseCountQuery);
 
-  // PostgREST renvoie les agrégats en string — on normalise en number
+  // PostgREST renvoie les agrégats en string, on normalise en number
   const countData = (rawCount ?? []) as Array<{
     cohort_id: string;
     count: string;

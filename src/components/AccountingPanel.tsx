@@ -232,7 +232,7 @@ const AccountingPanel = () => {
       date: p.paid_at || p.created_at,
       type: "revenu" as const,
       category: "Inscription",
-      description: `${(p.profiles as any)?.first_name || ""} ${(p.profiles as any)?.last_name || ""} — ${(p.cohorts as any)?.name || ""}`,
+      description: `${(p.profiles as any)?.first_name || ""} ${(p.profiles as any)?.last_name || ""} (${(p.cohorts as any)?.name || ""})`,
       amount: p.amount,
     }));
     const exps = expenses.map(e => ({
@@ -353,7 +353,7 @@ const AccountingPanel = () => {
                   <tr key={p.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
                     <td className="px-5 py-3 text-sm text-muted-foreground">{format(new Date(p.paid_at || p.created_at), "dd/MM/yyyy")}</td>
                     <td className="px-5 py-3 text-sm font-medium text-foreground">{(p.profiles as any)?.first_name} {(p.profiles as any)?.last_name}</td>
-                    <td className="px-5 py-3 text-sm text-muted-foreground">{(p.cohorts as any)?.formations?.name || (p.cohorts as any)?.name || "—"}</td>
+                    <td className="px-5 py-3 text-sm text-muted-foreground">{(p.cohorts as any)?.formations?.name || (p.cohorts as any)?.name || "-"}</td>
                     <td className="px-5 py-3 text-sm font-semibold text-foreground">{formatCurrency(p.amount)}</td>
                     <td className="px-5 py-3">
                       <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
@@ -602,7 +602,7 @@ const StaffPaymentsSection = ({ staffPayments, staffType, onMarkPaid, onAdd }: {
                   <tbody>
                     {g.payments.map(p => (
                       <tr key={p.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
-                        <td className="px-5 py-3 text-sm text-muted-foreground">{format(new Date(p.period_start), "dd/MM/yyyy")} — {format(new Date(p.period_end), "dd/MM/yyyy")}</td>
+                        <td className="px-5 py-3 text-sm text-muted-foreground">{format(new Date(p.period_start), "dd/MM/yyyy")} au {format(new Date(p.period_end), "dd/MM/yyyy")}</td>
                         <td className="px-5 py-3 text-sm font-semibold text-foreground">{formatCurrency(p.amount)}</td>
                         <td className="px-5 py-3">
                           <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
@@ -611,7 +611,7 @@ const StaffPaymentsSection = ({ staffPayments, staffType, onMarkPaid, onAdd }: {
                             {p.status === "paid" ? "Payé" : "En attente"}
                           </span>
                         </td>
-                        <td className="px-5 py-3 text-sm text-muted-foreground">{p.notes || "—"}</td>
+                        <td className="px-5 py-3 text-sm text-muted-foreground">{p.notes || "-"}</td>
                         <td className="px-5 py-3">
                           {p.status === "pending" && (
                             <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => onMarkPaid(p.id)}>

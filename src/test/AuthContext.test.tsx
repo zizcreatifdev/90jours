@@ -24,7 +24,7 @@ type MockSession = { user: { id: string } } | null;
 
 // ── Shared state ──────────────────────────────────────────────────────────────
 
-/** Captured by the onAuthStateChange mock — lets tests fire events manually. */
+/** Captured by the onAuthStateChange mock, lets tests fire events manually. */
 let fireAuthEvent: (event: AuthEventName, session: MockSession) => void = () => {};
 
 /** Configures supabase.from() to return the given roles for user_roles table. */
@@ -73,7 +73,7 @@ beforeEach(() => {
 
 // ── Priorité des rôles ────────────────────────────────────────────────────────
 
-describe("AuthContext — priorité des rôles (super_admin > staff > student)", () => {
+describe("AuthContext, priorité des rôles (super_admin > staff > student)", () => {
   it("sélectionne super_admin en activeRole par défaut quand l'utilisateur a [super_admin, staff, student]", async () => {
     setupRolesMock(["super_admin", "staff", "student"]);
     const { result } = renderHook(() => useAuth(), { wrapper });
@@ -107,7 +107,7 @@ describe("AuthContext — priorité des rôles (super_admin > staff > student)",
 
 // ── Persistance localStorage ──────────────────────────────────────────────────
 
-describe("AuthContext — persistance localStorage", () => {
+describe("AuthContext, persistance localStorage", () => {
   it("restaure le rôle stocké si l'utilisateur le possède toujours", async () => {
     // super_admin est le rôle prioritaire, mais le storage dit "staff"
     localStorage.setItem("90jours-active-role", "staff");
@@ -145,7 +145,7 @@ describe("AuthContext — persistance localStorage", () => {
 
 // ── SIGNED_OUT ────────────────────────────────────────────────────────────────
 
-describe("AuthContext — SIGNED_OUT", () => {
+describe("AuthContext, SIGNED_OUT", () => {
   it("réinitialise user, roles, activeRole et supprime le localStorage", async () => {
     setupRolesMock(["student"]);
     const { result } = renderHook(() => useAuth(), { wrapper });
@@ -167,8 +167,8 @@ describe("AuthContext — SIGNED_OUT", () => {
 
 // ── setActiveRole avec rôle invalide ─────────────────────────────────────────
 
-describe("AuthContext — setActiveRole invalide", () => {
-  it("rejette un rôle que l'utilisateur ne possède pas — activeRole reste inchangé", async () => {
+describe("AuthContext, setActiveRole invalide", () => {
+  it("rejette un rôle que l'utilisateur ne possède pas, activeRole reste inchangé", async () => {
     setupRolesMock(["student"]);
     const { result } = renderHook(() => useAuth(), { wrapper });
 

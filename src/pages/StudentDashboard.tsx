@@ -291,7 +291,7 @@ const StudentDashboard = () => {
                 {greeting()}, {profile?.first_name || "Étudiant"} !
               </h1>
               <p className="text-xs md:text-sm text-muted-foreground">
-                {enrollment.formation_name && <span className="font-medium">{enrollment.formation_name} — </span>}
+                {enrollment.formation_name && <span className="font-medium">{enrollment.formation_name}, </span>}
                 Cohorte {cohort.name}
               </p>
               </div>
@@ -328,7 +328,7 @@ const StudentDashboard = () => {
                   >
                     <div>
                       <p className={`font-medium ${isActive ? "text-accent" : "text-foreground"}`}>
-                        {e.formation_name || "Formation"} — {e.cohorts.name}
+                        {e.formation_name || "Formation"}, {e.cohorts.name}
                       </p>
                     </div>
                     <Badge variant={statusColor as any} className="text-[10px] h-5">
@@ -356,7 +356,7 @@ const StudentDashboard = () => {
               <div className="mb-8 rounded-2xl bg-primary p-6 text-primary-foreground">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <h3 className="font-display text-lg font-bold">{enrollment.formation_name && `${enrollment.formation_name} — `}Cohorte {cohort.name}</h3>
+                    <h3 className="font-display text-lg font-bold">{enrollment.formation_name && `${enrollment.formation_name}, `}Cohorte {cohort.name}</h3>
                     <p className="mt-1 text-sm opacity-80">
                       Du {fmt(cohort.start_date)} au {fmt(cohort.end_date)}
                     </p>

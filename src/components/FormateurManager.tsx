@@ -208,7 +208,7 @@ const FormateurManager = () => {
               <div>
                 <Label>Formation à assigner <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
                 <Select value={form.formation_id} onValueChange={v => setForm({ ...form, formation_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Aucune — assistant uniquement" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Aucune (assistant uniquement)" /></SelectTrigger>
                   <SelectContent>
                     {formations.map(f => (
                       <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
@@ -246,7 +246,7 @@ const FormateurManager = () => {
                       {f.first_name || "En attente"} {f.last_name || ""}
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Staff — {f.formations.length > 0 ? "Formateur" : "Assistant"}
+                      Staff, {f.formations.length > 0 ? "Formateur" : "Assistant"}
                     </p>
                   </div>
                 </div>

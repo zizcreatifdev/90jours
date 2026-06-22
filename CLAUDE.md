@@ -26,7 +26,13 @@ git push -u origin claude/create-project-state-K3MOH
 
 ---
 
-## Stack — Ne Jamais Changer
+## Règle Absolue de Typographie
+
+- **Aucun tiret long (—, em-dash, U+2014) ni demi-cadratin (–, en-dash, U+2013)** dans le code ou les textes (composants, pages, hooks, commentaires, seeds SQL, index.html, meta). Utiliser virgule, deux-points ou parenthèses selon le sens ; pour une plage de valeurs, écrire "X à Y" ou un tiret simple "X-Y".
+
+---
+
+## Stack : Ne Jamais Changer
 
 - **React 18** avec hooks fonctionnels uniquement (pas de classes)
 - **TypeScript strict** — pas de `any`, pas de `@ts-ignore` sans justification

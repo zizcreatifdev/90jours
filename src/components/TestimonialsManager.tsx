@@ -395,7 +395,7 @@ const TestimonialsManager = () => {
                   >
                     {uploading ? "Envoi..." : "Choisir une photo"}
                   </Button>
-                  <p className="mt-1 text-xs text-muted-foreground">JPG, PNG, WebP — max 2 Mo</p>
+                  <p className="mt-1 text-xs text-muted-foreground">JPG, PNG, WebP (max 2 Mo)</p>
                 </div>
               </div>
             </div>
@@ -413,8 +413,8 @@ const TestimonialsManager = () => {
                     </div>
                   ) : null}
                   <div>
-                    <p className="text-sm font-semibold text-foreground">{form.name || "—"}</p>
-                    <p className="text-xs text-muted-foreground">{form.role || "—"}</p>
+                    <p className="text-sm font-semibold text-foreground">{form.name || "-"}</p>
+                    <p className="text-xs text-muted-foreground">{form.role || "-"}</p>
                     {form.content && (
                       <p className="mt-1.5 text-sm italic text-foreground/80 line-clamp-3">"{form.content}"</p>
                     )}

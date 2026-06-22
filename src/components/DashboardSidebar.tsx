@@ -219,7 +219,7 @@ const SidebarNav = ({
         <Tooltip>
           <TooltipTrigger asChild>
             <button
-              aria-label={`Notifications${unreadCount > 0 ? ` — ${unreadCount > 99 ? "99+" : unreadCount} non lues` : ""}`}
+              aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount > 99 ? "99+" : unreadCount} non lues` : ""}`}
               onClick={() => {
                 const path = role === "admin" ? "/admin" : role === "staff" ? "/staff" : "/student";
                 navigate(path);
@@ -330,7 +330,7 @@ const DashboardSidebar = ({ role, mobileOpen, onMobileOpenChange }: DashboardSid
         </SheetContent>
       </Sheet>
 
-      {/* Desktop sidebar — hidden in focus mode */}
+      {/* Desktop sidebar, hidden in focus mode */}
       <aside
         className={cn(
           "hidden md:flex h-screen flex-col border-r border-border bg-card sticky top-0 transition-all duration-200",

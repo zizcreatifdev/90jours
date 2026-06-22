@@ -55,7 +55,7 @@ const SignedContractsPanel = () => {
         contract_snapshot: c.contract_snapshot,
         created_at: c.created_at,
         profile: c.profiles as { first_name: string; last_name: string } | null,
-        cohort_name: (c.cohorts as { name: string } | null)?.name ?? "—",
+        cohort_name: (c.cohorts as { name: string } | null)?.name ?? "-",
       })) as SignedContract[];
 
       setContracts(mapped);
@@ -70,13 +70,13 @@ const SignedContractsPanel = () => {
 
   const handleExportCsv = () => {
     const rows = filtered.map(c => ({
-      "Nom": c.profile ? `${c.profile.first_name} ${c.profile.last_name}` : "—",
+      "Nom": c.profile ? `${c.profile.first_name} ${c.profile.last_name}` : "-",
       "Cohorte": c.cohort_name,
       "Date de signature": c.signed_at
         ? new Date(c.signed_at).toLocaleString("fr-FR")
-        : "—",
-      "Nom signé": c.signature_name ?? "—",
-      "IP": c.ip_address ?? "—",
+        : "-",
+      "Nom signé": c.signature_name ?? "-",
+      "IP": c.ip_address ?? "-",
     }));
     exportToCsv(rows, `contrats-signes-${new Date().toISOString().slice(0, 10)}.csv`);
     toast({ title: "Export CSV généré" });
@@ -144,7 +144,7 @@ const SignedContractsPanel = () => {
                   <tr key={c.id} className="border-b border-border last:border-0 hover:bg-secondary/30 transition-colors">
                     <td className="px-6 py-3.5">
                       <p className="text-sm font-medium text-foreground">
-                        {c.profile ? `${c.profile.first_name} ${c.profile.last_name}` : "—"}
+                        {c.profile ? `${c.profile.first_name} ${c.profile.last_name}` : "-"}
                       </p>
                     </td>
                     <td className="px-6 py-3.5 text-sm text-muted-foreground">
@@ -156,10 +156,10 @@ const SignedContractsPanel = () => {
                             day: "numeric", month: "short", year: "numeric",
                             hour: "2-digit", minute: "2-digit",
                           })
-                        : "—"}
+                        : "-"}
                     </td>
                     <td className="px-6 py-3.5 text-sm text-muted-foreground italic">
-                      {c.signature_name ?? "—"}
+                      {c.signature_name ?? "-"}
                     </td>
                     <td className="px-6 py-3.5">
                       <button

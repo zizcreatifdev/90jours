@@ -139,7 +139,7 @@ const Register = () => {
         <div className="mx-auto max-w-2xl">
           <div className="mb-8 text-center">
             <h1 className="mb-3 font-display text-3xl font-bold text-foreground">Inscription</h1>
-            <p className="text-muted-foreground">Rejoignez notre prochaine cohorte — 60 jours de formation.</p>
+            <p className="text-muted-foreground">Rejoignez notre prochaine cohorte, 60 jours de formation.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-4 sm:p-8 shadow-card">
@@ -190,7 +190,7 @@ const Register = () => {
                             )}
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {new Date(cohort.start_date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })} —{" "}
+                            {new Date(cohort.start_date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })} au{" "}
                             {new Date(cohort.end_date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
                           </p>
                         </button>

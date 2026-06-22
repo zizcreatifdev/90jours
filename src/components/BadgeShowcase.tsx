@@ -185,7 +185,7 @@ const BadgeShowcase = ({
                     key={bt}
                     title={
                       earned
-                        ? `${def.label} — obtenu le ${new Date(earned.earned_at).toLocaleDateString("fr-FR")}`
+                        ? `${def.label}, obtenu le ${new Date(earned.earned_at).toLocaleDateString("fr-FR")}`
                         : def.description
                     }
                     className={cn(

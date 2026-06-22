@@ -1,5 +1,5 @@
 /**
- * brief-reminders — Edge Function (cron)
+ * brief-reminders : Edge Function (cron)
  *
  * Runs every day at 08:00 UTC (configured in supabase/config.toml).
  * Finds all briefs whose deadline falls within the next 48 hours and

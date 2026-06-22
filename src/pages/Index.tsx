@@ -136,7 +136,7 @@ const Index = () => {
       });
   }, []);
 
-  // Intersection Observer — "Comment ça marche"
+  // Intersection Observer : "Comment ça marche"
   useEffect(() => {
     if (!howRef.current) return;
     const obs = new IntersectionObserver(
@@ -147,7 +147,7 @@ const Index = () => {
     return () => obs.disconnect();
   }, []);
 
-  // Intersection Observer — Formations
+  // Intersection Observer : Formations
   useEffect(() => {
     if (!formationsRef.current) return;
     const obs = new IntersectionObserver(
@@ -238,7 +238,7 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Hero title — bottom left */}
+        {/* Hero title : bottom left */}
         <div className="absolute bottom-16 left-6 right-6 z-10 md:bottom-20 md:left-10 md:right-auto md:max-w-2xl">
           <h1 className="font-display text-4xl font-semibold leading-[1.05] tracking-tight text-white md:text-6xl lg:text-7xl">
             {heroTitle}
@@ -283,7 +283,7 @@ const Index = () => {
           </div>
         )}
 
-        {/* Scroll indicator — bottom right */}
+        {/* Scroll indicator : bottom right */}
         <button
           onClick={() => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" })}
           aria-label="Défiler vers le contenu"
@@ -294,7 +294,7 @@ const Index = () => {
         </button>
       </section>
 
-      {/* ===== SECTION 2 — COMMENT ÇA MARCHE ===== */}
+      {/* ===== SECTION 2 : COMMENT ÇA MARCHE ===== */}
       <section
         id="how"
         ref={howRef}
@@ -311,7 +311,7 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Steps — editorial, typographic, no icons */}
+          {/* Steps : editorial, typographic, no icons */}
           <div className="grid gap-px bg-border md:grid-cols-4">
             {HOW_STEPS.map((step, i) => (
               <div
@@ -336,7 +336,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* ===== SECTION 3 — NOS FORMATIONS ===== */}
+      {/* ===== SECTION 3 : NOS FORMATIONS ===== */}
       <section
         id="formations"
         ref={formationsRef}
@@ -389,7 +389,7 @@ const Index = () => {
             )}
           </div>
 
-          {/* Cohort cards — editorial grid */}
+          {/* Cohort cards : editorial grid */}
           {loading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-accent" />
@@ -425,7 +425,7 @@ const Index = () => {
                     />
 
                     <div className="flex flex-1 flex-col pl-7 pr-6 pt-6 pb-6">
-                      {/* Formation label — no pill, just colored small-caps text */}
+                      {/* Formation label : no pill, just colored small-caps text */}
                       {cohort.formation && (
                         <p
                           className="mb-3 text-[10px] font-bold uppercase tracking-[0.2em]"
@@ -435,7 +435,7 @@ const Index = () => {
                         </p>
                       )}
 
-                      {/* Cohort name — big, typographic */}
+                      {/* Cohort name : big, typographic */}
                       <h3 className="font-display text-2xl font-black leading-tight text-foreground">
                         {cohort.name}
                       </h3>
@@ -519,7 +519,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* ===== SECTION 4 — TÉMOIGNAGES (hidden if none) ===== */}
+      {/* ===== SECTION 4 : TÉMOIGNAGES (hidden if none) ===== */}
       {testimonials.length > 0 && (
         <section className="bg-white dark:bg-[#111111] py-24 overflow-hidden">
           <div className="container mx-auto px-4">
@@ -605,7 +605,7 @@ const Index = () => {
         </section>
       )}
 
-      {/* ===== SECTION 5 — CTA FINAL ===== */}
+      {/* ===== SECTION 5 : CTA FINAL ===== */}
       <section className="relative overflow-hidden bg-[#0E1B2E] py-28">
         {/* Subtle gold radial glow from below */}
         <div
@@ -646,11 +646,11 @@ const Index = () => {
         </div>
       </section>
 
-      {/* ===== SECTION 6 — FOOTER ===== */}
+      {/* ===== SECTION 6 : FOOTER ===== */}
       <footer className="border-t border-white/10 bg-[#0E1B2E] text-white">
         <div className="container mx-auto px-4 py-14">
           <div className="grid gap-10 md:grid-cols-3">
-            {/* Col 1 — Logo + tagline */}
+            {/* Col 1 : Logo + tagline */}
             <div>
               <div className="mb-4 flex items-center gap-3">
                 {settings.logo_url ? (
@@ -675,7 +675,7 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Col 2 — Navigation */}
+            {/* Col 2 : Navigation */}
             <div>
               <h4 className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/40">Navigation</h4>
               <div className="flex flex-col gap-2.5">
@@ -700,7 +700,7 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Col 3 — Contact */}
+            {/* Col 3 : Contact */}
             <div>
               <h4 className="mb-4 text-xs font-semibold uppercase tracking-widest text-white/40">Contact</h4>
               <p className="text-sm text-white/60">{settings.footer_email || "info@60jours.com"}</p>

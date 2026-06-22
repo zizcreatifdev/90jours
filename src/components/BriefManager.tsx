@@ -198,7 +198,7 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
             <SelectContent>
               {cohorts.map(c => (
                 <SelectItem key={c.id} value={c.id}>
-                  Cohorte {c.name}{c.formation ? ` — ${c.formation.name}` : ""}
+                  Cohorte {c.name}{c.formation ? ` (${c.formation.name})` : ""}
                 </SelectItem>
               ))}
             </SelectContent>

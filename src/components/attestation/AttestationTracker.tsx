@@ -207,7 +207,7 @@ const AttestationTracker = () => {
           <SelectContent>
             <SelectItem value="all">Toutes les cohortes</SelectItem>
             {cohorts.map(c => (
-              <SelectItem key={c.id} value={c.id}>{c.name} {c.formation ? `— ${c.formation.name}` : ""}</SelectItem>
+              <SelectItem key={c.id} value={c.id}>{c.name} {c.formation ? `(${c.formation.name})` : ""}</SelectItem>
             ))}
           </SelectContent>
         </Select>

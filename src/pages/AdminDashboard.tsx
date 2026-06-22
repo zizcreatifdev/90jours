@@ -158,7 +158,7 @@ const AdminDashboard = () => {
         ...(payRes.data || []).map((p: any) => ({
           id: `pay-${p.id}`,
           type: "payment" as const,
-          description: `${fmt(p.profiles)} — ${(p.amount || 0).toLocaleString("fr-FR")} FCFA (${p.status === "paid" ? "confirmé" : "en attente"})`,
+          description: `${fmt(p.profiles)} : ${(p.amount || 0).toLocaleString("fr-FR")} FCFA (${p.status === "paid" ? "confirmé" : "en attente"})`,
           timestamp: p.created_at,
         })),
         ...(subRes.data || []).map((s: any) => ({
@@ -336,7 +336,7 @@ const AdminDashboard = () => {
             </button>
             <div>
               <h1 className="font-display text-lg md:text-xl font-bold text-foreground">{greeting()}, {profile?.first_name || "Admin"} !</h1>
-              <p className="text-xs md:text-sm text-muted-foreground">Super Admin — 60 jours de formation</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Super Admin, 60 jours de formation</p>
             </div>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
@@ -436,7 +436,7 @@ const AdminDashboard = () => {
                           return (
                             <tr key={s.id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
                               <td className="px-6 py-3.5 text-sm font-medium text-foreground">{s.profile?.first_name} {s.profile?.last_name}</td>
-                              <td className="px-6 py-3.5 text-sm text-muted-foreground">{coh?.name || "—"}</td>
+                              <td className="px-6 py-3.5 text-sm text-muted-foreground">{coh?.name || "-"}</td>
                               <td className="px-6 py-3.5">
                                 <div className="flex items-center gap-3">
                                   <Progress value={s.progress} className="h-1.5 w-20" />
@@ -586,11 +586,11 @@ const AdminDashboard = () => {
                                   </span>
                                 </div>
                               ) : (
-                                <span className="text-xs text-muted-foreground">—</span>
+                                <span className="text-xs text-muted-foreground">-</span>
                               )}
                             </td>
                             <td className="px-6 py-3.5 text-sm text-muted-foreground">
-                              {new Date(cohort.start_date).toLocaleDateString("fr-FR", { month: "short" })} — {new Date(cohort.end_date).toLocaleDateString("fr-FR", { month: "short", year: "numeric" })}
+                              {new Date(cohort.start_date).toLocaleDateString("fr-FR", { month: "short" })} au {new Date(cohort.end_date).toLocaleDateString("fr-FR", { month: "short", year: "numeric" })}
                             </td>
                             <td className="px-6 py-3.5 text-sm">{enrolled}/{cohort.capacity}</td>
                             <td className="px-6 py-3.5">
@@ -736,8 +736,8 @@ const AdminDashboard = () => {
                               <span className="text-sm font-medium text-foreground">{u.first_name} {u.last_name}</span>
                             </div>
                           </td>
-                          <td className="px-6 py-3.5 text-sm text-muted-foreground">{u.email || "—"}</td>
-                          <td className="px-6 py-3.5 text-sm text-muted-foreground">{u.phone || "—"}</td>
+                          <td className="px-6 py-3.5 text-sm text-muted-foreground">{u.email || "-"}</td>
+                          <td className="px-6 py-3.5 text-sm text-muted-foreground">{u.phone || "-"}</td>
                           <td className="px-6 py-3.5 text-sm text-muted-foreground">
                             {new Date(u.created_at).toLocaleDateString("fr-FR")}
                           </td>

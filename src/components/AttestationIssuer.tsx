@@ -448,7 +448,7 @@ const AttestationIssuer = () => {
           <SelectContent>
             {availableCohorts.map(c => (
               <SelectItem key={c.id} value={c.id}>
-                {c.name} {c.formation ? `— ${c.formation.name}` : ""}
+                {c.name} {c.formation ? `(${c.formation.name})` : ""}
               </SelectItem>
             ))}
           </SelectContent>
@@ -555,7 +555,7 @@ const AttestationIssuer = () => {
                             <CheckCircle2 className="h-3 w-3" /> {s.attestation_number || "Délivrée"}
                           </span>
                         ) : (
-                          <span className="text-xs text-muted-foreground">—</span>
+                          <span className="text-xs text-muted-foreground">-</span>
                         )}
                       </td>
                       <td className="px-4 py-3">

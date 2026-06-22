@@ -77,7 +77,7 @@ const CohortCard = ({ cohort }: CohortCardProps) => {
       <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 text-sm text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <Calendar className="h-4 w-4 shrink-0" />
-          <span className="truncate">{formatDate(cohort.start_date)} — {formatDate(cohort.end_date)}</span>
+          <span className="truncate">{formatDate(cohort.start_date)} au {formatDate(cohort.end_date)}</span>
         </span>
       </div>
 

@@ -4,14 +4,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Mock AuthContext — vi.mock est hissé en haut par Vitest
+// Mock AuthContext, vi.mock est hissé en haut par Vitest
 vi.mock("@/contexts/AuthContext", () => ({
   useAuth: vi.fn(),
 }));
 
 type AppRole = "super_admin" | "staff" | "student";
 
-// Utilisateur de test minimal — ProtectedRoute ne lit que `user` comme boolean
+// Utilisateur de test minimal, ProtectedRoute ne lit que `user` comme boolean
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockUser = { id: "test-user-123" } as any;
 
@@ -166,7 +166,7 @@ describe("ProtectedRoute", () => {
     // Ni le contenu protégé ni une page de redirection ne doit s'afficher
     expect(screen.queryByText("Contenu Protégé")).not.toBeInTheDocument();
     expect(screen.queryByText("Page Login")).not.toBeInTheDocument();
-    // Le spinner Loader2 est un SVG — on vérifie sa présence dans le DOM
+    // Le spinner Loader2 est un SVG, on vérifie sa présence dans le DOM
     expect(document.querySelector("svg")).toBeInTheDocument();
   });
 });
