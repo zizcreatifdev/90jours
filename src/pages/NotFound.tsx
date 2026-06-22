@@ -7,89 +7,133 @@ const NotFound = () => {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#0E1B2E] px-6 py-16 text-center">
       <svg
-        viewBox="0 0 480 320"
+        viewBox="0 0 560 280"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="mb-10 w-full max-w-sm"
+        className="mb-10 w-full max-w-lg"
         aria-hidden="true"
       >
-        {/* Background shadow */}
-        <ellipse cx="240" cy="300" rx="200" ry="24" fill="#0B1624" />
+        {/* Background geometric grid lines — subtle navy */}
+        <line x1="0" y1="56" x2="560" y2="56" stroke="#1A2D48" strokeWidth="1" />
+        <line x1="0" y1="112" x2="560" y2="112" stroke="#1A2D48" strokeWidth="1" />
+        <line x1="0" y1="168" x2="560" y2="168" stroke="#1A2D48" strokeWidth="1" />
+        <line x1="0" y1="224" x2="560" y2="224" stroke="#1A2D48" strokeWidth="1" />
+        <line x1="80" y1="0" x2="80" y2="280" stroke="#1A2D48" strokeWidth="1" />
+        <line x1="200" y1="0" x2="200" y2="280" stroke="#1A2D48" strokeWidth="1" />
+        <line x1="280" y1="0" x2="280" y2="280" stroke="#1A2D48" strokeWidth="1" />
+        <line x1="360" y1="0" x2="360" y2="280" stroke="#1A2D48" strokeWidth="1" />
+        <line x1="480" y1="0" x2="480" y2="280" stroke="#1A2D48" strokeWidth="1" />
 
-        {/* Open book base */}
-        <rect x="100" y="182" width="280" height="14" rx="4" fill="#1A2D48" />
+        {/* Decorative gold accent lines */}
+        <line x1="0" y1="140" x2="560" y2="140" stroke="#C5A05A" strokeWidth="0.5" opacity="0.4" />
+        <line x1="280" y1="0" x2="280" y2="280" stroke="#C5A05A" strokeWidth="0.5" opacity="0.3" />
 
-        {/* Left page */}
-        <path
-          d="M110 196 Q122 118 182 108 L240 106 L240 196 Z"
-          fill="#FBFAF8"
-          stroke="#C5A05A"
-          strokeWidth="1.5"
-        />
-        {/* Left page lines */}
-        <line x1="132" y1="142" x2="222" y2="140" stroke="#C5A05A" strokeWidth="1" opacity="0.35" />
-        <line x1="132" y1="154" x2="218" y2="152" stroke="#C5A05A" strokeWidth="1" opacity="0.35" />
-        <line x1="132" y1="166" x2="220" y2="164" stroke="#C5A05A" strokeWidth="1" opacity="0.35" />
-        <line x1="132" y1="178" x2="214" y2="176" stroke="#C5A05A" strokeWidth="1" opacity="0.35" />
+        {/* Corner accent marks */}
+        <polyline points="20,20 20,4 36,4" stroke="#C5A05A" strokeWidth="1.5" fill="none" opacity="0.7" />
+        <polyline points="540,20 540,4 524,4" stroke="#C5A05A" strokeWidth="1.5" fill="none" opacity="0.7" />
+        <polyline points="20,260 20,276 36,276" stroke="#C5A05A" strokeWidth="1.5" fill="none" opacity="0.7" />
+        <polyline points="540,260 540,276 524,276" stroke="#C5A05A" strokeWidth="1.5" fill="none" opacity="0.7" />
 
-        {/* Right page */}
-        <path
-          d="M370 196 Q358 118 298 108 L240 106 L240 196 Z"
-          fill="#FBFAF8"
-          stroke="#C5A05A"
-          strokeWidth="1.5"
-        />
-        {/* Right page lines */}
-        <line x1="348" y1="142" x2="258" y2="140" stroke="#C5A05A" strokeWidth="1" opacity="0.35" />
-        <line x1="348" y1="154" x2="262" y2="152" stroke="#C5A05A" strokeWidth="1" opacity="0.35" />
-        <line x1="348" y1="166" x2="260" y2="164" stroke="#C5A05A" strokeWidth="1" opacity="0.35" />
-        <line x1="348" y1="178" x2="266" y2="176" stroke="#C5A05A" strokeWidth="1" opacity="0.35" />
-
-        {/* Book spine */}
-        <line x1="240" y1="106" x2="240" y2="196" stroke="#C5A05A" strokeWidth="2.5" />
-
-        {/* Magnifying glass */}
-        <circle cx="300" cy="74" r="34" stroke="#C5A05A" strokeWidth="3" fill="none" />
-        <circle cx="300" cy="74" r="24" fill="#132236" />
-        <line x1="325" y1="99" x2="348" y2="122" stroke="#C5A05A" strokeWidth="4.5" strokeLinecap="round" />
-
-        {/* Question mark */}
+        {/* Large "4" left */}
         <text
-          x="300"
-          y="84"
-          textAnchor="middle"
+          x="64"
+          y="210"
           fontFamily="Georgia, 'Times New Roman', serif"
-          fontSize="26"
+          fontSize="200"
+          fontWeight="bold"
+          fill="none"
+          stroke="#C5A05A"
+          strokeWidth="2"
+          opacity="0.18"
+        >
+          4
+        </text>
+        <text
+          x="64"
+          y="210"
+          fontFamily="Georgia, 'Times New Roman', serif"
+          fontSize="200"
           fontWeight="bold"
           fill="#C5A05A"
+          opacity="0.85"
         >
-          ?
+          4
         </text>
 
-        {/* Stars */}
-        <circle cx="78" cy="58" r="2.5" fill="#C5A05A" opacity="0.7" />
-        <circle cx="408" cy="48" r="2" fill="#C5A05A" opacity="0.5" />
-        <circle cx="148" cy="38" r="1.5" fill="#FBFAF8" opacity="0.4" />
-        <circle cx="382" cy="88" r="1.5" fill="#FBFAF8" opacity="0.3" />
-        <circle cx="58" cy="128" r="2" fill="#C5A05A" opacity="0.4" />
-        <circle cx="422" cy="148" r="1.5" fill="#C5A05A" opacity="0.5" />
-        <circle cx="440" cy="60" r="1" fill="#FBFAF8" opacity="0.5" />
-        <circle cx="42" cy="90" r="1" fill="#FBFAF8" opacity="0.4" />
+        {/* "0" center */}
+        <text
+          x="186"
+          y="210"
+          fontFamily="Georgia, 'Times New Roman', serif"
+          fontSize="200"
+          fontWeight="bold"
+          fill="none"
+          stroke="#C5A05A"
+          strokeWidth="2"
+          opacity="0.18"
+        >
+          0
+        </text>
+        <text
+          x="186"
+          y="210"
+          fontFamily="Georgia, 'Times New Roman', serif"
+          fontSize="200"
+          fontWeight="bold"
+          fill="#C5A05A"
+          opacity="0.85"
+        >
+          0
+        </text>
 
-        {/* Compass decoration */}
-        <polygon points="162,66 155,84 162,80 169,84" fill="#C5A05A" opacity="0.65" />
-        <polygon points="162,66 155,48 162,52 169,48" fill="#FBFAF8" opacity="0.4" />
-        <circle cx="162" cy="66" r="4" fill="#1A2D48" stroke="#C5A05A" strokeWidth="1.5" />
+        {/* Large "4" right */}
+        <text
+          x="344"
+          y="210"
+          fontFamily="Georgia, 'Times New Roman', serif"
+          fontSize="200"
+          fontWeight="bold"
+          fill="none"
+          stroke="#C5A05A"
+          strokeWidth="2"
+          opacity="0.18"
+        >
+          4
+        </text>
+        <text
+          x="344"
+          y="210"
+          fontFamily="Georgia, 'Times New Roman', serif"
+          fontSize="200"
+          fontWeight="bold"
+          fill="#C5A05A"
+          opacity="0.85"
+        >
+          4
+        </text>
+
+        {/* Horizontal rule through midpoint of numbers */}
+        <line x1="52" y1="140" x2="508" y2="140" stroke="#C5A05A" strokeWidth="1.5" opacity="0.6" />
+
+        {/* Small scattered dots */}
+        <circle cx="530" cy="36" r="2.5" fill="#C5A05A" opacity="0.5" />
+        <circle cx="30" cy="248" r="2" fill="#C5A05A" opacity="0.4" />
+        <circle cx="530" cy="248" r="2" fill="#C5A05A" opacity="0.4" />
+        <circle cx="30" cy="36" r="2.5" fill="#C5A05A" opacity="0.5" />
+
+        {/* Fine diagonal accent */}
+        <line x1="420" y1="60" x2="500" y2="120" stroke="#C5A05A" strokeWidth="1" opacity="0.25" strokeDasharray="4 4" />
+        <line x1="60" y1="160" x2="140" y2="220" stroke="#C5A05A" strokeWidth="1" opacity="0.25" strokeDasharray="4 4" />
       </svg>
 
-      <p className="mb-2 font-mono text-xs tracking-[0.25em] text-[#C5A05A] uppercase">
-        Erreur 404
-      </p>
-      <h1 className="mb-4 font-display text-3xl font-bold text-[#FBFAF8] sm:text-4xl">
+      <p className="mb-2 font-mono text-xs tracking-[0.25em] uppercase text-[#C5A05A]">
         Page introuvable
+      </p>
+      <h1 className="mb-4 font-display text-2xl font-bold text-[#FBFAF8] sm:text-3xl">
+        Cette page n'existe pas
       </h1>
-      <p className="mb-8 max-w-xs text-sm leading-relaxed text-[#FBFAF8]/60">
-        Cette page n'existe pas ou a été déplacée. Revenez à l'accueil pour continuer votre parcours.
+      <p className="mb-8 max-w-xs text-sm leading-relaxed text-[#FBFAF8]/55">
+        Elle a peut-être été déplacée ou supprimée. Revenez à l'accueil pour continuer votre parcours.
       </p>
 
       <Button
