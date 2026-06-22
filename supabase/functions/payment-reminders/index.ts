@@ -17,7 +17,6 @@ interface Payment {
   id: string;
   user_id: string;
   amount: number;
-  currency: string;
   created_at: string;
   profiles?: {
     first_name: string;
@@ -39,7 +38,7 @@ Deno.serve(async (_req) => {
 
     const { data: overduePayments, error: paymentsError } = await supabase
       .from("payments")
-      .select("id, user_id, amount, currency, created_at, profiles:user_id(first_name, last_name)")
+      .select("id, user_id, amount, created_at, profiles:user_id(first_name, last_name)")
       .eq("status", "pending")
       .lt("created_at", thirtyDaysAgo.toISOString());
 
@@ -60,6 +59,22 @@ Deno.serve(async (_req) => {
     }
 
     console.log(`Found ${overduePayments.length} overdue payment(s).`);
+
+    // ── 1b. Deduplicate : skip students already reminded within the last 7 days ─
+    const uniqueStudentIds = [...new Set((overduePayments as Payment[]).map(p => p.user_id))];
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const { data: recentNotifs } = await supabase
+      .from("notifications")
+      .select("user_id")
+      .in("user_id", uniqueStudentIds)
+      .eq("type", "payment")
+      .gte("created_at", sevenDaysAgo.toISOString());
+
+    const recentlyReminded = new Set(
+      (recentNotifs ?? []).map((n: { user_id: string }) => n.user_id)
+    );
+    console.log(`Students already reminded in last 7 days: ${recentlyReminded.size}`);
 
     // ── 2. Get all admins ─────────────────────────────────────────────────────
 
@@ -83,6 +98,9 @@ Deno.serve(async (_req) => {
     // ── 3. Build notifications ────────────────────────────────────────────────
 
     for (const payment of overduePayments as Payment[]) {
+      // Skip students who already received a payment reminder this week
+      if (recentlyReminded.has(payment.user_id)) continue;
+
       const profile = payment.profiles as { first_name: string; last_name: string } | null;
       const studentName = profile
         ? `${profile.first_name} ${profile.last_name}`
@@ -92,7 +110,7 @@ Deno.serve(async (_req) => {
         (now.getTime() - new Date(payment.created_at).getTime()) / (1000 * 60 * 60 * 24)
       );
 
-      const amountStr = `${(payment.amount / 100).toFixed(2)} ${(payment.currency || "EUR").toUpperCase()}`;
+      const amountStr = `${payment.amount.toLocaleString("fr-FR")} FCFA`;
 
       // Student notification
       notificationsToInsert.push({
