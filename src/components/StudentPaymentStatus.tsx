@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { addDays, format, parseISO } from "date-fns";
+import { addDays, differenceInDays, format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -141,6 +141,14 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
   const dueDate = (days: number): string | null =>
     cohortStart ? format(addDays(parseISO(cohortStart), days), "d MMMM yyyy", { locale: fr }) : null;
 
+  // Retourne le nombre de jours de retard (positif) ou null si a jour / non applicable.
+  const overdueCount = (deadlineDays: number, isPaid: boolean): number | null => {
+    if (!cohortStart || isPaid) return null;
+    const deadline = addDays(parseISO(cohortStart), deadlineDays);
+    const days = differenceInDays(new Date(), deadline);
+    return days > 0 ? days : null;
+  };
+
   const fmt = (n: number) => n.toLocaleString("fr-FR") + " FCFA";
   const waveHref = (amount: number) => `${waveBaseUrl}?amount=${amount}`;
 
@@ -225,7 +233,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
 
   // ── Ligne de paiement reutilisable ────────────────────────────────────────
   const PaymentLine = ({
-    title, amount, done, partialPaid, deadline, waveAmount, badgeWhenDone, badgeWhenTodo,
+    title, amount, done, partialPaid, deadline, waveAmount, badgeWhenDone, badgeWhenTodo, overdueDays,
   }: {
     title: string;
     amount: number;
@@ -235,6 +243,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
     waveAmount: number;
     badgeWhenDone: string;
     badgeWhenTodo: string;
+    overdueDays?: number | null;
   }) => {
     const isPartial = !done && (partialPaid ?? 0) > 0;
     return (
@@ -250,7 +259,13 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
             </p>
             {deadline && (
               <p className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
-                <CalendarClock className="h-3 w-3" /> Échéance : {deadline}
+                <CalendarClock className="h-3 w-3" /> Echeance : {deadline}
+              </p>
+            )}
+            {!done && overdueDays != null && overdueDays > 0 && (
+              <p className="mt-1 flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium text-yellow-700 bg-yellow-500/10 w-fit">
+                <AlertCircle className="h-3 w-3 flex-shrink-0" />
+                En retard depuis {overdueDays} jour{overdueDays > 1 ? "s" : ""}
               </p>
             )}
           </div>
@@ -358,6 +373,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
           waveAmount={inscriptionAmount}
           badgeWhenDone="Payé"
           badgeWhenTodo="Non payé"
+          overdueDays={overdueCount(15, inscriptionFullyPaid)}
         />
 
         {/* Toggle 1 fois / 2 tranches */}
@@ -397,6 +413,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
             waveAmount={formationCost}
             badgeWhenDone="Payé"
             badgeWhenTodo={formationPaid > 0 ? "Partiel" : "Non payé"}
+            overdueDays={overdueCount(30, formationFullyPaid)}
           />
         ) : (
           <>
@@ -408,6 +425,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
               waveAmount={tranche1}
               badgeWhenDone="Payé"
               badgeWhenTodo="Non payé"
+              overdueDays={overdueCount(30, tranche1Done)}
             />
             <PaymentLine
               title="Tranche 2"
@@ -417,6 +435,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
               waveAmount={tranche2}
               badgeWhenDone="Payé"
               badgeWhenTodo="Non payé"
+              overdueDays={overdueCount(60, tranche2Done)}
             />
           </>
         )}
