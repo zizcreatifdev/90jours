@@ -450,10 +450,13 @@ const Index = () => {
               {/* Zone Initiation */}
               {initiation.length > 0 && (
                 <div>
-                  <div className="mb-6 flex items-center gap-4">
+                  <div className="mb-2 flex items-center gap-4">
                     <h3 className="font-display text-2xl font-bold text-foreground">Initiation</h3>
                     <div className="h-px flex-1 bg-border" />
                   </div>
+                  <p className="mb-6 text-sm text-muted-foreground">
+                    Pour démarrer de zéro et poser des bases solides.
+                  </p>
                   <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     {initiation.map((cohort, i) => (
                       <PublicCohortCard
@@ -471,10 +474,13 @@ const Index = () => {
               {/* Zone Perfectionnement */}
               {perfectionnement.length > 0 && (
                 <div>
-                  <div className="mb-6 flex items-center gap-4">
+                  <div className="mb-2 flex items-center gap-4">
                     <h3 className="font-display text-2xl font-bold text-foreground">Perfectionnement</h3>
                     <div className="h-px flex-1 bg-border" />
                   </div>
+                  <p className="mb-6 text-sm text-muted-foreground">
+                    Pour monter en niveau et affiner sa pratique.
+                  </p>
                   <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     {perfectionnement.map((cohort, i) => (
                       <PublicCohortCard
