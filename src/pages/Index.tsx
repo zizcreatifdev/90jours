@@ -67,11 +67,15 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
       )}
       style={{ transitionDelay: formationsVisible ? `${index * 80}ms` : "0ms" }}
     >
-      {/* Navy header */}
+      {/* Navy header : duree a gauche, niveau a droite */}
       <div className="flex items-center justify-between bg-[#0E1B2E] px-5 py-3">
-        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C5A05A]">
-          {cohort.formation?.name ?? "Formation"}
-        </p>
+        {cohort.formation?.duration_days != null ? (
+          <p className="text-[11px] font-medium text-white/70">
+            {cohort.formation.duration_days} jours
+          </p>
+        ) : (
+          <span />
+        )}
         <span
           className={cn(
             "rounded-full px-2.5 py-0.5 text-[10px] font-semibold",
@@ -86,10 +90,15 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
 
       {/* Card body */}
       <div className="flex flex-1 flex-col px-5 pt-5 pb-5">
-        {/* Cohort name */}
+        {/* Grand titre : nom de la formation (element distinctif principal) */}
         <h3 className="font-display text-xl font-black leading-tight text-foreground">
-          {cohort.name}
+          {cohort.formation?.name ?? "Formation"}
         </h3>
+
+        {/* Sous-titre : nom de la cohorte, discret en doré petites caps */}
+        <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#C5A05A]">
+          Promo {cohort.name}
+        </p>
 
         {/* Description */}
         {cohort.formation?.description && (

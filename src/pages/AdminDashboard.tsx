@@ -97,14 +97,29 @@ const AdminDashboard = () => {
         if (rolesError) throw rolesError;
         const studentIds = (studentRoles || []).map((r: any) => r.user_id);
 
-        const { data, error } = await supabase
+        // Pas de FK enrollments -> profiles dans le schema : on charge les inscriptions
+        // puis les profils separement et on joint cote client (meme pattern que fetchUsers).
+        const { data: enrollData, error } = await supabase
           .from("enrollments")
-          .select("*, profiles:user_id(first_name, last_name)")
+          .select("id, user_id, cohort_id, progress, enrolled_at")
           .in("user_id", studentIds.length > 0 ? studentIds : ["none"])
           .order("enrolled_at", { ascending: false })
           .limit(10);
         if (error) throw error;
-        if (data) setStudents(data.map((d: any) => ({ ...d, profile: d.profiles })));
+
+        const enrollments = enrollData || [];
+        const userIds = [...new Set(enrollments.map((e: any) => e.user_id))];
+        let profileMap = new Map<string, { first_name: string; last_name: string }>();
+        if (userIds.length > 0) {
+          const { data: profiles, error: profilesError } = await supabase
+            .from("profiles")
+            .select("user_id, first_name, last_name")
+            .in("user_id", userIds);
+          if (profilesError) throw profilesError;
+          profileMap = new Map((profiles || []).map((p: any) => [p.user_id, { first_name: p.first_name, last_name: p.last_name }]));
+        }
+
+        setStudents(enrollments.map((e: any) => ({ ...e, profile: profileMap.get(e.user_id) })));
       } catch {
         toast({ title: "Erreur", description: "Impossible de charger les étudiants récents.", variant: "destructive" });
       }
