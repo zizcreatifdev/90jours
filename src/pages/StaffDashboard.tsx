@@ -109,19 +109,27 @@ const StaffDashboard = () => {
         if (rolesError) throw rolesError;
         const studentIds = (studentRoles || []).map((r: any) => r.user_id);
 
-        const [studentsRes, resourcesRes, announcementsRes] = await Promise.all([
-          supabase.from("enrollments").select("*")
-            .eq("cohort_id", selectedCohortId)
-            .in("user_id", studentIds.length > 0 ? studentIds : ["none"]),
+        // Ressources et annonces sont scopees a la cohorte (independantes des etudiants)
+        const [resourcesRes, announcementsRes] = await Promise.all([
           supabase.from("resources").select("*").eq("cohort_id", selectedCohortId).order("created_at", { ascending: false }),
           supabase.from("announcements").select("*").eq("cohort_id", selectedCohortId).order("created_at", { ascending: false }),
         ]);
-        if (studentsRes.error || resourcesRes.error || announcementsRes.error) {
-          throw (studentsRes.error || resourcesRes.error || announcementsRes.error);
+        if (resourcesRes.error || announcementsRes.error) {
+          throw (resourcesRes.error || announcementsRes.error);
+        }
+
+        // Aucun etudiant : court-circuit la requete enrollments (eviter sentinel "none" sur uuid -> 22P02)
+        let enrollments: any[] = [];
+        if (studentIds.length > 0) {
+          const { data: studentsData, error: studentsError } = await supabase
+            .from("enrollments").select("*")
+            .eq("cohort_id", selectedCohortId)
+            .in("user_id", studentIds);
+          if (studentsError) throw studentsError;
+          enrollments = studentsData || [];
         }
 
         // Pas de FK enrollments -> profiles : jointure cote client via Map sur user_id
-        const enrollments = studentsRes.data || [];
         const userIds = [...new Set(enrollments.map((e: any) => e.user_id).filter(Boolean))];
         let profileMap = new Map<string, { first_name: string; last_name: string; phone: string | null }>();
         if (userIds.length > 0) {
@@ -136,7 +144,8 @@ const StaffDashboard = () => {
 
         if (resourcesRes.data) setResources(resourcesRes.data);
         if (announcementsRes.data) setAnnouncements(announcementsRes.data);
-      } catch {
+      } catch (err) {
+        console.error("StaffDashboard.fetchData:", err);
         toast({ title: "Erreur", description: "Impossible de charger les données de la cohorte.", variant: "destructive" });
       }
     };

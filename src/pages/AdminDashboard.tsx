@@ -97,12 +97,15 @@ const AdminDashboard = () => {
         if (rolesError) throw rolesError;
         const studentIds = (studentRoles || []).map((r: any) => r.user_id);
 
+        // Aucun etudiant : court-circuit (eviter .in avec sentinel "none" sur colonne uuid -> 22P02)
+        if (studentIds.length === 0) { setStudents([]); return; }
+
         // Pas de FK enrollments -> profiles dans le schema : on charge les inscriptions
         // puis les profils separement et on joint cote client (meme pattern que fetchUsers).
         const { data: enrollData, error } = await supabase
           .from("enrollments")
           .select("id, user_id, cohort_id, progress, enrolled_at")
-          .in("user_id", studentIds.length > 0 ? studentIds : ["none"])
+          .in("user_id", studentIds)
           .order("enrolled_at", { ascending: false })
           .limit(10);
         if (error) throw error;
@@ -120,7 +123,8 @@ const AdminDashboard = () => {
         }
 
         setStudents(enrollments.map((e: any) => ({ ...e, profile: profileMap.get(e.user_id) })));
-      } catch {
+      } catch (err) {
+        console.error("fetchStudents:", err);
         toast({ title: "Erreur", description: "Impossible de charger les étudiants récents.", variant: "destructive" });
       }
     };

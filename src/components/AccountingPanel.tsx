@@ -212,7 +212,9 @@ const AccountingPanel = () => {
       const { data } = await supabase.from("user_roles").select("user_id").eq("role", "staff");
       if (data) {
         const ids = data.map(r => r.user_id);
-        const { data: profiles } = await supabase.from("profiles").select("user_id, first_name, last_name").in("user_id", ids.length > 0 ? ids : ["none"]);
+        // Aucun staff : pas de requete avec sentinel "none" sur colonne uuid (-> 22P02)
+        if (ids.length === 0) { setStaffList([]); return; }
+        const { data: profiles } = await supabase.from("profiles").select("user_id, first_name, last_name").in("user_id", ids);
         if (profiles) setStaffList(profiles as any);
       }
     };
