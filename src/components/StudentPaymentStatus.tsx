@@ -98,8 +98,8 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
         .single();
       if (f) {
         setFormation(f);
-        // Remise deja appliquee en base (persiste apres rechargement)
-        const d = await fetchStudentDiscount(user.id, cohortId, f.registration_fee ?? 10000);
+        // Remise deja appliquee en base (figee, persiste apres rechargement)
+        const d = await fetchStudentDiscount(user.id, cohortId);
         setPersistedDiscount(d);
       }
     }

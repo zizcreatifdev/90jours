@@ -11,11 +11,12 @@
 --   2. apply_promo_code     : applique de façon atomique (incrément concurrent-safe
 --                             borné par max_uses + insertion de l'usage).
 --
--- La réduction porte sur les frais d'inscription, calculée côté front (etape 2/2) :
---   - percentage : inscription * (1 - discount_value / 100)
---   - fixed      : max(0, inscription - discount_value)
--- Les fonctions ne connaissent pas le montant, elles renvoient seulement
--- discount_type + discount_value.
+-- La réduction porte sur les frais d'inscription :
+--   - percentage : round(registration_fee * discount_value / 100)
+--   - fixed      : min(discount_value, registration_fee)
+-- apply_promo_code calcule ce montant cote serveur (registration_fee lu depuis
+-- la cohorte) et le FIGE dans promo_code_usage.discount_amount, pour que la
+-- remise survive a une desactivation ulterieure du code.
 --
 -- Sécurité : search_path figé, vérification auth.uid(), EXECUTE révoqué de PUBLIC
 -- puis accordé à authenticated uniquement.
@@ -28,6 +29,13 @@ BEGIN;
 -- doublons existaient déjà, les dédoublonner avant de jouer cette migration.
 CREATE UNIQUE INDEX IF NOT EXISTS promo_code_usage_unique_user_code
   ON public.promo_code_usage (promo_code_id, user_id);
+
+-- ── 0b. Montant de remise FIGE au moment de l'application ────────────────────
+-- Stocke le montant FCFA reellement deduit, calcule cote serveur. La remise
+-- devient ainsi independante de l'etat futur du code (si le code est plus tard
+-- desactive, l'etudiant garde sa remise sans avoir a relire promo_codes).
+ALTER TABLE public.promo_code_usage
+  ADD COLUMN IF NOT EXISTS discount_amount integer NOT NULL DEFAULT 0;
 
 -- ── 1. Validation (lecture seule) ───────────────────────────────────────────
 DROP FUNCTION IF EXISTS public.validate_promo_code(text, uuid);
@@ -103,6 +111,10 @@ SET search_path = public
 AS $$
 DECLARE
   v_id uuid;
+  v_type text;
+  v_value integer;
+  v_fee integer;
+  v_discount integer;
   v_updated uuid;
 BEGIN
   -- Sécurité : un étudiant ne peut appliquer un code que pour lui-même.
@@ -111,7 +123,8 @@ BEGIN
     RETURN;
   END IF;
 
-  SELECT id INTO v_id
+  SELECT id, discount_type, discount_value
+    INTO v_id, v_type, v_value
   FROM public.promo_codes
   WHERE upper(code) = upper(trim(p_code))
   LIMIT 1;
@@ -151,9 +164,24 @@ BEGIN
       RETURN;
     END IF;
 
-    -- Trace l'usage (lié au paiement déclaré)
-    INSERT INTO public.promo_code_usage (promo_code_id, user_id, payment_id)
-    VALUES (v_id, p_user_id, p_payment_id);
+    -- Frais d'inscription de la cohorte, lus cote serveur (non manipulables par
+    -- le client) pour calculer le montant de remise a figer.
+    SELECT COALESCE(f.registration_fee, 0) INTO v_fee
+    FROM public.cohorts c
+    JOIN public.formations f ON f.id = c.formation_id
+    WHERE c.id = p_cohort_id;
+    v_fee := COALESCE(v_fee, 0);
+
+    -- Montant de remise fige (sur les frais d'inscription) : meme calcul que le
+    -- front (percentage : round(fee * value / 100) ; fixed : min(value, fee)).
+    v_discount := CASE
+      WHEN v_type = 'percentage' THEN GREATEST(0, ROUND(v_fee * v_value / 100.0))::integer
+      ELSE GREATEST(0, LEAST(v_value, v_fee))
+    END;
+
+    -- Trace l'usage (lié au paiement déclaré) avec la remise figée
+    INSERT INTO public.promo_code_usage (promo_code_id, user_id, payment_id, discount_amount)
+    VALUES (v_id, p_user_id, p_payment_id, v_discount);
   EXCEPTION
     WHEN unique_violation THEN
       -- Application concurrente détectée : l'incrément ci-dessus est annulé.

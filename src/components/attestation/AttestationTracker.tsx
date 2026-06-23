@@ -64,13 +64,9 @@ const AttestationTracker = () => {
     const { data: profiles } = await supabase.from("profiles").select("user_id, first_name, last_name").in("user_id", userIds);
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
-    // Remise code promo par (etudiant, cohorte) : frais d'inscription propres a
-    // chaque formation, via les cohortes deja chargees (useCohorts).
+    // Remise code promo figee par (etudiant, cohorte), lue depuis promo_code_usage.
     const usageRows = await fetchPromoUsage(userIds);
-    const discountMap = buildDiscountMap(
-      usageRows,
-      (cid) => cohorts.find(c => c.id === cid)?.formation?.registration_fee ?? 0,
-    );
+    const discountMap = buildDiscountMap(usageRows);
 
     // Get emails
     const { data: emailData } = await supabase.functions.invoke("list-user-emails");
