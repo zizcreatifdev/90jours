@@ -23,6 +23,12 @@
 
 BEGIN;
 
+-- ── 0. Unicité : un code ne peut être utilisé qu'une seule fois par étudiant ──
+-- Table normalement vide tant que le consommateur (UI) n'est pas câblé ; si des
+-- doublons existaient déjà, les dédoublonner avant de jouer cette migration.
+CREATE UNIQUE INDEX IF NOT EXISTS promo_code_usage_unique_user_code
+  ON public.promo_code_usage (promo_code_id, user_id);
+
 -- ── 1. Validation (lecture seule) ───────────────────────────────────────────
 DROP FUNCTION IF EXISTS public.validate_promo_code(text, uuid);
 
@@ -115,27 +121,45 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Incrément atomique : toutes les conditions sont dans le WHERE, donc deux
-  -- applications concurrentes sont sérialisées par le verrou de ligne et la
-  -- seconde échoue si max_uses serait dépassé (current_uses re-évalué a jour).
-  UPDATE public.promo_codes
-     SET current_uses = current_uses + 1,
-         updated_at = now()
-   WHERE id = v_id
-     AND is_active = true
-     AND (early_bird_deadline IS NULL OR early_bird_deadline > now())
-     AND (max_uses IS NULL OR current_uses < max_uses)
-     AND (cohort_id IS NULL OR cohort_id = p_cohort_id)
-   RETURNING id INTO v_updated;
-
-  IF v_updated IS NULL THEN
-    RETURN QUERY SELECT false, 'Ce code n''est plus valable (inactif, expiré, épuisé ou réservé à une autre cohorte).'::text;
+  -- Anti-doublon : un même étudiant ne peut utiliser ce code qu'une seule fois.
+  IF EXISTS (
+    SELECT 1 FROM public.promo_code_usage
+    WHERE promo_code_id = v_id AND user_id = p_user_id
+  ) THEN
+    RETURN QUERY SELECT false, 'Vous avez déjà utilisé ce code.'::text;
     RETURN;
   END IF;
 
-  -- Trace l'usage (lié au paiement déclaré)
-  INSERT INTO public.promo_code_usage (promo_code_id, user_id, payment_id)
-  VALUES (v_id, p_user_id, p_payment_id);
+  -- Incrément + trace dans un sous-bloc : en cas d'application concurrente, la
+  -- violation de l'index unique (promo_code_usage) annule aussi l'incrément.
+  BEGIN
+    -- Incrément atomique : toutes les conditions sont dans le WHERE, donc deux
+    -- applications concurrentes sont sérialisées par le verrou de ligne et la
+    -- seconde échoue si max_uses serait dépassé (current_uses re-évalué a jour).
+    UPDATE public.promo_codes
+       SET current_uses = current_uses + 1,
+           updated_at = now()
+     WHERE id = v_id
+       AND is_active = true
+       AND (early_bird_deadline IS NULL OR early_bird_deadline > now())
+       AND (max_uses IS NULL OR current_uses < max_uses)
+       AND (cohort_id IS NULL OR cohort_id = p_cohort_id)
+     RETURNING id INTO v_updated;
+
+    IF v_updated IS NULL THEN
+      RETURN QUERY SELECT false, 'Ce code n''est plus valable (inactif, expiré, épuisé ou réservé à une autre cohorte).'::text;
+      RETURN;
+    END IF;
+
+    -- Trace l'usage (lié au paiement déclaré)
+    INSERT INTO public.promo_code_usage (promo_code_id, user_id, payment_id)
+    VALUES (v_id, p_user_id, p_payment_id);
+  EXCEPTION
+    WHEN unique_violation THEN
+      -- Application concurrente détectée : l'incrément ci-dessus est annulé.
+      RETURN QUERY SELECT false, 'Vous avez déjà utilisé ce code.'::text;
+      RETURN;
+  END;
 
   RETURN QUERY SELECT true, NULL::text;
 END;
