@@ -29,6 +29,7 @@ import { useSiteSettings } from "@/hooks/use-site-settings";
 import NotificationPanel from "@/components/NotificationPanel";
 import OfficialMessageSender from "@/components/OfficialMessageSender";
 import FormateurMessageSender from "@/components/FormateurMessageSender";
+import StaffMessageSender from "@/components/StaffMessageSender";
 import FormationManager from "@/components/FormationManager";
 import FormateurManager from "@/components/FormateurManager";
 import AuditLogPanel from "@/components/AuditLogPanel";
@@ -404,6 +405,7 @@ const AdminDashboard = () => {
           </div>
           <div className="flex items-center gap-2 md:gap-4">
             <FormateurMessageSender />
+            <StaffMessageSender />
             <OfficialMessageSender />
             <NotificationPanel />
             <Link to="/profile">
