@@ -1,4 +1,4 @@
-import { Users, FileText, Megaphone, BookOpen, Loader2, Search, Plus, Upload, Trash2, Mail, Download, ListTodo, ClipboardList, Briefcase, Menu, MessageSquare, Award } from "lucide-react";
+import { Users, FileText, Megaphone, BookOpen, Loader2, Search, Plus, Upload, Trash2, Mail, Download, ListTodo, ClipboardList, Briefcase, Menu, Award } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import NotificationPanel from "@/components/NotificationPanel";
@@ -22,6 +22,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { exportToCsv } from "@/lib/export-csv";
 import StaffTasks from "@/components/StaffTasks";
+import StaffMessages from "@/components/StaffMessages";
 import BriefManager from "@/components/BriefManager";
 import PortfolioManager from "@/components/PortfolioManager";
 import DashboardCalendar from "@/components/DashboardCalendar";
@@ -496,12 +497,8 @@ const StaffDashboard = () => {
           ) : tab === "resources" ? (
             <div className="mx-auto max-w-2xl">{resourcesCard}</div>
           ) : tab === "messages" ? (
-            <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-10 text-center shadow-card">
-              <MessageSquare className="mx-auto h-10 w-10 text-muted-foreground" />
-              <h2 className="mt-4 font-display text-lg font-semibold text-foreground">Messagerie formateur</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                La lecture de vos messages arrive prochainement. En attendant, retrouvez vos notifications en haut a droite.
-              </p>
+            <div className="mx-auto max-w-2xl">
+              <StaffMessages />
             </div>
           ) : tab === "attestations" ? (
             <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-10 text-center shadow-card">
