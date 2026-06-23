@@ -1,4 +1,4 @@
-import { Users, FileText, Megaphone, BookOpen, Loader2, Search, Plus, Upload, Trash2, Mail, Download, ListTodo, ClipboardList, Briefcase, Menu } from "lucide-react";
+import { Users, FileText, Megaphone, BookOpen, Loader2, Search, Plus, Upload, Trash2, Mail, Download, ListTodo, ClipboardList, Briefcase, Menu, MessageSquare, Award } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import NotificationPanel from "@/components/NotificationPanel";
@@ -300,6 +300,138 @@ const StaffDashboard = () => {
     ? Math.round(students.reduce((a: number, s: any) => a + s.progress, 0) / students.length)
     : 0;
 
+  // Onglet actif (lu depuis l'URL) : pilote l'affichage du contenu
+  const tab = searchParams.get("tab") || "overview";
+
+  // Cartes reutilisables (overview + onglets dedies)
+  const announcementsCard = (
+    <div className="rounded-2xl border border-border bg-card shadow-card">
+      <div className="flex items-center justify-between border-b border-border px-6 py-4">
+        <h2 className="font-display text-base font-semibold text-foreground">Annonces</h2>
+        <Dialog open={annOpen} onOpenChange={setAnnOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Plus className="mr-1 h-4 w-4" /> Nouvelle
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="font-display">Publier une annonce</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateAnnouncement} className="space-y-4 pt-2">
+              <div>
+                <Label htmlFor="ann-title">Titre</Label>
+                <Input id="ann-title" required maxLength={200} value={annTitle} onChange={e => setAnnTitle(e.target.value)} placeholder="Titre de l'annonce" />
+              </div>
+              <div>
+                <Label htmlFor="ann-content">Contenu</Label>
+                <Textarea id="ann-content" required maxLength={2000} rows={4} value={annContent} onChange={e => setAnnContent(e.target.value)} placeholder="Rédigez votre annonce..." />
+              </div>
+              <Button type="submit" disabled={annSaving} className="w-full">
+                {annSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+                Publier
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+      <div className="divide-y divide-border max-h-72 overflow-y-auto">
+        {announcements.length === 0 ? (
+          <p className="px-6 py-8 text-center text-sm text-muted-foreground">Aucune annonce</p>
+        ) : (
+          announcements.map((a: any) => (
+            <div key={a.id} className="group flex items-start justify-between px-6 py-3.5">
+              <div>
+                <p className="text-sm font-medium text-foreground">{a.title}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{a.content}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{new Date(a.created_at).toLocaleDateString("fr-FR")}</p>
+              </div>
+              <ConfirmDialog
+                trigger={
+                  <button className="ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                }
+                title="Supprimer cette annonce ?"
+                description="Cette action est irréversible."
+                confirmLabel="Supprimer"
+                onConfirm={() => handleDeleteAnnouncement(a.id)}
+              />
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
+  const resourcesCard = (
+    <div className="rounded-2xl border border-border bg-card shadow-card">
+      <div className="flex items-center justify-between border-b border-border px-6 py-4">
+        <h2 className="font-display text-base font-semibold text-foreground">Ressources</h2>
+        <Dialog open={resOpen} onOpenChange={setResOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="outline">
+              <Upload className="mr-1 h-4 w-4" /> Upload
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="font-display">Ajouter une ressource</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleUploadResource} className="space-y-4 pt-2">
+              <div>
+                <Label htmlFor="res-title">Titre</Label>
+                <Input id="res-title" maxLength={200} value={resTitle} onChange={e => setResTitle(e.target.value)} placeholder="Titre de la ressource" />
+              </div>
+              <div>
+                <Label>Fichier</Label>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  required
+                  onChange={e => setResFile(e.target.files?.[0] || null)}
+                  className="mt-1 block w-full text-sm text-muted-foreground file:mr-4 file:rounded-lg file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-medium file:text-foreground hover:file:bg-secondary/80"
+                />
+              </div>
+              <Button type="submit" disabled={resUploading} className="w-full">
+                {resUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                Uploader
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+      <div className="divide-y divide-border max-h-72 overflow-y-auto">
+        {resources.length === 0 ? (
+          <p className="px-6 py-8 text-center text-sm text-muted-foreground">Aucune ressource</p>
+        ) : (
+          resources.map((r: any) => (
+            <div key={r.id} className="group flex items-center justify-between px-6 py-3">
+              <a href={r.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-accent transition-colors">
+                <FileText className="h-4 w-4 text-accent" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">{r.title}</p>
+                  <p className="text-xs text-muted-foreground uppercase">{r.type}</p>
+                </div>
+              </a>
+              <ConfirmDialog
+                trigger={
+                  <button className="ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                }
+                title="Supprimer cette ressource ?"
+                description="Le fichier sera supprimé définitivement."
+                confirmLabel="Supprimer"
+                onConfirm={() => handleDeleteResource(r.id)}
+              />
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex min-h-screen bg-background">
       <DashboardSidebar role="staff" mobileOpen={sidebarOpen} onMobileOpenChange={setSidebarOpen} />
@@ -340,9 +472,44 @@ const StaffDashboard = () => {
         </header>
 
         <div className="p-4 md:p-8">
-          {searchParams.get("tab") === "calendar" ? (
+          {tab === "calendar" ? (
             <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
               <DashboardCalendar role="staff" cohortIds={cohorts.map(c => c.id)} />
+            </div>
+          ) : tab === "tasks" ? (
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+              <StaffTasks />
+            </div>
+          ) : tab === "briefs" ? (
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+              <BriefManager cohortId={selectedCohortId} role="staff" />
+            </div>
+          ) : tab === "portfolios" ? (
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+              <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+                <Briefcase className="h-5 w-5" /> Portfolios
+              </h2>
+              <PortfolioManager filterCohortIds={cohorts.map(c => c.id)} />
+            </div>
+          ) : tab === "announcements" ? (
+            <div className="mx-auto max-w-2xl">{announcementsCard}</div>
+          ) : tab === "resources" ? (
+            <div className="mx-auto max-w-2xl">{resourcesCard}</div>
+          ) : tab === "messages" ? (
+            <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-10 text-center shadow-card">
+              <MessageSquare className="mx-auto h-10 w-10 text-muted-foreground" />
+              <h2 className="mt-4 font-display text-lg font-semibold text-foreground">Messagerie formateur</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                La lecture de vos messages arrive prochainement. En attendant, retrouvez vos notifications en haut a droite.
+              </p>
+            </div>
+          ) : tab === "attestations" ? (
+            <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-10 text-center shadow-card">
+              <Award className="mx-auto h-10 w-10 text-muted-foreground" />
+              <h2 className="mt-4 font-display text-lg font-semibold text-foreground">Attestations</h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Les attestations sont délivrées par l'administration. Vous n'avez pas d'action à effectuer ici.
+              </p>
             </div>
           ) : (
           <>
@@ -452,131 +619,8 @@ const StaffDashboard = () => {
             </div>
 
             <div className="space-y-8">
-              {/* Announcements with CRUD */}
-              <div className="rounded-2xl border border-border bg-card shadow-card">
-                <div className="flex items-center justify-between border-b border-border px-6 py-4">
-                  <h2 className="font-display text-base font-semibold text-foreground">Annonces</h2>
-                  <Dialog open={annOpen} onOpenChange={setAnnOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                        <Plus className="mr-1 h-4 w-4" /> Nouvelle
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle className="font-display">Publier une annonce</DialogTitle>
-                      </DialogHeader>
-                      <form onSubmit={handleCreateAnnouncement} className="space-y-4 pt-2">
-                        <div>
-                          <Label htmlFor="ann-title">Titre</Label>
-                          <Input id="ann-title" required maxLength={200} value={annTitle} onChange={e => setAnnTitle(e.target.value)} placeholder="Titre de l'annonce" />
-                        </div>
-                        <div>
-                          <Label htmlFor="ann-content">Contenu</Label>
-                          <Textarea id="ann-content" required maxLength={2000} rows={4} value={annContent} onChange={e => setAnnContent(e.target.value)} placeholder="Rédigez votre annonce..." />
-                        </div>
-                        <Button type="submit" disabled={annSaving} className="w-full">
-                          {annSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
-                          Publier
-                        </Button>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-                <div className="divide-y divide-border max-h-72 overflow-y-auto">
-                  {announcements.length === 0 ? (
-                    <p className="px-6 py-8 text-center text-sm text-muted-foreground">Aucune annonce</p>
-                  ) : (
-                    announcements.map((a: any) => (
-                      <div key={a.id} className="group flex items-start justify-between px-6 py-3.5">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{a.title}</p>
-                          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{a.content}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">{new Date(a.created_at).toLocaleDateString("fr-FR")}</p>
-                        </div>
-                        <ConfirmDialog
-                          trigger={
-                            <button className="ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          }
-                          title="Supprimer cette annonce ?"
-                          description="Cette action est irréversible."
-                          confirmLabel="Supprimer"
-                          onConfirm={() => handleDeleteAnnouncement(a.id)}
-                        />
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {/* Resources with upload */}
-              <div className="rounded-2xl border border-border bg-card shadow-card">
-                <div className="flex items-center justify-between border-b border-border px-6 py-4">
-                  <h2 className="font-display text-base font-semibold text-foreground">Ressources</h2>
-                  <Dialog open={resOpen} onOpenChange={setResOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" variant="outline">
-                        <Upload className="mr-1 h-4 w-4" /> Upload
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
-                      <DialogHeader>
-                        <DialogTitle className="font-display">Ajouter une ressource</DialogTitle>
-                      </DialogHeader>
-                      <form onSubmit={handleUploadResource} className="space-y-4 pt-2">
-                        <div>
-                          <Label htmlFor="res-title">Titre</Label>
-                          <Input id="res-title" maxLength={200} value={resTitle} onChange={e => setResTitle(e.target.value)} placeholder="Titre de la ressource" />
-                        </div>
-                        <div>
-                          <Label>Fichier</Label>
-                          <input
-                            ref={fileRef}
-                            type="file"
-                            required
-                            onChange={e => setResFile(e.target.files?.[0] || null)}
-                            className="mt-1 block w-full text-sm text-muted-foreground file:mr-4 file:rounded-lg file:border-0 file:bg-secondary file:px-4 file:py-2 file:text-sm file:font-medium file:text-foreground hover:file:bg-secondary/80"
-                          />
-                        </div>
-                        <Button type="submit" disabled={resUploading} className="w-full">
-                          {resUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                          Uploader
-                        </Button>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-                <div className="divide-y divide-border max-h-72 overflow-y-auto">
-                  {resources.length === 0 ? (
-                    <p className="px-6 py-8 text-center text-sm text-muted-foreground">Aucune ressource</p>
-                  ) : (
-                    resources.map((r: any) => (
-                      <div key={r.id} className="group flex items-center justify-between px-6 py-3">
-                        <a href={r.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-accent transition-colors">
-                          <FileText className="h-4 w-4 text-accent" />
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{r.title}</p>
-                            <p className="text-xs text-muted-foreground uppercase">{r.type}</p>
-                          </div>
-                        </a>
-                        <ConfirmDialog
-                          trigger={
-                            <button className="ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          }
-                          title="Supprimer cette ressource ?"
-                          description="Le fichier sera supprimé définitivement."
-                          confirmLabel="Supprimer"
-                          onConfirm={() => handleDeleteResource(r.id)}
-                        />
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
+              {announcementsCard}
+              {resourcesCard}
             </div>
           </div>
           </>

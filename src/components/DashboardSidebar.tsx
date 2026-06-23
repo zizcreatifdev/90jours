@@ -82,6 +82,8 @@ const staffLinks: SidebarLink[] = [
   { href: "/staff", label: "Mes cohortes", icon: LayoutDashboard },
   { href: "/staff?tab=calendar", label: "Calendrier", icon: CalendarDays },
   { href: "/staff?tab=tasks", label: "Mes tâches", icon: ClipboardList },
+  { href: "/staff?tab=briefs", label: "Briefs", icon: BookOpen },
+  { href: "/staff?tab=portfolios", label: "Portfolios", icon: Briefcase },
   { href: "/staff?tab=announcements", label: "Annonces", icon: Megaphone },
   { href: "/staff?tab=resources", label: "Ressources", icon: Upload },
 ];
