@@ -102,7 +102,7 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
       setLoading(true);
       const [briefsRes, studentsRes] = await Promise.all([
         supabase.from("briefs").select("*, brief_categories(id, name)").eq("cohort_id", selectedCohort).order("deadline", { ascending: true }),
-        supabase.from("enrollments").select("user_id, profiles:user_id(first_name, last_name)").eq("cohort_id", selectedCohort),
+        supabase.from("enrollments").select("user_id").eq("cohort_id", selectedCohort),
       ]);
       const briefsData = (briefsRes.data || []).map((b: any) => ({ ...b, category: b.brief_categories })) as Brief[];
       setBriefs(briefsData);
@@ -110,7 +110,18 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
         // Filter to students only
         const { data: studentRoles } = await supabase.from("user_roles").select("user_id").eq("role", "student");
         const studentIds = new Set((studentRoles || []).map((r: any) => r.user_id));
-        setStudents(studentsRes.data.filter((s: any) => studentIds.has(s.user_id)));
+        const enrolledStudents = studentsRes.data.filter((s: any) => studentIds.has(s.user_id));
+        // Pas de FK enrollments -> profiles : jointure cote client via Map sur user_id
+        const userIds = [...new Set(enrolledStudents.map((s: any) => s.user_id).filter(Boolean))];
+        let profileMap = new Map<string, { first_name: string; last_name: string }>();
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from("profiles")
+            .select("user_id, first_name, last_name")
+            .in("user_id", userIds);
+          profileMap = new Map((profiles || []).map((p: any) => [p.user_id, { first_name: p.first_name, last_name: p.last_name }]));
+        }
+        setStudents(enrolledStudents.map((s: any) => ({ ...s, profiles: profileMap.get(s.user_id) ?? null })));
       }
 
       if (briefsData.length > 0) {

@@ -35,7 +35,7 @@ const SignedContractsPanel = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("student_contracts")
-        .select("*, profiles:user_id(first_name, last_name), cohorts:cohort_id(name)")
+        .select("*, cohorts:cohort_id(name)")
         .not("signed_at", "is", null)
         .order("signed_at", { ascending: false });
 
@@ -43,6 +43,17 @@ const SignedContractsPanel = () => {
         toast({ title: "Erreur", description: error.message, variant: "destructive" });
         setLoading(false);
         return;
+      }
+
+      // Pas de FK student_contracts -> profiles : jointure cote client via Map sur user_id
+      const userIds = [...new Set((data || []).map((c: any) => c.user_id).filter(Boolean))];
+      let profileMap = new Map<string, { first_name: string; last_name: string }>();
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, first_name, last_name")
+          .in("user_id", userIds);
+        profileMap = new Map((profiles || []).map((p: any) => [p.user_id, { first_name: p.first_name, last_name: p.last_name }]));
       }
 
       const mapped = (data || []).map((c: any) => ({
@@ -54,7 +65,7 @@ const SignedContractsPanel = () => {
         ip_address: c.ip_address,
         contract_snapshot: c.contract_snapshot,
         created_at: c.created_at,
-        profile: c.profiles as { first_name: string; last_name: string } | null,
+        profile: profileMap.get(c.user_id) ?? null,
         cohort_name: (c.cohorts as { name: string } | null)?.name ?? "-",
       })) as SignedContract[];
 

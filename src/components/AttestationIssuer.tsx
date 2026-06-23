@@ -201,7 +201,7 @@ const AttestationIssuer = () => {
       // Get enrollments (students only)
       const { data: enrollments } = await supabase
         .from("enrollments")
-        .select("user_id, profiles:user_id(first_name, last_name)")
+        .select("user_id")
         .eq("cohort_id", selectedCohort);
 
       if (!enrollments) { setLoading(false); return; }
@@ -213,6 +213,17 @@ const AttestationIssuer = () => {
         .in("role", ["super_admin", "staff"]);
       const staffIds = new Set((staffRoles || []).map(r => r.user_id));
       const studentEnrollments = enrollments.filter(e => !staffIds.has(e.user_id));
+
+      // Pas de FK enrollments -> profiles : jointure cote client via Map sur user_id
+      const studentIds = [...new Set(studentEnrollments.map(e => e.user_id).filter(Boolean))];
+      let profileMap = new Map<string, { first_name: string; last_name: string }>();
+      if (studentIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, first_name, last_name")
+          .in("user_id", studentIds);
+        profileMap = new Map((profiles || []).map((p: any) => [p.user_id, { first_name: p.first_name, last_name: p.last_name }]));
+      }
 
       // Get portfolios
       const { data: portfolios } = await supabase
@@ -244,7 +255,7 @@ const AttestationIssuer = () => {
       });
 
       const rows: StudentRow[] = studentEnrollments.map(e => {
-        const p = e.profiles as any;
+        const p = profileMap.get(e.user_id);
         return {
           user_id: e.user_id,
           first_name: p?.first_name || "",

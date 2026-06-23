@@ -162,24 +162,40 @@ const AdminDashboard = () => {
       const [enrollRes, payRes, subRes] = await Promise.all([
         supabase
           .from("enrollments")
-          .select("id, enrolled_at, profiles:user_id(first_name, last_name), cohorts:cohort_id(name)")
+          .select("id, user_id, enrolled_at, cohorts:cohort_id(name)")
           .order("enrolled_at", { ascending: false })
           .limit(5),
         supabase
           .from("payments")
-          .select("id, created_at, amount, status, profiles:user_id(first_name, last_name)")
+          .select("id, user_id, created_at, amount, status")
           .order("created_at", { ascending: false })
           .limit(5),
         supabase
           .from("brief_submissions")
-          .select("id, completed_at, profiles:user_id(first_name, last_name), briefs:brief_id(title)")
+          .select("id, user_id, completed_at, briefs:brief_id(title)")
           .order("completed_at", { ascending: false })
           .limit(5),
       ]);
       if (enrollRes.error || payRes.error || subRes.error) throw (enrollRes.error || payRes.error || subRes.error);
 
-      const fmt = (n: string) => {
-        const p = n as unknown as { first_name?: string; last_name?: string };
+      // Pas de FK vers profiles : jointure cote client via Map sur user_id
+      const activityUserIds = [...new Set([
+        ...(enrollRes.data || []).map((e: any) => e.user_id),
+        ...(payRes.data || []).map((p: any) => p.user_id),
+        ...(subRes.data || []).map((s: any) => s.user_id),
+      ].filter(Boolean))];
+      let activityProfiles = new Map<string, { first_name?: string; last_name?: string }>();
+      if (activityUserIds.length > 0) {
+        const { data: profs, error: profsError } = await supabase
+          .from("profiles")
+          .select("user_id, first_name, last_name")
+          .in("user_id", activityUserIds);
+        if (profsError) throw profsError;
+        activityProfiles = new Map((profs || []).map((p: any) => [p.user_id, { first_name: p.first_name, last_name: p.last_name }]));
+      }
+
+      const fmt = (userId: string) => {
+        const p = activityProfiles.get(userId);
         return `${p?.first_name || ""} ${p?.last_name || ""}`.trim() || "Inconnu";
       };
 
@@ -187,19 +203,19 @@ const AdminDashboard = () => {
         ...(enrollRes.data || []).map((e: any) => ({
           id: `enroll-${e.id}`,
           type: "enrollment" as const,
-          description: `${fmt(e.profiles)} s'est inscrit${e.cohorts?.name ? ` · ${e.cohorts.name}` : ""}`,
+          description: `${fmt(e.user_id)} s'est inscrit${e.cohorts?.name ? ` · ${e.cohorts.name}` : ""}`,
           timestamp: e.enrolled_at,
         })),
         ...(payRes.data || []).map((p: any) => ({
           id: `pay-${p.id}`,
           type: "payment" as const,
-          description: `${fmt(p.profiles)} : ${(p.amount || 0).toLocaleString("fr-FR")} FCFA (${p.status === "paid" ? "confirmé" : "en attente"})`,
+          description: `${fmt(p.user_id)} : ${(p.amount || 0).toLocaleString("fr-FR")} FCFA (${p.status === "paid" ? "confirmé" : "en attente"})`,
           timestamp: p.created_at,
         })),
         ...(subRes.data || []).map((s: any) => ({
           id: `sub-${s.id}`,
           type: "submission" as const,
-          description: `${fmt(s.profiles)} a soumis "${(s.briefs as any)?.title || "un brief"}"`,
+          description: `${fmt(s.user_id)} a soumis "${(s.briefs as any)?.title || "un brief"}"`,
           timestamp: s.completed_at,
         })),
       ];

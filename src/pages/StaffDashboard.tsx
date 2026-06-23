@@ -110,7 +110,7 @@ const StaffDashboard = () => {
         const studentIds = (studentRoles || []).map((r: any) => r.user_id);
 
         const [studentsRes, resourcesRes, announcementsRes] = await Promise.all([
-          supabase.from("enrollments").select("*, profiles:user_id(first_name, last_name, phone)")
+          supabase.from("enrollments").select("*")
             .eq("cohort_id", selectedCohortId)
             .in("user_id", studentIds.length > 0 ? studentIds : ["none"]),
           supabase.from("resources").select("*").eq("cohort_id", selectedCohortId).order("created_at", { ascending: false }),
@@ -119,7 +119,21 @@ const StaffDashboard = () => {
         if (studentsRes.error || resourcesRes.error || announcementsRes.error) {
           throw (studentsRes.error || resourcesRes.error || announcementsRes.error);
         }
-        if (studentsRes.data) setStudents(studentsRes.data);
+
+        // Pas de FK enrollments -> profiles : jointure cote client via Map sur user_id
+        const enrollments = studentsRes.data || [];
+        const userIds = [...new Set(enrollments.map((e: any) => e.user_id).filter(Boolean))];
+        let profileMap = new Map<string, { first_name: string; last_name: string; phone: string | null }>();
+        if (userIds.length > 0) {
+          const { data: profiles, error: profilesError } = await supabase
+            .from("profiles")
+            .select("user_id, first_name, last_name, phone")
+            .in("user_id", userIds);
+          if (profilesError) throw profilesError;
+          profileMap = new Map((profiles || []).map((p: any) => [p.user_id, { first_name: p.first_name, last_name: p.last_name, phone: p.phone }]));
+        }
+        setStudents(enrollments.map((e: any) => ({ ...e, profiles: profileMap.get(e.user_id) })));
+
         if (resourcesRes.data) setResources(resourcesRes.data);
         if (announcementsRes.data) setAnnouncements(announcementsRes.data);
       } catch {

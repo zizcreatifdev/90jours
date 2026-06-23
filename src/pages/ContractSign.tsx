@@ -131,12 +131,17 @@ const ContractSign = () => {
       if (c.formation_id) {
         const { data: sf } = await supabase
           .from("staff_formations" as "staff_formations")
-          .select("staff_id, profiles:staff_id(first_name, last_name)")
+          .select("staff_id")
           .eq("formation_id", c.formation_id)
           .limit(1)
           .maybeSingle();
-        if (sf) {
-          const p = (sf as any).profiles as { first_name?: string; last_name?: string } | null;
+        // Pas de FK staff_formations -> profiles : chargement separe du profil
+        if (sf && (sf as any).staff_id) {
+          const { data: p } = await supabase
+            .from("profiles")
+            .select("first_name, last_name")
+            .eq("user_id", (sf as any).staff_id)
+            .maybeSingle();
           if (p) {
             formateurName = `${p.first_name || ""} ${p.last_name || ""}`.trim() || formateurName;
           }

@@ -107,13 +107,28 @@ const AccountingPanel = () => {
     const fetchAll = async () => {
       setLoading(true);
       const [paymentsRes, expensesRes, staffPaymentsRes] = await Promise.all([
-        supabase.from("payments").select("*, profiles:user_id(first_name, last_name), cohorts:cohort_id(name, formation_id, formations:formation_id(name))").is("deleted_at", null).order("created_at", { ascending: false }),
+        supabase.from("payments").select("*, cohorts:cohort_id(name, formation_id, formations:formation_id(name))").is("deleted_at", null).order("created_at", { ascending: false }),
         supabase.from("expenses").select("*").is("archived_at", null).order("expense_date", { ascending: false }),
-        supabase.from("staff_payments").select("*, profiles:staff_user_id(first_name, last_name)").order("created_at", { ascending: false }),
+        supabase.from("staff_payments").select("*").order("created_at", { ascending: false }),
       ]);
-      if (paymentsRes.data) setPayments(paymentsRes.data as any);
+
+      // Pas de FK vers profiles : jointure cote client via Map (payments.user_id + staff_payments.staff_user_id)
+      const profileIds = [...new Set([
+        ...(paymentsRes.data || []).map((p: any) => p.user_id),
+        ...(staffPaymentsRes.data || []).map((sp: any) => sp.staff_user_id),
+      ].filter(Boolean))];
+      let profileMap = new Map<string, { first_name: string; last_name: string }>();
+      if (profileIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, first_name, last_name")
+          .in("user_id", profileIds);
+        profileMap = new Map((profiles || []).map((p: any) => [p.user_id, { first_name: p.first_name, last_name: p.last_name }]));
+      }
+
+      if (paymentsRes.data) setPayments(paymentsRes.data.map((p: any) => ({ ...p, profiles: profileMap.get(p.user_id) ?? null })) as any);
       if (expensesRes.data) setExpenses(expensesRes.data as any);
-      if (staffPaymentsRes.data) setStaffPayments(staffPaymentsRes.data as any);
+      if (staffPaymentsRes.data) setStaffPayments(staffPaymentsRes.data.map((sp: any) => ({ ...sp, profiles: profileMap.get(sp.staff_user_id) ?? null })) as any);
       setLoading(false);
     };
     fetchAll();
@@ -206,10 +221,13 @@ const AccountingPanel = () => {
       period_end: newStaffPay.period_end,
       notes: newStaffPay.notes || null,
       created_by: user!.id,
-    }).select("*, profiles:staff_user_id(first_name, last_name)").single();
+    }).select("*").single();
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
     else {
-      setStaffPayments(prev => [data as any, ...prev]);
+      // Pas de FK vers profiles : on rattache le profil depuis staffList (deja charge)
+      const sp = staffList.find(s => s.user_id === newStaffPay.staff_user_id);
+      const withProfile = { ...(data as any), profiles: sp ? { first_name: sp.first_name, last_name: sp.last_name } : null };
+      setStaffPayments(prev => [withProfile as any, ...prev]);
       setStaffPayOpen(false);
       setNewStaffPay({ staff_user_id: "", staff_type: "formateur", amount: "", period_start: "", period_end: "", notes: "" });
       toast({ title: "Paiement staff ajouté" });
