@@ -128,6 +128,10 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
   // La reduction d'un code promo ne porte QUE sur les frais d'inscription.
   const effectiveInscriptionAmount = promoApplied ? promoApplied.newAmount : inscriptionAmount;
   const totalDue = formation?.total_price ?? 50000;
+  // Remise promo : montant deduit (uniquement sur l'inscription) et total effectif.
+  // Egalite garantie : effectiveInscriptionAmount + formationCost = effectiveTotalDue.
+  const discountAmount = promoApplied ? Math.max(0, inscriptionAmount - effectiveInscriptionAmount) : 0;
+  const effectiveTotalDue = totalDue - discountAmount;
   const formationCost = totalDue - inscriptionAmount;
   const tranche1 = formation?.tranche_1_amount ?? Math.floor(formationCost / 2);
   const tranche2 = formation?.tranche_2_amount ?? (formationCost - Math.floor(formationCost / 2));
@@ -142,11 +146,11 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
   const formationPaid = sumByStatus(FORMATION_TYPES, "paid");
   const totalPaid = inscriptionPaid + formationPaid;
   const totalPending = sumByStatus(["inscription", ...FORMATION_TYPES], "pending");
-  const remaining = Math.max(totalDue - totalPaid, 0);
+  const remaining = Math.max(effectiveTotalDue - totalPaid, 0);
 
   // Avancement cumulatif : robuste meme si un paiement "formation_complete" ou
   // "formation" (heritage) couvre plusieurs tranches a la fois.
-  const inscriptionFullyPaid = inscriptionPaid >= inscriptionAmount;
+  const inscriptionFullyPaid = inscriptionPaid >= effectiveInscriptionAmount;
   const formationFullyPaid = formationPaid >= formationCost;
   const tranche1Done = formationPaid >= tranche1;
   const tranche2Done = formationPaid >= formationCost;
@@ -439,6 +443,13 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
           <p className={`text-sm font-bold ${remaining > 0 ? "text-destructive" : "text-green-600"}`}>{fmt(remaining)}</p>
         </div>
       </div>
+
+      {discountAmount > 0 && (
+        <div className="flex items-center gap-1.5 border-b border-border bg-accent/5 px-6 py-2 text-[11px] text-accent">
+          <Tag className="h-3 w-3 shrink-0" />
+          Remise code promo : {fmt(discountAmount)} déduits du total à régler.
+        </div>
+      )}
 
       {/* Payment rows */}
       <div className="divide-y divide-border">
