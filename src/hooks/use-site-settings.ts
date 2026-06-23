@@ -31,18 +31,25 @@ export const useSiteSettings = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchSettings = async () => {
-    const { data } = await supabase
-      .from("site_settings" as any)
-      .select("hero_image_url, hero_title, hero_subtitle, logo_url, footer_email, footer_phone, footer_text, wave_payment_url")
-      .eq("id", "default")
-      .single();
-    if (data) {
-      const merged = { ...defaults, ...(data as any) } as SiteSettings;
-      // Repli sur le lien historique si la colonne est vide ou absente.
-      if (!merged.wave_payment_url) merged.wave_payment_url = WAVE_PAYMENT_URL_FALLBACK;
-      setSettings(merged);
+    try {
+      const { data } = await supabase
+        .from("site_settings" as any)
+        .select("hero_image_url, hero_title, hero_subtitle, logo_url, footer_email, footer_phone, footer_text, wave_payment_url")
+        .eq("id", "default")
+        .single();
+      if (data) {
+        const merged = { ...defaults, ...(data as any) } as SiteSettings;
+        // Repli sur le lien historique si la colonne est vide ou absente.
+        if (!merged.wave_payment_url) merged.wave_payment_url = WAVE_PAYMENT_URL_FALLBACK;
+        setSettings(merged);
+      }
+      // En cas d'absence de données, les valeurs par défaut restent en place.
+    } catch (err) {
+      // En cas de panne, on conserve les valeurs par défaut déjà initialisées.
+      console.error("Erreur de chargement des paramètres du site", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => { fetchSettings(); }, []);

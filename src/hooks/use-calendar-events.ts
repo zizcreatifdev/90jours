@@ -27,6 +27,7 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
 
   const fetchEvents = async () => {
     setLoading(true);
+    try {
     const allEvents: CalendarEvent[] = [];
 
     // Fetch cohorts with formation info for labeling
@@ -56,7 +57,6 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
         .map((c: any) => c.id);
       if (targetCohortIds!.length === 0) {
         setEvents([]);
-        setLoading(false);
         return;
       }
     }
@@ -132,7 +132,11 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
     });
 
     setEvents(allEvents);
-    setLoading(false);
+    } catch (err) {
+      console.error("Erreur de chargement du calendrier", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

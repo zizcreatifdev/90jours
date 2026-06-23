@@ -112,11 +112,13 @@ export function useCohorts() {
   }, [queryClient]);
 
   // PERF-03 : staleTime évite les re-fetch inutiles au focus de fenêtre
-  const { data = [], isLoading: loading, refetch } = useQuery({
+  const { data = [], isLoading: loading, isError, error, refetch } = useQuery({
     queryKey: COHORTS_QUERY_KEY,
     queryFn: fetchCohortsData,
     staleTime: STALE_TIME,
   });
 
-  return { cohorts: data, loading, refetch };
+  // isError permet aux consommateurs de distinguer un vrai vide (data=[])
+  // d'une panne backend, au lieu d'afficher "aucune cohorte" dans les deux cas.
+  return { cohorts: data, loading, isError, error, refetch };
 }

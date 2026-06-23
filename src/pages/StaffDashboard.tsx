@@ -30,7 +30,7 @@ const StaffDashboard = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { cohorts: allCohorts, loading } = useCohorts();
+  const { cohorts: allCohorts, loading, isError: cohortsError } = useCohorts();
   const { profile, user } = useAuth();
   const { toast } = useToast();
   const [selectedCohortId, setSelectedCohortId] = useState<string>("");
@@ -58,6 +58,13 @@ const StaffDashboard = () => {
   const [resFile, setResFile] = useState<File | null>(null);
   const [resUploading, setResUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Signale une panne de chargement des cohortes (au lieu d'un affichage vide muet)
+  useEffect(() => {
+    if (cohortsError) {
+      toast({ title: "Erreur", description: "Impossible de charger les cohortes.", variant: "destructive" });
+    }
+  }, [cohortsError, toast]);
 
   // Fetch staff formation assignments
   useEffect(() => {
@@ -93,23 +100,31 @@ const StaffDashboard = () => {
   useEffect(() => {
     if (!selectedCohortId) return;
     const fetchData = async () => {
-      // Get only student role user_ids
-      const { data: studentRoles } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "student");
-      const studentIds = (studentRoles || []).map((r: any) => r.user_id);
+      try {
+        // Get only student role user_ids
+        const { data: studentRoles, error: rolesError } = await supabase
+          .from("user_roles")
+          .select("user_id")
+          .eq("role", "student");
+        if (rolesError) throw rolesError;
+        const studentIds = (studentRoles || []).map((r: any) => r.user_id);
 
-      const [studentsRes, resourcesRes, announcementsRes] = await Promise.all([
-        supabase.from("enrollments").select("*, profiles:user_id(first_name, last_name, phone)")
-          .eq("cohort_id", selectedCohortId)
-          .in("user_id", studentIds.length > 0 ? studentIds : ["none"]),
-        supabase.from("resources").select("*").eq("cohort_id", selectedCohortId).order("created_at", { ascending: false }),
-        supabase.from("announcements").select("*").eq("cohort_id", selectedCohortId).order("created_at", { ascending: false }),
-      ]);
-      if (studentsRes.data) setStudents(studentsRes.data);
-      if (resourcesRes.data) setResources(resourcesRes.data);
-      if (announcementsRes.data) setAnnouncements(announcementsRes.data);
+        const [studentsRes, resourcesRes, announcementsRes] = await Promise.all([
+          supabase.from("enrollments").select("*, profiles:user_id(first_name, last_name, phone)")
+            .eq("cohort_id", selectedCohortId)
+            .in("user_id", studentIds.length > 0 ? studentIds : ["none"]),
+          supabase.from("resources").select("*").eq("cohort_id", selectedCohortId).order("created_at", { ascending: false }),
+          supabase.from("announcements").select("*").eq("cohort_id", selectedCohortId).order("created_at", { ascending: false }),
+        ]);
+        if (studentsRes.error || resourcesRes.error || announcementsRes.error) {
+          throw (studentsRes.error || resourcesRes.error || announcementsRes.error);
+        }
+        if (studentsRes.data) setStudents(studentsRes.data);
+        if (resourcesRes.data) setResources(resourcesRes.data);
+        if (announcementsRes.data) setAnnouncements(announcementsRes.data);
+      } catch {
+        toast({ title: "Erreur", description: "Impossible de charger les données de la cohorte.", variant: "destructive" });
+      }
     };
     fetchData();
   }, [selectedCohortId]);

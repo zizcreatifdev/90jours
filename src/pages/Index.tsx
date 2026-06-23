@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ArrowRight, Bell, ChevronDown, Loader2, Quote, Zap } from "lucide-react";
+import { AlertCircle, ArrowRight, Bell, ChevronDown, Loader2, Quote, RefreshCw, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -156,7 +156,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
 
 // ── Page component ────────────────────────────────────────────────────────────
 const Index = () => {
-  const { cohorts, loading } = useCohorts();
+  const { cohorts, loading, isError: cohortsError, refetch: refetchCohorts } = useCohorts();
   const { settings, loading: settingsLoading } = useSiteSettings();
   const { slides, loading: slidesLoading } = useHeroSlides();
   const { user, roles } = useAuth();
@@ -433,6 +433,19 @@ const Index = () => {
           {loading ? (
             <div className="flex justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-accent" />
+            </div>
+          ) : cohortsError ? (
+            <div className="py-16 text-center">
+              <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground" />
+              <p className="mt-4 font-display text-xl font-semibold text-foreground">Impossible de charger les formations pour le moment.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Veuillez réessayer dans quelques instants.</p>
+              <button
+                onClick={() => refetchCohorts()}
+                className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#C5A05A] px-6 py-2.5 text-sm font-semibold text-[#C5A05A] transition-colors hover:bg-[#C5A05A]/10"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Réessayer
+              </button>
             </div>
           ) : aucuneCohorteOuverte ? (
             <div className="py-16 text-center">

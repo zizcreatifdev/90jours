@@ -57,7 +57,7 @@ interface UserRow {
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { cohorts, loading: cohortsLoading, refetch } = useCohorts();
+  const { cohorts, loading: cohortsLoading, isError: cohortsError, refetch } = useCohorts();
   const { profile } = useAuth();
   const { settings: siteSettings, refetch: refetchSettings } = useSiteSettings();
   const { toast } = useToast();
@@ -80,21 +80,34 @@ const AdminDashboard = () => {
   }
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
 
+  // Signale une panne de chargement des cohortes (au lieu d'un affichage vide muet)
+  useEffect(() => {
+    if (cohortsError) {
+      toast({ title: "Erreur", description: "Impossible de charger les cohortes.", variant: "destructive" });
+    }
+  }, [cohortsError, toast]);
+
   useEffect(() => {
     const fetchStudents = async () => {
-      const { data: studentRoles } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "student");
-      const studentIds = (studentRoles || []).map((r: any) => r.user_id);
+      try {
+        const { data: studentRoles, error: rolesError } = await supabase
+          .from("user_roles")
+          .select("user_id")
+          .eq("role", "student");
+        if (rolesError) throw rolesError;
+        const studentIds = (studentRoles || []).map((r: any) => r.user_id);
 
-      const { data } = await supabase
-        .from("enrollments")
-        .select("*, profiles:user_id(first_name, last_name)")
-        .in("user_id", studentIds.length > 0 ? studentIds : ["none"])
-        .order("enrolled_at", { ascending: false })
-        .limit(10);
-      if (data) setStudents(data.map((d: any) => ({ ...d, profile: d.profiles })));
+        const { data, error } = await supabase
+          .from("enrollments")
+          .select("*, profiles:user_id(first_name, last_name)")
+          .in("user_id", studentIds.length > 0 ? studentIds : ["none"])
+          .order("enrolled_at", { ascending: false })
+          .limit(10);
+        if (error) throw error;
+        if (data) setStudents(data.map((d: any) => ({ ...d, profile: d.profiles })));
+      } catch {
+        toast({ title: "Erreur", description: "Impossible de charger les étudiants récents.", variant: "destructive" });
+      }
     };
     fetchStudents();
   }, []);
@@ -102,22 +115,27 @@ const AdminDashboard = () => {
   // Fetch real monthly enrollment data
   useEffect(() => {
     const fetchMonthlyData = async () => {
-      const { data: enrollments } = await supabase
-        .from("enrollments")
-        .select("enrolled_at")
-        .order("enrolled_at", { ascending: true });
+      try {
+        const { data: enrollments, error } = await supabase
+          .from("enrollments")
+          .select("enrolled_at")
+          .order("enrolled_at", { ascending: true });
+        if (error) throw error;
 
-      if (enrollments) {
-        const months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
-        const currentYear = new Date().getFullYear();
-        const counts = new Array(12).fill(0);
-        enrollments.forEach((e: any) => {
-          const d = new Date(e.enrolled_at);
-          if (d.getFullYear() === currentYear) {
-            counts[d.getMonth()]++;
-          }
-        });
-        setMonthlyData(months.map((name, i) => ({ name, inscrits: counts[i] })));
+        if (enrollments) {
+          const months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+          const currentYear = new Date().getFullYear();
+          const counts = new Array(12).fill(0);
+          enrollments.forEach((e: any) => {
+            const d = new Date(e.enrolled_at);
+            if (d.getFullYear() === currentYear) {
+              counts[d.getMonth()]++;
+            }
+          });
+          setMonthlyData(months.map((name, i) => ({ name, inscrits: counts[i] })));
+        }
+      } catch {
+        toast({ title: "Erreur", description: "Impossible de charger les statistiques mensuelles.", variant: "destructive" });
       }
     };
     fetchMonthlyData();
@@ -125,6 +143,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const fetchActivity = async () => {
+      try {
       const [enrollRes, payRes, subRes] = await Promise.all([
         supabase
           .from("enrollments")
@@ -142,6 +161,7 @@ const AdminDashboard = () => {
           .order("completed_at", { ascending: false })
           .limit(5),
       ]);
+      if (enrollRes.error || payRes.error || subRes.error) throw (enrollRes.error || payRes.error || subRes.error);
 
       const fmt = (n: string) => {
         const p = n as unknown as { first_name?: string; last_name?: string };
@@ -171,18 +191,23 @@ const AdminDashboard = () => {
 
       items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setRecentActivity(items.slice(0, 10));
+      } catch {
+        toast({ title: "Erreur", description: "Impossible de charger l'activité récente.", variant: "destructive" });
+      }
     };
     fetchActivity();
   }, []);
 
   useEffect(() => {
     const fetchUsers = async () => {
+      try {
       const [profilesRes, rolesRes, emailsRes] = await Promise.all([
         supabase.from("profiles").select("user_id, first_name, last_name, phone, created_at").order("created_at", { ascending: false }),
         supabase.from("user_roles").select("user_id, role"),
         supabase.functions.invoke("list-user-emails"),
       ]);
 
+      if (profilesRes.error) throw profilesRes.error;
       if (!profilesRes.data) return;
 
       const roleMap = new Map<string, string[]>();
@@ -199,6 +224,9 @@ const AdminDashboard = () => {
         email: emailMap[p.user_id] || "",
         roles: roleMap.get(p.user_id) || ["student"],
       })));
+      } catch {
+        toast({ title: "Erreur", description: "Impossible de charger la liste des utilisateurs.", variant: "destructive" });
+      }
     };
     fetchUsers();
   }, []);

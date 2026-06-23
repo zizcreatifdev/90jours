@@ -79,16 +79,22 @@ export const useStudentBadges = () => {
       setIsLoading(false);
       return;
     }
-    supabase
-      .from("student_badges")
-      .select("*")
-      .eq("user_id", user.id)
-      .then(({ data }) => {
+    const fetchBadges = async () => {
+      try {
+        const { data } = await supabase
+          .from("student_badges")
+          .select("*")
+          .eq("user_id", user.id);
         const loaded = (data || []) as StudentBadge[];
         setBadges(loaded);
         badgesRef.current = loaded;
+      } catch (err) {
+        console.error("Erreur de chargement des badges", err);
+      } finally {
         setIsLoading(false);
-      });
+      }
+    };
+    fetchBadges();
   }, [user]);
 
   // ── Award checker ────────────────────────────────────────────────────────────

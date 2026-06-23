@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, FileText, Megaphone, Send, Loader2, Search, Download, Users, CreditCard, ClipboardList, Award, ChevronDown, Menu, Play, ExternalLink, FileSignature } from "lucide-react";
+import { BookOpen, Calendar, FileText, Megaphone, Send, Loader2, Search, Download, Users, CreditCard, ClipboardList, Award, ChevronDown, Menu, Play, ExternalLink, FileSignature, AlertCircle, RefreshCw } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useSearchParams } from "react-router-dom";
 import DashboardSidebar from "@/components/DashboardSidebar";
@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import ActivityHeatmap from "@/components/ActivityHeatmap";
 import BadgeShowcase from "@/components/BadgeShowcase";
 import { useStudentBadges } from "@/hooks/use-student-badges";
@@ -66,6 +67,9 @@ const StudentDashboard = () => {
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [enrollmentCount, setEnrollmentCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+  const { toast } = useToast();
   const [searchRes, setSearchRes] = useState("");
   const [briefSubmissions, setBriefSubmissions] = useState<any[]>([]);
   const [seenAnnouncements, setSeenAnnouncements] = useState<Set<string>>(new Set());
@@ -74,48 +78,56 @@ const StudentDashboard = () => {
   useEffect(() => {
     if (!user) return;
     const fetchEnrollments = async () => {
-      const { data: enrollments } = await supabase
-        .from("enrollments")
-        .select("*, cohorts:cohort_id(*)")
-        .eq("user_id", user.id);
+      try {
+        setLoadError(false);
+        const { data: enrollments, error } = await supabase
+          .from("enrollments")
+          .select("*, cohorts:cohort_id(*)")
+          .eq("user_id", user.id);
+        if (error) throw error;
 
-      if (!enrollments || enrollments.length === 0) {
+        if (!enrollments || enrollments.length === 0) {
+          setLoading(false);
+          return;
+        }
+
+        // Fetch formation names for each cohort
+        const formationIds = [...new Set(enrollments.map((e: any) => e.cohorts?.formation_id).filter(Boolean))];
+        let formationMap = new Map<string, { name: string; color: string | null; duration_days: number }>();
+        if (formationIds.length > 0) {
+          const { data: formations } = await supabase.from("formations").select("id, name, attestation_color, duration_days").in("id", formationIds);
+          if (formations) formationMap = new Map(formations.map(f => [f.id, { name: f.name, color: f.attestation_color, duration_days: f.duration_days }]));
+        }
+
+        const enriched = enrollments.map((e: any) => ({
+          ...e,
+          formation_name: e.cohorts?.formation_id ? formationMap.get(e.cohorts.formation_id)?.name : undefined,
+          formation_color: e.cohorts?.formation_id ? formationMap.get(e.cohorts.formation_id)?.color : undefined,
+          formation_duration_days: e.cohorts?.formation_id ? formationMap.get(e.cohorts.formation_id)?.duration_days : undefined,
+        })) as EnrollmentWithCohort[];
+
+        // Sort: active first, then upcoming, then completed
+        enriched.sort((a, b) => {
+          const pa = COHORT_STATUS_PRIORITY[a.cohorts.status] ?? 99;
+          const pb = COHORT_STATUS_PRIORITY[b.cohorts.status] ?? 99;
+          if (pa !== pb) return pa - pb;
+          return new Date(b.enrolled_at).getTime() - new Date(a.enrolled_at).getTime();
+        });
+
+        setAllEnrollments(enriched);
+
+        // Auto-select: restore from storage or pick the first active
+        const stored = localStorage.getItem("90jours-active-enrollment");
+        const valid = enriched.find(e => e.id === stored);
+        setSelectedEnrollmentId(valid ? valid.id : enriched[0].id);
+      } catch (err) {
+        console.error("Erreur de chargement des inscriptions", err);
+        setLoadError(true);
         setLoading(false);
-        return;
       }
-
-      // Fetch formation names for each cohort
-      const formationIds = [...new Set(enrollments.map((e: any) => e.cohorts?.formation_id).filter(Boolean))];
-      let formationMap = new Map<string, { name: string; color: string | null; duration_days: number }>();
-      if (formationIds.length > 0) {
-        const { data: formations } = await supabase.from("formations").select("id, name, attestation_color, duration_days").in("id", formationIds);
-        if (formations) formationMap = new Map(formations.map(f => [f.id, { name: f.name, color: f.attestation_color, duration_days: f.duration_days }]));
-      }
-
-      const enriched = enrollments.map((e: any) => ({
-        ...e,
-        formation_name: e.cohorts?.formation_id ? formationMap.get(e.cohorts.formation_id)?.name : undefined,
-        formation_color: e.cohorts?.formation_id ? formationMap.get(e.cohorts.formation_id)?.color : undefined,
-        formation_duration_days: e.cohorts?.formation_id ? formationMap.get(e.cohorts.formation_id)?.duration_days : undefined,
-      })) as EnrollmentWithCohort[];
-
-      // Sort: active first, then upcoming, then completed
-      enriched.sort((a, b) => {
-        const pa = COHORT_STATUS_PRIORITY[a.cohorts.status] ?? 99;
-        const pb = COHORT_STATUS_PRIORITY[b.cohorts.status] ?? 99;
-        if (pa !== pb) return pa - pb;
-        return new Date(b.enrolled_at).getTime() - new Date(a.enrolled_at).getTime();
-      });
-
-      setAllEnrollments(enriched);
-
-      // Auto-select: restore from storage or pick the first active
-      const stored = localStorage.getItem("90jours-active-enrollment");
-      const valid = enriched.find(e => e.id === stored);
-      setSelectedEnrollmentId(valid ? valid.id : enriched[0].id);
     };
     fetchEnrollments();
-  }, [user]);
+  }, [user, reloadKey]);
 
   // Derived: current enrollment & cohort
   const enrollment = allEnrollments.find(e => e.id === selectedEnrollmentId);
@@ -130,17 +142,23 @@ const StudentDashboard = () => {
   useEffect(() => {
     if (!cohort || !user) { setLoading(false); return; }
     const fetchCohortData = async () => {
-      const [resRes, annRes, countRes, seenRes] = await Promise.all([
-        supabase.from("resources").select("*").eq("cohort_id", cohort.id).order("created_at", { ascending: false }),
-        supabase.from("announcements").select("*").eq("cohort_id", cohort.id).order("created_at", { ascending: false }),
-        supabase.rpc("get_cohort_enrollment_count", { cohort_uuid: cohort.id }),
-        supabase.from("seen_announcements").select("announcement_id").eq("user_id", user.id),
-      ]);
-      if (resRes.data) setResources(resRes.data);
-      if (annRes.data) setAnnouncements(annRes.data);
-      if (seenRes.data) setSeenAnnouncements(new Set(seenRes.data.map(s => s.announcement_id)));
-      if (countRes.data !== null) setEnrollmentCount(countRes.data);
-      setLoading(false);
+      try {
+        const [resRes, annRes, countRes, seenRes] = await Promise.all([
+          supabase.from("resources").select("*").eq("cohort_id", cohort.id).order("created_at", { ascending: false }),
+          supabase.from("announcements").select("*").eq("cohort_id", cohort.id).order("created_at", { ascending: false }),
+          supabase.rpc("get_cohort_enrollment_count", { cohort_uuid: cohort.id }),
+          supabase.from("seen_announcements").select("announcement_id").eq("user_id", user.id),
+        ]);
+        if (resRes.data) setResources(resRes.data);
+        if (annRes.data) setAnnouncements(annRes.data);
+        if (seenRes.data) setSeenAnnouncements(new Set(seenRes.data.map(s => s.announcement_id)));
+        if (countRes.data !== null) setEnrollmentCount(countRes.data);
+      } catch (err) {
+        console.error("Erreur de chargement des données de la cohorte", err);
+        setLoadError(true);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchCohortData();
   }, [cohort?.id, user?.id]);
@@ -227,6 +245,29 @@ const StudentDashboard = () => {
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cohort?.id]);
+
+  if (loadError) {
+    return (
+      <div className="flex min-h-screen bg-background">
+        <DashboardSidebar role="student" />
+        <main className="flex flex-1 items-center justify-center">
+          <div className="text-center">
+            <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground" />
+            <h2 className="mt-4 font-display text-xl font-bold text-foreground">Impossible de charger vos données.</h2>
+            <p className="mt-2 text-muted-foreground">Veuillez réessayer dans quelques instants.</p>
+            <Button
+              variant="outline"
+              onClick={() => { setLoadError(false); setLoading(true); setReloadKey(k => k + 1); }}
+              className="mt-6 gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Réessayer
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

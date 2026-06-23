@@ -13,7 +13,7 @@ import { useCohorts } from "@/hooks/use-cohorts";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Users, CheckCircle, Loader2, Bell } from "lucide-react";
+import { Users, CheckCircle, Loader2, Bell, AlertCircle, RefreshCw } from "lucide-react";
 import PasswordStrengthIndicator, { getPasswordStrength } from "@/components/PasswordStrengthIndicator";
 import WaitlistForm from "@/components/WaitlistForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -21,7 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { cohorts, loading: cohortsLoading } = useCohorts();
+  const { cohorts, loading: cohortsLoading, isError: cohortsError, refetch: refetchCohorts } = useCohorts();
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const cohortFromUrl = searchParams.get("cohort");
@@ -174,7 +174,9 @@ const Register = () => {
           <div className="mb-8 text-center">
             <h1 className="mb-3 font-display text-3xl font-bold text-foreground">Inscription</h1>
             <p className="text-muted-foreground">
-              {showWaitlistOnly
+              {cohortsError
+                ? "Un probleme est survenu lors du chargement."
+                : showWaitlistOnly
                 ? "Rejoignez notre liste d'attente pour etre notifie en priorite."
                 : "Rejoignez notre prochaine cohorte, 60 jours de formation."}
             </p>
@@ -187,8 +189,29 @@ const Register = () => {
             </div>
           )}
 
+          {/* ── Panne de chargement (distinguée du vrai vide) ── */}
+          {!cohortsLoading && cohortsError && (
+            <div className="rounded-2xl border border-border bg-card p-8 text-center shadow-card">
+              <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground" />
+              <p className="mt-4 font-display text-lg font-semibold text-foreground">
+                Impossible de charger les cohortes pour le moment.
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Veuillez réessayer dans quelques instants.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => refetchCohorts()}
+                className="mt-6 gap-2 rounded-full border-[#C5A05A] text-[#C5A05A] hover:bg-[#C5A05A]/10"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Réessayer
+              </Button>
+            </div>
+          )}
+
           {/* ── Waitlist uniquement (aucune cohorte ou toutes pleines) ── */}
-          {!cohortsLoading && showWaitlistOnly && (
+          {!cohortsLoading && !cohortsError && showWaitlistOnly && (
             <div className="rounded-2xl border border-[#C5A05A]/30 bg-card p-4 sm:p-8 shadow-card">
               <div className="mb-6 rounded-xl bg-[#C5A05A]/8 px-5 py-4 text-center">
                 <p className="font-display font-bold text-foreground">
@@ -205,7 +228,7 @@ const Register = () => {
           )}
 
           {/* ── Formulaire d'inscription (au moins une cohorte disponible) ── */}
-          {!cohortsLoading && !showWaitlistOnly && (
+          {!cohortsLoading && !cohortsError && !showWaitlistOnly && (
             <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-card p-4 sm:p-8 shadow-card">
               {/* Cohort selection */}
               <div className="mb-8">
