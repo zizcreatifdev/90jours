@@ -218,7 +218,7 @@ const PromoCodeManager = () => {
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Toutes les cohortes</SelectItem>
-                    {cohorts.map(c => <SelectItem key={c.id} value={c.id}>Cohorte {c.name}</SelectItem>)}
+                    {cohorts.map(c => <SelectItem key={c.id} value={c.id}>Cohorte {c.name}{c.formation ? ` (${c.formation.name})` : ""}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

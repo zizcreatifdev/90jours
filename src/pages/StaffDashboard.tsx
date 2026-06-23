@@ -321,7 +321,7 @@ const StaffDashboard = () => {
               </SelectTrigger>
               <SelectContent>
                 {cohorts.map(c => (
-                  <SelectItem key={c.id} value={c.id}>Cohorte {c.name}</SelectItem>
+                  <SelectItem key={c.id} value={c.id}>Cohorte {c.name}{c.formation ? ` (${c.formation.name})` : ""}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

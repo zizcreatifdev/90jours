@@ -129,7 +129,7 @@ const FormateurMessageSender = () => {
                 <SelectTrigger><SelectValue placeholder="Choisir..." /></SelectTrigger>
                 <SelectContent>
                   {cohorts.map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    <SelectItem key={c.id} value={c.id}>{c.name}{c.formation ? ` (${c.formation.name})` : ""}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

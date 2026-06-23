@@ -55,7 +55,7 @@ const TaskManager = () => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
-  const [cohorts, setCohorts] = useState<{ id: string; name: string }[]>([]);
+  const [cohorts, setCohorts] = useState<{ id: string; name: string; formation?: { name: string } | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -103,8 +103,8 @@ const TaskManager = () => {
     }
 
     // Fetch cohorts
-    const { data: cohortsData } = await supabase.from("cohorts").select("id, name").order("name");
-    if (cohortsData) setCohorts(cohortsData);
+    const { data: cohortsData } = await supabase.from("cohorts").select("id, name, formation:formations(name)").order("name");
+    if (cohortsData) setCohorts(cohortsData as any);
 
     // Fetch tasks
     const { data: tasksData } = await supabase
@@ -355,7 +355,7 @@ const TaskManager = () => {
                       <SelectTrigger><SelectValue placeholder="Aucune" /></SelectTrigger>
                       <SelectContent>
                         {cohorts.map(c => (
-                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                          <SelectItem key={c.id} value={c.id}>{c.name}{c.formation ? ` (${c.formation.name})` : ""}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

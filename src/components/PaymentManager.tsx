@@ -434,7 +434,7 @@ const PaymentManager = () => {
                       <SelectTrigger aria-invalid={!!showError("selectedCohort")}><SelectValue placeholder="Sélectionner une cohorte" /></SelectTrigger>
                       <SelectContent>
                         {cohorts.filter(c => c.status !== "archived").map(c => (
-                          <SelectItem key={c.id} value={c.id}>Cohorte {c.name}</SelectItem>
+                          <SelectItem key={c.id} value={c.id}>Cohorte {c.name}{c.formation ? ` (${c.formation.name})` : ""}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

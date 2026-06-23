@@ -230,17 +230,17 @@ const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onCreated }: C
   const [duration, setDuration] = useState("60");
   const [cohortId, setCohortId] = useState("");
   const [saving, setSaving] = useState(false);
-  const [cohorts, setCohorts] = useState<{ id: string; name: string }[]>([]);
+  const [cohorts, setCohorts] = useState<{ id: string; name: string; formation?: { name: string } | null }[]>([]);
 
   // Fetch cohorts for selector
   useState(() => {
     const fetch = async () => {
-      let query = supabase.from("cohorts").select("id, name").eq("status", "active");
+      let query = supabase.from("cohorts").select("id, name, formation:formations(name)").eq("status", "active");
       if (cohortIds && cohortIds.length > 0) {
         query = query.in("id", cohortIds);
       }
       const { data } = await query;
-      if (data) setCohorts(data);
+      if (data) setCohorts(data as any);
     };
     fetch();
   });
@@ -302,7 +302,7 @@ const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onCreated }: C
               <SelectTrigger><SelectValue placeholder="Sélectionner une cohorte" /></SelectTrigger>
               <SelectContent>
                 {cohorts.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>Cohorte {c.name}</SelectItem>
+                  <SelectItem key={c.id} value={c.id}>Cohorte {c.name}{c.formation ? ` (${c.formation.name})` : ""}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
