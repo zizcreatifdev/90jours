@@ -13,7 +13,7 @@ const NotFound = () => {
         className="mb-10 w-full max-w-lg"
         aria-hidden="true"
       >
-        {/* Background geometric grid lines — subtle navy */}
+        {/* Background geometric grid lines, subtle navy */}
         <line x1="0" y1="56" x2="560" y2="56" stroke="#1A2D48" strokeWidth="1" />
         <line x1="0" y1="112" x2="560" y2="112" stroke="#1A2D48" strokeWidth="1" />
         <line x1="0" y1="168" x2="560" y2="168" stroke="#1A2D48" strokeWidth="1" />

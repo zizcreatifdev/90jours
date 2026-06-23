@@ -83,6 +83,15 @@ const categoryLabels: Record<string, string> = {
   autre: "Autre",
 };
 
+// Libelles de categorie pour les paiements etudiants, selon payment_type
+const paymentTypeLabels: Record<string, string> = {
+  inscription: "Inscription",
+  tranche_1: "Tranche 1",
+  tranche_2: "Tranche 2",
+  formation_complete: "Formation complète",
+  formation: "Formation complète",
+};
+
 // ── Main Component ──
 const AccountingPanel = () => {
   const { user } = useAuth();
@@ -249,7 +258,7 @@ const AccountingPanel = () => {
     const revs = payments.filter(p => p.status === "paid").map(p => ({
       date: p.paid_at || p.created_at,
       type: "revenu" as const,
-      category: "Inscription",
+      category: paymentTypeLabels[(p as any).payment_type] || "Inscription",
       description: `${(p.profiles as any)?.first_name || ""} ${(p.profiles as any)?.last_name || ""} (${(p.cohorts as any)?.name || ""})`,
       amount: p.amount,
     }));
@@ -482,6 +491,9 @@ const AccountingPanel = () => {
               <SelectContent>
                 <SelectItem value="all">Toutes catégories</SelectItem>
                 <SelectItem value="Inscription">Inscription</SelectItem>
+                <SelectItem value="Tranche 1">Tranche 1</SelectItem>
+                <SelectItem value="Tranche 2">Tranche 2</SelectItem>
+                <SelectItem value="Formation complète">Formation complète</SelectItem>
                 <SelectItem value="Paiement formateur">Paiement formateur</SelectItem>
                 <SelectItem value="Frais techniques">Frais techniques</SelectItem>
                 <SelectItem value="Autre">Autre</SelectItem>

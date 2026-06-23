@@ -17,8 +17,8 @@ interface SiteSettings {
 
 const defaults: SiteSettings = {
   hero_image_url: null,
-  hero_title: "Formez-vous en 60 jours",
-  hero_subtitle: "Des formations intensives qui transforment votre créativité en 60 jours.",
+  hero_title: "Révélez votre potentiel créatif en 60 jours",
+  hero_subtitle: "Que vous soyez en reconversion, en quête de perfectionnement ou simplement curieux d'apprendre, nos formations intensives transforment votre créativité.",
   logo_url: null,
   footer_email: "info@60jours.com",
   footer_phone: "+221 77 000 00 00",

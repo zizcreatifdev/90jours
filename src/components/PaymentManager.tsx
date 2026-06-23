@@ -40,6 +40,7 @@ const PAYMENT_TYPES = [
   { value: "tranche_1", label: "Tranche 1" },
   { value: "tranche_2", label: "Tranche 2" },
   { value: "formation_complete", label: "Formation complète (en une fois)" },
+  { value: "formation", label: "Formation" },
 ];
 
 const TYPE_LABELS: Record<string, string> = {
@@ -391,6 +392,7 @@ const PaymentManager = () => {
                 <SelectItem value="tranche_1">Tranche 1</SelectItem>
                 <SelectItem value="tranche_2">Tranche 2</SelectItem>
                 <SelectItem value="formation_complete">Formation complète</SelectItem>
+                <SelectItem value="formation">Formation</SelectItem>
               </SelectContent>
             </Select>
             <div className="relative">
