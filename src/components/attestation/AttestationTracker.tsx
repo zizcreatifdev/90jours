@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Award, CheckCircle2, XCircle, Clock, AlertTriangle, Search, Download, Loader2, FileText } from "lucide-react";
 import { exportToCsv } from "@/lib/export-csv";
+import { fetchPromoUsage, buildDiscountMap } from "@/lib/student-discount";
 
 interface TrackerRow {
   user_id: string;
@@ -63,6 +64,14 @@ const AttestationTracker = () => {
     const { data: profiles } = await supabase.from("profiles").select("user_id, first_name, last_name").in("user_id", userIds);
     const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
 
+    // Remise code promo par (etudiant, cohorte) : frais d'inscription propres a
+    // chaque formation, via les cohortes deja chargees (useCohorts).
+    const usageRows = await fetchPromoUsage(userIds);
+    const discountMap = buildDiscountMap(
+      usageRows,
+      (cid) => cohorts.find(c => c.id === cid)?.formation?.registration_fee ?? 0,
+    );
+
     // Get emails
     const { data: emailData } = await supabase.functions.invoke("list-user-emails");
     const emailMap: Record<string, string> = emailData?.emails || {};
@@ -92,8 +101,10 @@ const AttestationTracker = () => {
       const key = `${e.user_id}_${e.cohort_id}`;
       const portfolioStatus = portfolioMap.get(key) || null;
       const formation = cohort?.formation;
-      // Montant du total = total_price (grand total TTC, inscription incluse).
-      const requiredTotal = formation?.total_price || 50000;
+      // Montant du total = total_price (grand total TTC, inscription incluse),
+      // diminue de la remise code promo (sur l'inscription) de cet etudiant.
+      const discount = discountMap.get(key) || 0;
+      const requiredTotal = (formation?.total_price || 50000) - discount;
       const paymentsTotal = paymentMap.get(key) || 0;
       const paymentOk = paymentsTotal >= requiredTotal;
       const attestation = attestationMap.get(key);

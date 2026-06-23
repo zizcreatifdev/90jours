@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { fetchStudentDiscount, discountForCode } from "@/lib/student-discount";
 
 interface Payment {
   id: string;
@@ -69,6 +70,8 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
   } | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
+  // Remise deja enregistree en base (promo_code_usage) : persiste apres rechargement.
+  const [persistedDiscount, setPersistedDiscount] = useState(0);
 
   const fetchData = async () => {
     if (!user || !cohortId) return;
@@ -93,7 +96,12 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
         .select("registration_fee, total_price, tranche_1_amount, tranche_2_amount")
         .eq("id", cohortRes.data.formation_id)
         .single();
-      if (f) setFormation(f);
+      if (f) {
+        setFormation(f);
+        // Remise deja appliquee en base (persiste apres rechargement)
+        const d = await fetchStudentDiscount(user.id, cohortId, f.registration_fee ?? 10000);
+        setPersistedDiscount(d);
+      }
     }
     setLoading(false);
   };
@@ -126,11 +134,13 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
   // ── Montants de reference ─────────────────────────────────────────────────
   const inscriptionAmount = formation?.registration_fee ?? 10000;
   // La reduction d'un code promo ne porte QUE sur les frais d'inscription.
-  const effectiveInscriptionAmount = promoApplied ? promoApplied.newAmount : inscriptionAmount;
+  // Priorite a la remise persistee (deja enregistree en base) ; sinon, remise de
+  // la session en cours (promoApplied). Les deux ne se cumulent pas.
+  const sessionDiscount = promoApplied ? Math.max(0, inscriptionAmount - promoApplied.newAmount) : 0;
+  const discountAmount = persistedDiscount > 0 ? persistedDiscount : sessionDiscount;
+  const effectiveInscriptionAmount = Math.max(0, inscriptionAmount - discountAmount);
   const totalDue = formation?.total_price ?? 50000;
-  // Remise promo : montant deduit (uniquement sur l'inscription) et total effectif.
-  // Egalite garantie : effectiveInscriptionAmount + formationCost = effectiveTotalDue.
-  const discountAmount = promoApplied ? Math.max(0, inscriptionAmount - effectiveInscriptionAmount) : 0;
+  // Total effectif. Egalite garantie : effectiveInscriptionAmount + formationCost = effectiveTotalDue.
   const effectiveTotalDue = totalDue - discountAmount;
   const formationCost = totalDue - inscriptionAmount;
   const tranche1 = formation?.tranche_1_amount ?? Math.floor(formationCost / 2);
@@ -238,9 +248,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
       setPromoError(row?.message || "Code invalide.");
       return;
     }
-    const newAmount = row.discount_type === "percentage"
-      ? Math.max(0, Math.round(inscriptionAmount * (1 - row.discount_value / 100)))
-      : Math.max(0, inscriptionAmount - row.discount_value);
+    const newAmount = Math.max(0, inscriptionAmount - discountForCode(row.discount_type, row.discount_value, inscriptionAmount));
     setPromoApplied({
       code,
       promoCodeId: row.promo_code_id,
@@ -466,7 +474,14 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
         />
 
         {/* Code promo : applique uniquement aux frais d'inscription, si non payee */}
-        {!inscriptionFullyPaid && (
+        {!inscriptionFullyPaid && persistedDiscount > 0 ? (
+          <div className="flex items-center gap-1.5 bg-secondary/30 px-6 py-3 text-xs">
+            <Tag className="h-3.5 w-3.5 shrink-0 text-accent" />
+            <span className="font-medium text-foreground">Remise déjà appliquée</span>
+            <span className="text-muted-foreground line-through">{fmt(inscriptionAmount)}</span>
+            <span className="font-semibold text-accent">{fmt(effectiveInscriptionAmount)}</span>
+          </div>
+        ) : !inscriptionFullyPaid && (
           <div className="bg-secondary/30 px-6 py-3">
             {promoApplied ? (
               <div className="flex flex-wrap items-center justify-between gap-2">

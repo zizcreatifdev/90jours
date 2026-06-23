@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useCohorts } from "@/hooks/use-cohorts";
+import { fetchPromoUsage, buildDiscountMap } from "@/lib/student-discount";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Award, CheckCircle2, XCircle, Loader2, Send, Archive } from "lucide-react";
@@ -189,13 +190,14 @@ const AttestationIssuer = () => {
       // Get cohort formation for pricing
       const { data: cohortData } = await supabase
         .from("cohorts")
-        .select("formation_id, formation:formations(total_price, deliverable_label)")
+        .select("formation_id, formation:formations(total_price, registration_fee, deliverable_label)")
         .eq("id", selectedCohort)
         .maybeSingle();
 
       const formation = cohortData?.formation as any;
       // Montant du total = total_price (grand total TTC, inscription incluse).
       const requiredTotal = formation?.total_price || 50000;
+      const registrationFee = formation?.registration_fee ?? 10000;
       setDeliverableLabel(formation?.deliverable_label || "Portfolio");
 
       // Get enrollments (students only)
@@ -254,15 +256,21 @@ const AttestationIssuer = () => {
         }
       });
 
+      // Remise code promo par etudiant (sur l'inscription) : le seuil de paiement
+      // complet est diminue d'autant, sinon un etudiant remise n'atteint jamais 100%.
+      const usageRows = (await fetchPromoUsage(studentIds)).filter(r => r.cohort_id === selectedCohort);
+      const discountMap = buildDiscountMap(usageRows, () => registrationFee);
+
       const rows: StudentRow[] = studentEnrollments.map(e => {
         const p = profileMap.get(e.user_id);
+        const discount = discountMap.get(`${e.user_id}_${selectedCohort}`) || 0;
         return {
           user_id: e.user_id,
           first_name: p?.first_name || "",
           last_name: p?.last_name || "",
           portfolio_status: portfolioMap.get(e.user_id) || null,
           payments_total: paymentMap.get(e.user_id) || 0,
-          required_total: requiredTotal,
+          required_total: requiredTotal - discount,
           has_attestation: attestationMap.has(e.user_id),
           attestation_number: attestationMap.get(e.user_id) || null,
         };

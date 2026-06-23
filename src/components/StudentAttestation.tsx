@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Award, Download, Lock, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AttestationPreview } from "@/components/AttestationTemplateEditor";
+import { fetchStudentDiscount } from "@/lib/student-discount";
 import html2canvas from "html2canvas";
 
 interface StudentAttestationProps {
@@ -65,8 +66,14 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
         .is("deleted_at", null);
 
       if (paymentsData && cohortData?.formation) {
-        // Montant du total = total_price (grand total TTC, inscription incluse).
-        const totalRequired = cohortData.formation.total_price || 50000;
+        // Montant du total = total_price (grand total TTC, inscription incluse),
+        // diminue de la remise code promo eventuellement appliquee a l'inscription.
+        const discount = await fetchStudentDiscount(
+          user.id,
+          cohortId,
+          cohortData.formation.registration_fee ?? 10000,
+        );
+        const totalRequired = (cohortData.formation.total_price || 50000) - discount;
         const totalPaid = paymentsData
           .filter((p: any) => p.status === "paid")
           .reduce((sum: number, p: any) => sum + p.amount, 0);
