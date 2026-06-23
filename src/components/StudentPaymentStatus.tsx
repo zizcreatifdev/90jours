@@ -4,7 +4,7 @@ import { fr } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettings, WAVE_PAYMENT_URL_FALLBACK } from "@/hooks/use-site-settings";
-import { CheckCircle, Clock, AlertCircle, CreditCard, ExternalLink, Plus, Loader2, CalendarClock } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, CreditCard, ExternalLink, Plus, Loader2, CalendarClock, Tag } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,18 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
   const [declareRef, setDeclareRef] = useState("");
   const [declareNotes, setDeclareNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // ── Code promo (applique uniquement aux frais d'inscription) ──────────────
+  const [promoInput, setPromoInput] = useState("");
+  const [promoApplied, setPromoApplied] = useState<{
+    code: string;
+    promoCodeId: string;
+    discountType: string;
+    discountValue: number;
+    newAmount: number;
+  } | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
 
   const fetchData = async () => {
     if (!user || !cohortId) return;
@@ -113,6 +125,8 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
 
   // ── Montants de reference ─────────────────────────────────────────────────
   const inscriptionAmount = formation?.registration_fee ?? 10000;
+  // La reduction d'un code promo ne porte QUE sur les frais d'inscription.
+  const effectiveInscriptionAmount = promoApplied ? promoApplied.newAmount : inscriptionAmount;
   const totalDue = formation?.total_price ?? 50000;
   const formationCost = totalDue - inscriptionAmount;
   const tranche1 = formation?.tranche_1_amount ?? Math.floor(formationCost / 2);
@@ -154,7 +168,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
 
   const lineAmount = (type: string): number => {
     switch (type) {
-      case "inscription": return inscriptionAmount;
+      case "inscription": return effectiveInscriptionAmount;
       case "tranche_1": return tranche1;
       case "tranche_2": return tranche2;
       case "formation_complete": return formationCost;
@@ -186,7 +200,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
 
   // Options de declaration selon le mode d'affichage et ce qui reste a payer.
   const declareOptions: { value: string; label: string }[] = [];
-  if (!inscriptionFullyPaid) declareOptions.push({ value: "inscription", label: `Inscription (${fmt(inscriptionAmount)})` });
+  if (!inscriptionFullyPaid) declareOptions.push({ value: "inscription", label: `Inscription (${fmt(effectiveInscriptionAmount)})` });
   if (payMode === "once") {
     if (!formationFullyPaid) declareOptions.push({ value: "formation_complete", label: `Formation en une fois (${fmt(formationCost)})` });
   } else {
@@ -199,6 +213,45 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
     setDeclareAmount(String(lineAmount(v)));
   };
 
+  // Valide un code promo (lecture seule) et affiche la reduction sur l'inscription.
+  const handleApplyPromo = async () => {
+    const code = promoInput.trim();
+    if (!code || !cohortId) return;
+    setPromoLoading(true);
+    setPromoError(null);
+    // RPC non typée dans types.ts (migration récente) : cast pour éviter l'erreur TS.
+    const { data, error } = await (supabase.rpc as any)("validate_promo_code", {
+      p_code: code,
+      p_cohort_id: cohortId,
+    });
+    setPromoLoading(false);
+    if (error) {
+      setPromoError("Impossible de valider le code pour le moment.");
+      return;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    if (!row || !row.valid) {
+      setPromoError(row?.message || "Code invalide.");
+      return;
+    }
+    const newAmount = row.discount_type === "percentage"
+      ? Math.max(0, Math.round(inscriptionAmount * (1 - row.discount_value / 100)))
+      : Math.max(0, inscriptionAmount - row.discount_value);
+    setPromoApplied({
+      code,
+      promoCodeId: row.promo_code_id,
+      discountType: row.discount_type,
+      discountValue: row.discount_value,
+      newAmount,
+    });
+    setPromoInput("");
+  };
+
+  const handleRemovePromo = () => {
+    setPromoApplied(null);
+    setPromoError(null);
+  };
+
   const handleDeclarePayment = async () => {
     if (!user || !cohortId || !declareType) return;
     const amount = parseInt(declareAmount) || 0;
@@ -207,7 +260,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
       return;
     }
     setSubmitting(true);
-    const { error } = await supabase.from("payments").insert({
+    const { data: inserted, error } = await supabase.from("payments").insert({
       user_id: user.id,
       cohort_id: cohortId,
       amount,
@@ -216,19 +269,44 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
       status: "pending",
       reference: declareRef || null,
       notes: declareNotes || null,
-    });
-    setSubmitting(false);
+    }).select("id").single();
+
     if (error) {
+      setSubmitting(false);
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Paiement déclaré", description: "Votre paiement sera vérifié par l'administration." });
-      setDeclareOpen(false);
-      setDeclareType("");
-      setDeclareAmount("");
-      setDeclareRef("");
-      setDeclareNotes("");
-      fetchData();
+      return;
     }
+
+    // Si un code promo a ete applique a l'inscription, on l'enregistre maintenant
+    // que le paiement existe (apply_promo_code a besoin du payment_id).
+    if (declareType === "inscription" && promoApplied && inserted?.id) {
+      const { data: applyData, error: applyErr } = await (supabase.rpc as any)("apply_promo_code", {
+        p_code: promoApplied.code,
+        p_user_id: user.id,
+        p_payment_id: inserted.id,
+        p_cohort_id: cohortId,
+      });
+      const applyRow = Array.isArray(applyData) ? applyData[0] : applyData;
+      if (applyErr || !applyRow?.success) {
+        // Le paiement reste enregistre (au montant reduit) ; on signale juste
+        // que le code n'a pas pu etre comptabilise (epuise, deja utilise...).
+        toast({
+          title: "Code promo non appliqué",
+          description: applyRow?.message || "La réduction n'a pas pu être enregistrée, mais votre paiement est bien déclaré.",
+          variant: "destructive",
+        });
+      }
+      setPromoApplied(null);
+    }
+
+    setSubmitting(false);
+    toast({ title: "Paiement déclaré", description: "Votre paiement sera vérifié par l'administration." });
+    setDeclareOpen(false);
+    setDeclareType("");
+    setDeclareAmount("");
+    setDeclareRef("");
+    setDeclareNotes("");
+    fetchData();
   };
 
   // ── Ligne de paiement reutilisable ────────────────────────────────────────
@@ -367,14 +445,55 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
         {/* Inscription */}
         <PaymentLine
           title="Inscription"
-          amount={inscriptionAmount}
+          amount={effectiveInscriptionAmount}
           done={inscriptionFullyPaid}
           deadline={dueDate(15)}
-          waveAmount={inscriptionAmount}
+          waveAmount={effectiveInscriptionAmount}
           badgeWhenDone="Payé"
           badgeWhenTodo="Non payé"
           overdueDays={overdueCount(15, inscriptionFullyPaid)}
         />
+
+        {/* Code promo : applique uniquement aux frais d'inscription, si non payee */}
+        {!inscriptionFullyPaid && (
+          <div className="bg-secondary/30 px-6 py-3">
+            {promoApplied ? (
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-xs">
+                  <Tag className="h-3.5 w-3.5 shrink-0 text-accent" />
+                  <span className="font-medium text-foreground">Code {promoApplied.code} appliqué</span>
+                  <span className="text-muted-foreground line-through">{fmt(inscriptionAmount)}</span>
+                  <span className="font-semibold text-accent">{fmt(promoApplied.newAmount)}</span>
+                </div>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={handleRemovePromo}>
+                  Retirer
+                </Button>
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={promoInput}
+                    onChange={e => setPromoInput(e.target.value.toUpperCase())}
+                    placeholder="Code promo"
+                    className="h-8 text-xs"
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 shrink-0 gap-1 text-xs"
+                    onClick={handleApplyPromo}
+                    disabled={promoLoading || !promoInput.trim()}
+                  >
+                    {promoLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Tag className="h-3 w-3" />}
+                    Appliquer
+                  </Button>
+                </div>
+                {promoError && <p className="mt-1.5 text-[11px] text-destructive">{promoError}</p>}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Toggle 1 fois / 2 tranches */}
         <div className="flex items-center justify-between gap-3 px-6 py-3">
