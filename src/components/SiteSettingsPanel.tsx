@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 
 interface SiteSettingsPanelProps {
   settings: {
-    hero_image_url: string | null;
     hero_title: string | null;
     hero_subtitle: string | null;
     logo_url: string | null;
@@ -25,7 +24,6 @@ interface SiteSettingsPanelProps {
 const SiteSettingsPanel = ({ settings, onUpdated }: SiteSettingsPanelProps) => {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const heroFileRef = useRef<HTMLInputElement>(null);
   const logoFileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -55,37 +53,34 @@ const SiteSettingsPanel = ({ settings, onUpdated }: SiteSettingsPanelProps) => {
     if (error) throw error;
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "hero" | "logo") => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     try {
       const ext = file.name.split(".").pop();
-      const path = `${type}-${Date.now()}.${ext}`;
+      const path = `logo-${Date.now()}.${ext}`;
       const { error: uploadError } = await supabase.storage
         .from("hero-images")
         .upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
       const { data: urlData } = supabase.storage.from("hero-images").getPublicUrl(path);
-      const field = type === "hero" ? "hero_image_url" : "logo_url";
-      await updateField({ [field]: urlData.publicUrl });
-      toast({ title: type === "hero" ? "Image hero mise à jour" : "Logo mis à jour" });
+      await updateField({ logo_url: urlData.publicUrl });
+      toast({ title: "Logo mis à jour" });
       onUpdated();
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
     } finally {
       setUploading(false);
-      if (heroFileRef.current) heroFileRef.current.value = "";
       if (logoFileRef.current) logoFileRef.current.value = "";
     }
   };
 
-  const handleRemoveImage = async (type: "hero" | "logo") => {
+  const handleRemoveImage = async () => {
     setUploading(true);
     try {
-      const field = type === "hero" ? "hero_image_url" : "logo_url";
-      await updateField({ [field]: null });
-      toast({ title: type === "hero" ? "Image par défaut restaurée" : "Logo supprimé" });
+      await updateField({ logo_url: null });
+      toast({ title: "Logo supprimé" });
       onUpdated();
     } catch (err: any) {
       toast({ title: "Erreur", description: err.message, variant: "destructive" });
@@ -131,13 +126,13 @@ const SiteSettingsPanel = ({ settings, onUpdated }: SiteSettingsPanelProps) => {
               {settings.logo_url ? "Changer le logo" : "Ajouter un logo"}
             </Button>
             {settings.logo_url && (
-              <Button variant="outline" size="sm" disabled={uploading} onClick={() => handleRemoveImage("logo")} className="gap-2">
+              <Button variant="outline" size="sm" disabled={uploading} onClick={() => handleRemoveImage()} className="gap-2">
                 <Trash2 className="h-4 w-4" /> Supprimer
               </Button>
             )}
           </div>
         </div>
-        <input ref={logoFileRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, "logo")} />
+        <input ref={logoFileRef} type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e)} />
       </div>
 
       {/* Hero carousel */}

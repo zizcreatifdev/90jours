@@ -9,10 +9,12 @@ import FieldError from "@/components/ui/field-error";
 import { useFormValidation, isValidEmail } from "@/hooks/use-form-validation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { settings } = useSiteSettings();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -54,7 +56,7 @@ const Login = () => {
       <div className="hidden w-1/2 items-center justify-center bg-primary lg:flex">
         <div className="max-w-md px-12 text-center">
           <div className="mx-auto mb-6">
-            <img src={logoWhite} alt="60jours" className="h-16 mx-auto" />
+            <img src={settings.logo_url || logoWhite} alt="60jours" className="h-16 mx-auto" />
           </div>
           <h2 className="mb-4 font-display text-3xl font-bold text-primary-foreground">
             60 jours de formation
@@ -69,8 +71,14 @@ const Login = () => {
       <div className="flex w-full items-center justify-center bg-background px-4 lg:w-1/2">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex items-center justify-center lg:hidden">
-            <img src={logoDark} alt="60jours" className="h-10 dark:hidden" />
-            <img src={logoWhite} alt="60jours" className="h-10 hidden dark:block" />
+            {settings.logo_url ? (
+              <img src={settings.logo_url} alt="60jours" className="h-10" />
+            ) : (
+              <>
+                <img src={logoDark} alt="60jours" className="h-10 dark:hidden" />
+                <img src={logoWhite} alt="60jours" className="h-10 hidden dark:block" />
+              </>
+            )}
           </div>
 
           <h1 className="mb-2 font-display text-2xl font-bold text-foreground">Connexion</h1>

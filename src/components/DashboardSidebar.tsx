@@ -33,6 +33,7 @@ import {
   ListPlus,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -123,6 +124,7 @@ const SidebarNav = ({
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
+  const { settings } = useSiteSettings();
 
   const handleSignOut = async () => {
     await signOut();
@@ -135,12 +137,16 @@ const SidebarNav = ({
       <Link
         to="/"
         className={cn(
-          "mb-4 flex h-10 items-center justify-center rounded-xl bg-primary",
+          "mb-4 flex h-10 items-center justify-center overflow-hidden rounded-xl bg-primary",
           expanded ? "w-full" : "w-10"
         )}
         onClick={onNavigate}
       >
-        <span className="font-display text-xs font-bold text-primary-foreground">60</span>
+        {settings.logo_url ? (
+          <img src={settings.logo_url} alt="Logo" className="max-h-7 max-w-[85%] object-contain" />
+        ) : (
+          <span className="font-display text-xs font-bold text-primary-foreground">60</span>
+        )}
       </Link>
 
       {/* Role Switcher */}
