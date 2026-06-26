@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,9 @@ import { useFormValidation } from "@/hooks/use-form-validation";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import ContractRichEditor from "@/components/ContractRichEditor";
+import { extractContractBody, renderContractDocument } from "@/lib/contract-style";
+import type { Editor } from "@tiptap/react";
 import { Loader2, Plus, Pencil, Trash2, Eye, FileSignature, ToggleLeft, ToggleRight } from "lucide-react";
 
 interface ContractTemplate {
@@ -75,6 +78,10 @@ const ContractTemplateEditor = () => {
   const [formContent, setFormContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
+  const editorRef = useRef<Editor | null>(null);
+
+  // Aperçu : remplit les variables (demo) puis réinjecte le style premium.
+  const buildPreview = (body: string) => renderContractDocument(fillDemo(body));
 
   const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
     { name: formName, content: formContent },
@@ -101,13 +108,14 @@ const ContractTemplateEditor = () => {
     setEditingId(t.id);
     setFormName(t.name);
     setFormDescription(t.description || "");
-    setFormContent(t.content);
+    // On édite uniquement le CORPS : on retire le style/enveloppe figés.
+    setFormContent(extractContractBody(t.content));
     reset();
   };
 
   const handleSave = async () => {
     if (!validateAll()) return;
-    if (!formName.trim() || !formContent.trim()) {
+    if (!formName.trim() || !formContent.trim() || editorRef.current?.isEmpty) {
       toast({ title: "Erreur", description: "Nom et contenu requis.", variant: "destructive" });
       return;
     }
@@ -199,7 +207,7 @@ const ContractTemplateEditor = () => {
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <button
-                    onClick={() => setPreviewHtml(fillDemo(t.content))}
+                    onClick={() => setPreviewHtml(buildPreview(extractContractBody(t.content)))}
                     title="Aperçu"
                     className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                   >
@@ -269,16 +277,16 @@ const ContractTemplateEditor = () => {
                 <p className="mt-1 text-xs text-muted-foreground">{formDescription.length}/300</p>
               </div>
               <div>
-                <RequiredLabel required>Contenu HTML</RequiredLabel>
-                <Textarea
+                <RequiredLabel required>Contenu du contrat</RequiredLabel>
+                <ContractRichEditor
                   value={formContent}
-                  onChange={e => setFormContent(e.target.value)}
+                  onChange={setFormContent}
                   onBlur={() => handleBlur("content")}
-                  aria-invalid={!!showError("content")}
-                  rows={20}
-                  className="font-mono text-xs"
-                  placeholder="<html>...</html>"
+                  onEditorReady={(ed) => { editorRef.current = ed; }}
                 />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Mise en forme façon traitement de texte. Le style premium (police, filet doré) est appliqué automatiquement a l'affichage.
+                </p>
                 <FieldError message={showError("content")} />
               </div>
               <div className="flex gap-3">
@@ -288,7 +296,7 @@ const ContractTemplateEditor = () => {
                 </Button>
                 <Button variant="outline" onClick={resetForm}>Annuler</Button>
                 {formContent && (
-                  <Button variant="ghost" onClick={() => setPreviewHtml(fillDemo(formContent))}>
+                  <Button variant="ghost" onClick={() => setPreviewHtml(buildPreview(formContent))}>
                     <Eye className="mr-1.5 h-4 w-4" /> Aperçu
                   </Button>
                 )}
@@ -303,8 +311,8 @@ const ContractTemplateEditor = () => {
                   <div key={v.key} className="flex items-start gap-2">
                     <code
                       className="text-[11px] bg-accent/10 text-accent px-1.5 py-0.5 rounded cursor-pointer hover:bg-accent/20 font-mono shrink-0"
-                      onClick={() => setFormContent(prev => prev + v.key)}
-                      title="Cliquer pour insérer"
+                      onClick={() => editorRef.current?.chain().focus().insertContent(v.key).run()}
+                      title="Cliquer pour insérer au curseur"
                     >
                       {v.key}
                     </code>
@@ -312,7 +320,7 @@ const ContractTemplateEditor = () => {
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-[10px] text-muted-foreground">Cliquez sur une variable pour l'insérer à la fin du texte.</p>
+              <p className="mt-3 text-[10px] text-muted-foreground">Cliquez sur une variable pour l'insérer au curseur. Le {"{{texte}}"} reste tel quel et sera remplacé a la signature.</p>
             </div>
           </div>
         </div>

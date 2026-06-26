@@ -9,6 +9,7 @@ import RequiredLabel from "@/components/ui/required-label";
 import FieldError from "@/components/ui/field-error";
 import { Loader2, ArrowDown, CheckCircle2, FileSignature } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { extractContractBody, renderContractDocument } from "@/lib/contract-style";
 
 // ── Variable replacement ──────────────────────────────────────────────────────
 
@@ -185,7 +186,11 @@ const ContractSign = () => {
       };
 
       setTemplateId(template.id);
-      setContractHtml(fillTemplate(template.content, vars));
+      // Le contenu stocké ne contient que le corps : on réinjecte le style premium
+      // (CONTRACT_STYLE + enveloppe) puis on remplit les variables. Pour un template
+      // existant (style déja inclus), extractContractBody le retire d'abord : rendu identique.
+      const rendered = renderContractDocument(extractContractBody(template.content));
+      setContractHtml(fillTemplate(rendered, vars));
       setLoading(false);
     };
 
