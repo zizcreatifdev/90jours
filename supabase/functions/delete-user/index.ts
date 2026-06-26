@@ -1,6 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ALLOWED_ORIGINS = ["https://60jours.vercel.app"];
+const ALLOWED_ORIGINS = [
+  "https://60jours.com",
+  "https://www.60jours.com",
+  "https://60jours.vercel.app",
+  "http://localhost:8080",
+];
 
 Deno.serve(async (req) => {
   const origin = req.headers.get("origin") ?? "";

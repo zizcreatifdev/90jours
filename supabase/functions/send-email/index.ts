@@ -31,7 +31,12 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ALLOWED_ORIGINS = ["https://60jours.vercel.app", "https://60jours.com"];
+const ALLOWED_ORIGINS = [
+  "https://60jours.com",
+  "https://www.60jours.com",
+  "https://60jours.vercel.app",
+  "http://localhost:8080",
+];
 
 const FROM_NAME = "60jours";
 const FROM_EMAIL_FALLBACK = "noreply@60jours.com";

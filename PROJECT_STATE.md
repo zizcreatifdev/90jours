@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 26 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: inscription : validation format email + suggestion de correction des fautes de frappe courantes
+**Prompt actuel**: cors : autoriser 60jours.com et www.60jours.com sur toutes les edge functions
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
