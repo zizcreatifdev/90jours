@@ -1,8 +1,8 @@
 # PROJECT_STATE.md — État du Projet
 
-**Dernière mise à jour**: 22 juin 2026
+**Dernière mise à jour**: 26 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: éditeur contrat WYSIWYG étape 2/2 (variables en chips, barre d'outils finalisée)
+**Prompt actuel**: Kanban des tâches étape 1/2 (TaskBoard partagé drag-and-drop, branché côté admin)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -18,14 +18,14 @@
 
 | Métrique | Valeur |
 |---------|--------|
-| Composants React | 101 |
+| Composants React | 102 |
 | Pages | 10 |
 | Hooks custom | 9 |
 | Tables Supabase | 33 |
 | Migrations SQL | 44 |
 | Edge Functions | 7 |
-| Tests | 63 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator + 9 EmptyState) |
-| Couverture tests | ~25% (ProtectedRoute + validate-url + AuthContext + export-csv + PasswordStrengthIndicator + EmptyState) |
+| Tests | 66 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator + 9 EmptyState + 4 task-config) |
+| Couverture tests | ~25% (ProtectedRoute + validate-url + AuthContext + export-csv + PasswordStrengthIndicator + EmptyState + task-config) |
 
 ---
 
@@ -372,3 +372,4 @@
 | padding-global-public | 2026-06-22 | Index.tsx : padding horizontal des 5 conteneurs de sections augmenté de px-4 (16px) à px-6 sm:px-8 lg:px-12 (24/32/48px responsive) pour aérer le contenu sur les côtés. Sections concernées : Comment ça marche (l.380), Nos formations (l.422), Témoignages (l.505), CTA final (l.598), Footer (l.631). Même valeur partout pour alignement vertical cohérent entre sections. container mx-auto conservé, marges verticales (py-*) et contenus inchangés. Hero plein écran (px-6 md:px-10 propre) laissé tel quel. build OK 62/62 ✅ | ✅ Terminé |
 | sous-titres-zones | 2026-06-22 | Index.tsx section "Nos formations" : ajout d'un sous-titre discret (text-sm text-muted-foreground) sous chaque titre de zone, entre le titre/filet et la grille. Sous "Initiation" : "Pour démarrer de zéro et poser des bases solides." Sous "Perfectionnement" : "Pour monter en niveau et affiner sa pratique." Titre passé de mb-6 à mb-2, sous-titre mb-6. Aucune autre modification (cartes, zones, logique intactes). build OK 62/62 ✅ | ✅ Terminé |
 | formations-publique | 2026-06-22 | Index.tsx refonte section "Nos formations" : nouveau composant PublicCohortCard (en-tete navy #0E1B2E, filiere name en doré capitales à gauche, badge niveau Initiation/Perfectionnement à droite, body Fraunces font-black, description line-clamp-2, dates, places, prix formation.total_price FCFA, CTA "S'inscrire" doré ou "Me prevenir" Bell si complet). Deux zones par niveau : Initiation (formation.level !== "avance") et Perfectionnement (formation.level === "avance"), chacune masquée si vide. Etat aucuneCohorteOuverte : message + bouton "Rejoindre la liste d'attente" ouvre Dialog WaitlistForm. Dialog "Me prévenir" par cohorte pleine avec preselectedFormationId. Suppression FILIERE_COLORS (#8B5CF6/#F97316/#0D9488) et dots footer colorés (remplacés par ligne dorée h-px). FIX bugs : cohort.formation?.level (pas cohort.level), cohort.formation?.total_price (pas cohort.total_price). build OK 62/62 ✅ | ✅ Terminé |
+| kanban-taches-1 | 2026-06-26 | Kanban des taches etape 1/2. Nouveau composant partage `src/components/tasks/TaskBoard.tsx` (Kanban @dnd-kit/core : 3 colonnes todo/in_progress/done, cartes draggables avec avatar formateur + fallback initiales, badge priorite, badge "En retard" si deadline depassee et statut non done, colonnes vides droppables a hauteur minimale, DragOverlay, capteurs PointerSensor distance 8 + TouchSensor delay 150ms pour ne pas bloquer le scroll mobile, prop editable bool|predicat). Constantes extraites dans `src/lib/task-config.ts` (STATUS_CONFIG/STATUS_ORDER/PRIORITY_CONFIG/resolveStatus/isTaskOverdue, source unique, n'emet que les 3 statuts) + 4 tests. TaskManager (admin) : ajout avatar_url au select profiles, liste plate remplacee par TaskBoard editable, filtre statut retire (les colonnes le remplacent) et filtre par formateur conserve, suppression deplacee dans le dialog detail. Realtime sans telescopage : update optimiste local au drop + revert si erreur DB, fetchData silencieux (pas de spinner plein ecran), evenement realtime ignore pendant un drag (isDraggingRef) et reconciliation en silence apres. Creation/notifications intactes. build OK, 66/66 tests, zero emoji, zero tiret long, Lucide, design 60jours. Reste etape 2/2 : brancher cote formateur (StaffTasks). | Termine |
