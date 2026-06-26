@@ -6,6 +6,13 @@
  *   - template  : identifiant de template (ex "welcome")
  *   - variables : donnees pour remplir le template (Record<string, string>)
  *
+ * Securite : JWT obligatoire (createClient.auth.getUser). L'email du destinataire
+ * doit correspondre exactement a l'email de l'utilisateur authentifie. Un visiteur
+ * anonyme ou un utilisateur authentifie ciblant une adresse tierce recoit une
+ * erreur 401/403 sans qu'aucun email ne soit envoye.
+ * La verification est faite par le serveur Supabase (signature JWT verifiee) et
+ * non par simple decodage de payload, afin d'eviter toute falsification.
+ *
  * Envoi :
  *   - Si le secret BREVO_API_KEY est present : envoi via l'API transactionnelle
  *     Brevo (POST https://api.brevo.com/v3/smtp/email, header api-key).
@@ -14,18 +21,25 @@
  *     { ok: true, mode: "log" }. La fonction ne plante jamais.
  *
  * Secrets (Deno.env) a provisionner pour l'envoi reel :
- *   - BREVO_API_KEY : la cle API transactionnelle Brevo (active l'envoi reel).
- *   - EMAIL_FROM    : adresse expediteur (fallback "contact@60jours.com").
- *   - APP_URL       : base de l'app pour les liens (fallback vercel).
+ *   - BREVO_API_KEY  : cle API transactionnelle Brevo (active l'envoi reel).
+ *   - EMAIL_FROM     : adresse expediteur (ex. noreply@60jours.com).
+ *   - EMAIL_REPLY_TO : adresse de reponse (ex. contact@60jours.com).
+ *   - APP_URL        : base de l'app pour les liens dans les emails.
  *
  * Pour ajouter un template : ajouter une entree dans le registre TEMPLATES.
  */
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const ALLOWED_ORIGINS = ["https://60jours.vercel.app", "https://60jours.com"];
 
 const FROM_NAME = "60jours";
-const FROM_EMAIL_FALLBACK = "contact@60jours.com";
+const FROM_EMAIL_FALLBACK = "noreply@60jours.com";
+const REPLY_TO_EMAIL_FALLBACK = "contact@60jours.com";
 const APP_URL_FALLBACK = "https://60jours.vercel.app";
+
+// Adresse de contact publique (affichee dans le footer des emails).
+const CONTACT_EMAIL = "contact@60jours.com";
 
 // Palette 60jours (couleurs en dur car un email ne peut pas lire les CSS vars).
 const NAVY = "#0E1B2E";
@@ -88,7 +102,8 @@ const layout = (innerHtml: string): string => `<!DOCTYPE html>
           <tr>
             <td style="padding:20px 32px;border-top:1px solid #ECE7DD;">
               <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:${MUTED};">
-                60jours, formations intensives. Cet email vous est envoye suite a votre inscription.
+                60jours, formations intensives. Cet email est automatique. Pour nous contacter :
+                <a href="mailto:${CONTACT_EMAIL}" style="color:${MUTED};text-decoration:underline;">${CONTACT_EMAIL}</a>
               </p>
             </td>
           </tr>
@@ -160,6 +175,7 @@ Deno.serve(async (req) => {
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   };
 
+  // OPTIONS : repondre immediatement (pas de JWT requis sur le preflight CORS).
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -177,6 +193,29 @@ Deno.serve(async (req) => {
     if (!recipientEmail) {
       return json({ ok: false, error: "Destinataire invalide." }, 400, corsHeaders);
     }
+
+    // ── Securite : verification cote serveur de l'identite de l'appelant ──────
+    // createClient.auth.getUser() fait une requete vers l'API Supabase Auth avec
+    // le JWT fourni. La signature est verifiee par le serveur (pas un simple
+    // decodage de payload), ce qui empeche toute falsification de l'email.
+    // Un appel sans JWT valide retourne user=null -> 401.
+    // Un appel avec un JWT valide mais un email destinataire different -> 403.
+    // Consequence : seul un utilisateur authentifie peut declencher un envoi,
+    // et uniquement vers sa propre adresse (pas d'envoi a des tiers).
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      { global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } } },
+    );
+    const { data: { user: authUser } } = await supabaseClient.auth.getUser();
+
+    if (!authUser?.email) {
+      return json({ ok: false, error: "Non autorise." }, 401, corsHeaders);
+    }
+    if (recipientEmail.toLowerCase() !== authUser.email.toLowerCase()) {
+      return json({ ok: false, error: "Destinataire non autorise." }, 403, corsHeaders);
+    }
+    // ── Fin verification ───────────────────────────────────────────────────────
 
     const render = TEMPLATES[template];
     if (!render) {
@@ -199,6 +238,8 @@ Deno.serve(async (req) => {
 
     // ── Envoi reel via Brevo ──
     const fromEmail = Deno.env.get("EMAIL_FROM") || FROM_EMAIL_FALLBACK;
+    const replyToEmail = Deno.env.get("EMAIL_REPLY_TO") || REPLY_TO_EMAIL_FALLBACK;
+
     const brevoRes = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
@@ -209,6 +250,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         sender: { email: fromEmail, name: FROM_NAME },
         to: [recipientName ? { email: recipientEmail, name: recipientName } : { email: recipientEmail }],
+        replyTo: { email: replyToEmail, name: FROM_NAME },
         subject,
         htmlContent: html,
       }),

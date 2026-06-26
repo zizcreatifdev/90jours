@@ -16,8 +16,12 @@ verify_jwt = false
 verify_jwt = false
 
 # Email transactionnel generique (mode log sans BREVO_API_KEY, envoi reel sinon).
-# verify_jwt = false : appelee pendant l'inscription (session toute neuve), comme
-# les autres fonctions publiques ; aucune operation sensible (envoi d'un template).
+# verify_jwt = false : obligatoire pour les requetes OPTIONS (CORS preflight) que
+# les navigateurs envoient SANS header Authorization. Si verify_jwt = true, le
+# runtime Edge rejette le preflight avec 401 avant meme d'entrer dans la fonction,
+# rendant tout appel depuis le navigateur impossible.
+# Securite geree a l'interieur : createClient.auth.getUser() verifie la signature
+# JWT cote serveur Supabase. Anonyme -> 401 ; destinataire != email authentifie -> 403.
 [functions.send-email]
 verify_jwt = false
 

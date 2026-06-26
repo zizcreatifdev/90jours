@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 26 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: Onboarding étudiant séquencé (contrat obligatoire + paiement non bloquant)
+**Prompt actuel**: send-email production hardening (reply-to, footer, durcissement securite anti-abus)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -23,7 +23,7 @@
 | Hooks custom | 10 |
 | Tables Supabase | 33 |
 | Migrations SQL | 44 |
-| Edge Functions | 8 |
+| Edge Functions | 8 (send-email durci) |
 | Tests | 66 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator + 9 EmptyState + 4 task-config) |
 | Couverture tests | ~25% (ProtectedRoute + validate-url + AuthContext + export-csv + PasswordStrengthIndicator + EmptyState + task-config) |
 
@@ -196,6 +196,7 @@
 | Edge Functions Deno | ✅ Complet | 100% |
 | RLS Supabase | ✅ Complet | 100% |
 | Real-time subscriptions | ✅ Complet | 100% |
+| **send-email : reply-to + footer + securite anti-abus** | ✅ Complet | 100% |
 | Tests unitaires | ⚠️ Placeholder | 2% |
 | Couverture de code | ❌ Non configurée | 0% |
 | Documentation | ✅ Créée maintenant | 100% |
