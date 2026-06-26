@@ -18,19 +18,26 @@ ne les exécute pas). Pour chaque étape : **[Supabase]**, **[Vercel]** ou **[Ap
       (Database > Extensions). Le script les active via `CREATE EXTENSION IF NOT EXISTS`,
       mais certains plans exigent de les activer depuis le dashboard.
 
-## 3. Déployer les 7 Edge Functions — **[Supabase]**
+## 3. Déployer les 8 Edge Functions — **[Supabase]**
 - [ ] Déployer : `invite-staff`, `delete-user`, `list-user-emails`,
-      `send-push-notification`, `get-vapid-key`, `brief-reminders`, `payment-reminders`
-      (ex. `supabase functions deploy <nom>` ou via le dashboard).
+      `send-push-notification`, `get-vapid-key`, `brief-reminders`, `payment-reminders`,
+      `send-email` (ex. `supabase functions deploy <nom>` ou via le dashboard).
 - [ ] Le fichier `supabase/config.toml` porte la planification cron — il sera
       réappliqué au déploiement (voir étape 8).
 
-## 4. Provisionner les 3 secrets Edge Functions — **[Supabase]**
+## 4. Provisionner les secrets Edge Functions — **[Supabase]**
 - [ ] Définir les secrets (Project Settings > Edge Functions > Secrets, ou
       `supabase secrets set ...`) : **`VAPID_PUBLIC_KEY`**, **`VAPID_PRIVATE_KEY`**, **`VAPID_SUBJECT`**.
       - `VAPID_SUBJECT` = une URL `mailto:` (ex. `mailto:contact@ton-domaine.com`).
       - Générer une paire VAPID : `npx web-push generate-vapid-keys`
         (donne la clé publique et la clé privée).
+- [ ] (Emails) Tant que **`BREVO_API_KEY`** est absent, `send-email` tourne en
+      **mode log** (rien n'est envoyé, tout est tracé dans les logs) et l'inscription
+      fonctionne normalement. Pour activer l'envoi réel via Brevo :
+      - **`BREVO_API_KEY`** : clé API transactionnelle Brevo (active l'envoi réel).
+      - **`EMAIL_FROM`** : adresse expéditeur vérifiée chez Brevo (fallback `contact@60jours.com`).
+      - **`APP_URL`** : base de l'app pour les liens des emails (fallback `https://60jours.vercel.app`).
+      - Redéployer `send-email` après avoir défini les secrets.
 - [ ] `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY` sont
       **injectés automatiquement** par Supabase — rien à faire.
 

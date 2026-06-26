@@ -142,7 +142,33 @@ const Register = () => {
       });
       if (enrollError) throw enrollError;
 
-      // Check if an active contract template exists → redirect to signing step
+      // Email de bienvenue (NON BLOQUANT : un echec ou le mode log n'empeche pas
+      // l'inscription, et n'affiche aucun toast d'erreur a l'etudiant).
+      try {
+        const cohortObj = cohorts.find((c) => c.id === selectedCohort);
+        const formationLabel = cohortObj?.formation?.name
+          ? `${cohortObj.formation.name}, cohorte ${cohortObj.name}`
+          : cohortObj
+          ? `cohorte ${cohortObj.name}`
+          : "votre formation";
+        const recipientEmail = user?.email || formData.email;
+        const recipientName = `${formData.firstName} ${formData.lastName}`.trim();
+        if (recipientEmail) {
+          void supabase.functions
+            .invoke("send-email", {
+              body: {
+                to: { email: recipientEmail, name: recipientName || undefined },
+                template: "welcome",
+                variables: { prenom: formData.firstName, formation: formationLabel },
+              },
+            })
+            .catch((mailErr) => console.error("send-email welcome (non bloquant):", mailErr));
+        }
+      } catch (mailErr) {
+        console.error("send-email welcome (non bloquant):", mailErr);
+      }
+
+      // Check if an active contract template exists : redirect to signing step
       const { data: template } = await supabase
         .from("contract_templates")
         .select("id")

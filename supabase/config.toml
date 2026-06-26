@@ -15,6 +15,12 @@ verify_jwt = false
 [functions.get-vapid-key]
 verify_jwt = false
 
+# Email transactionnel generique (mode log sans BREVO_API_KEY, envoi reel sinon).
+# verify_jwt = false : appelee pendant l'inscription (session toute neuve), comme
+# les autres fonctions publiques ; aucune operation sensible (envoi d'un template).
+[functions.send-email]
+verify_jwt = false
+
 # ── Scheduled function : brief deadline reminders ─────────────────────────────
 # Runs every day at 08:00 UTC.
 # Finds briefs due within 48 h and notifies students who haven't submitted.
