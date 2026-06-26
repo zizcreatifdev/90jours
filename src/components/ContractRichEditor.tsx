@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { Bold, Italic, Heading2, Heading3, List, ListOrdered, Undo2, Redo2 } from "lucide-react";
+import Underline from "@tiptap/extension-underline";
+import { Bold, Italic, Underline as UnderlineIcon, Heading2, Heading3, List, ListOrdered, Undo2, Redo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { VariableNode, varTextToEditorHtml, editorHtmlToVarText } from "@/lib/contract-variable";
 
 interface ContractRichEditorProps {
   value: string;
@@ -42,9 +44,11 @@ const ToolbarButton = ({
 
 const ContractRichEditor = ({ value, onChange, onBlur, onEditorReady }: ContractRichEditorProps) => {
   const editor = useEditor({
-    extensions: [StarterKit],
-    content: value,
-    onUpdate: ({ editor }) => onChange(editor.getHTML()),
+    extensions: [StarterKit, Underline, VariableNode],
+    // Les {{cle}} stockés sont convertis en marqueurs de chip avant parsing.
+    content: varTextToEditorHtml(value),
+    // A la sauvegarde, les chips sont reconverties en {{cle}} texte brut.
+    onUpdate: ({ editor }) => onChange(editorHtmlToVarText(editor.getHTML())),
     onBlur: () => onBlur?.(),
   });
 
@@ -54,10 +58,10 @@ const ContractRichEditor = ({ value, onChange, onBlur, onEditorReady }: Contract
   }, [editor]);
 
   // Synchronise le contenu externe (ex changement de template) sans boucle :
-  // setContent uniquement si la valeur differe du HTML courant.
+  // on compare dans le meme espace ({{cle}}) que la valeur stockée.
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value || "", false);
+    if (editor && value !== editorHtmlToVarText(editor.getHTML())) {
+      editor.commands.setContent(varTextToEditorHtml(value || ""), false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
@@ -72,6 +76,9 @@ const ContractRichEditor = ({ value, onChange, onBlur, onEditorReady }: Contract
         </ToolbarButton>
         <ToolbarButton title="Italique" active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()}>
           <Italic className="h-4 w-4" />
+        </ToolbarButton>
+        <ToolbarButton title="Souligné" active={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()}>
+          <UnderlineIcon className="h-4 w-4" />
         </ToolbarButton>
         <span className="mx-1 h-5 w-px bg-border" />
         <ToolbarButton title="Titre" active={editor.isActive("heading", { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
@@ -97,7 +104,14 @@ const ContractRichEditor = ({ value, onChange, onBlur, onEditorReady }: Contract
       </div>
       <EditorContent
         editor={editor}
-        className="contract-editor min-h-[360px] max-h-[60vh] overflow-y-auto px-4 py-3 text-sm leading-relaxed [&_h2]:mt-4 [&_h2]:font-display [&_h2]:text-base [&_h2]:font-bold [&_h3]:mt-3 [&_h3]:font-display [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[320px]"
+        className={cn(
+          "contract-editor min-h-[360px] max-h-[60vh] overflow-y-auto px-4 py-3 text-sm leading-relaxed",
+          "[&_h2]:mt-4 [&_h2]:font-display [&_h2]:text-base [&_h2]:font-bold [&_h3]:mt-3 [&_h3]:font-display [&_h3]:font-semibold",
+          "[&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-2 [&_u]:underline",
+          "[&_.ProseMirror]:outline-none [&_.ProseMirror]:min-h-[320px]",
+          // Chip variable (non editable, insecable, charte 60jours accent)
+          "[&_.contract-var]:mx-0.5 [&_.contract-var]:inline-flex [&_.contract-var]:items-center [&_.contract-var]:whitespace-nowrap [&_.contract-var]:rounded-full [&_.contract-var]:bg-accent/15 [&_.contract-var]:px-2 [&_.contract-var]:py-0.5 [&_.contract-var]:text-xs [&_.contract-var]:font-medium [&_.contract-var]:text-accent [&_.contract-var]:align-baseline"
+        )}
       />
     </div>
   );

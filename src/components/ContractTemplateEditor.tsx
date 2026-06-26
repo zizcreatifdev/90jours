@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ContractRichEditor from "@/components/ContractRichEditor";
 import { extractContractBody, renderContractDocument } from "@/lib/contract-style";
+import { CONTRACT_VARIABLES } from "@/lib/contract-variable";
 import type { Editor } from "@tiptap/react";
 import { Loader2, Plus, Pencil, Trash2, Eye, FileSignature, ToggleLeft, ToggleRight } from "lucide-react";
 
@@ -25,24 +26,6 @@ interface ContractTemplate {
   created_at: string;
   updated_at: string;
 }
-
-const AVAILABLE_VARIABLES = [
-  { key: "{{prenom}}", label: "Prénom de l'étudiant" },
-  { key: "{{nom}}", label: "Nom de famille" },
-  { key: "{{email}}", label: "Email" },
-  { key: "{{formation}}", label: "Nom de la formation" },
-  { key: "{{cohorte}}", label: "Numéro/nom de la cohorte" },
-  { key: "{{formateur}}", label: "Nom du formateur référent" },
-  { key: "{{date_debut}}", label: "Date de début de la cohorte" },
-  { key: "{{date_fin}}", label: "Date de fin de la cohorte" },
-  { key: "{{montant}}", label: "Montant total (hérité)" },
-  { key: "{{frais_inscription}}", label: "Frais d'inscription" },
-  { key: "{{cout_total}}", label: "Coût total de la formation" },
-  { key: "{{livrable}}", label: "Libellé du livrable (ex: Portfolio)" },
-  { key: "{{date_signature}}", label: "Date de signature" },
-  { key: "{{heure_signature}}", label: "Heure de signature" },
-  { key: "{{signature_name}}", label: "Nom saisi lors de la signature" },
-];
 
 const DEMO_VARS: Record<string, string> = {
   prenom: "Aminata",
@@ -307,20 +290,21 @@ const ContractTemplateEditor = () => {
             <div className="rounded-xl border border-border bg-muted/30 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Variables disponibles</p>
               <div className="space-y-2">
-                {AVAILABLE_VARIABLES.map(v => (
+                {CONTRACT_VARIABLES.map(v => (
                   <div key={v.key} className="flex items-start gap-2">
-                    <code
-                      className="text-[11px] bg-accent/10 text-accent px-1.5 py-0.5 rounded cursor-pointer hover:bg-accent/20 font-mono shrink-0"
-                      onClick={() => editorRef.current?.chain().focus().insertContent(v.key).run()}
+                    <button
+                      type="button"
+                      className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[11px] font-medium text-accent hover:bg-accent/20 transition-colors"
+                      onClick={() => editorRef.current?.chain().focus().insertContent({ type: "variable", attrs: { key: v.key } }).run()}
                       title="Cliquer pour insérer au curseur"
                     >
-                      {v.key}
-                    </code>
-                    <span className="text-xs text-muted-foreground">{v.label}</span>
+                      {v.label}
+                    </button>
+                    <span className="text-xs text-muted-foreground">{v.description}</span>
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-[10px] text-muted-foreground">Cliquez sur une variable pour l'insérer au curseur. Le {"{{texte}}"} reste tel quel et sera remplacé a la signature.</p>
+              <p className="mt-3 text-[10px] text-muted-foreground">Cliquez sur une variable pour l'insérer au curseur. Elle apparait comme une pastille et sera remplacée par la vraie valeur a la signature.</p>
             </div>
           </div>
         </div>
