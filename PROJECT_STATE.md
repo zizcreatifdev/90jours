@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 26 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: send-email production hardening (reply-to, footer, durcissement securite anti-abus)
+**Prompt actuel**: inscription : validation format email + suggestion de correction des fautes de frappe courantes
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -24,6 +24,7 @@
 | Tables Supabase | 33 |
 | Migrations SQL | 44 |
 | Edge Functions | 8 (send-email durci) |
+| Utilitaires lib | email-suggestion.ts (Levenshtein, 20 domaines) |
 | Tests | 66 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator + 9 EmptyState + 4 task-config) |
 | Couverture tests | ~25% (ProtectedRoute + validate-url + AuthContext + export-csv + PasswordStrengthIndicator + EmptyState + task-config) |
 
@@ -113,6 +114,7 @@
 | Messagerie | ✅ Complet | 100% |
 | Suivi progression | ✅ Complet | 100% |
 | **Onboarding séquencé** (contrat + paiement) | ✅ Complet | 100% |
+| **Validation email + suggestion fautes de frappe** | ✅ Complet | 100% |
 
 **Complétion globale**: 100%
 **Bugs connus**: Aucun identifié

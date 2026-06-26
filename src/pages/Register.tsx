@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import RequiredLabel from "@/components/ui/required-label";
 import FieldError from "@/components/ui/field-error";
 import { useFormValidation, isValidEmail, type ValidationRules } from "@/hooks/use-form-validation";
+import { suggestEmailCorrection } from "@/lib/email-suggestion";
 import { Textarea } from "@/components/ui/textarea";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -31,6 +32,7 @@ const Register = () => {
   const [staffFormationIds, setStaffFormationIds] = useState<string[]>([]);
   const [waitlistFormationId, setWaitlistFormationId] = useState<string | null>(null);
   const [waitlistOpen, setWaitlistOpen] = useState(false);
+  const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
 
   // Fetch formations where current user is staff
   useEffect(() => {
@@ -90,6 +92,11 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Suggestion non bloquante calculee aussi a la soumission (cas ou l'etudiant
+    // n'a pas quitte le champ email avant de cliquer sur le bouton).
+    if (!user && isValidEmail(formData.email)) {
+      setEmailSuggestion(suggestEmailCorrection(formData.email));
+    }
     if (!validateAll()) return;
     if (!selectedCohort) {
       toast({ title: "Erreur", description: "Veuillez sélectionner une cohorte.", variant: "destructive" });
@@ -353,8 +360,43 @@ const Register = () => {
                   </div>
                   <div className="mt-4">
                     <RequiredLabel htmlFor="email" required>Email</RequiredLabel>
-                    <Input id="email" type="email" maxLength={100} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} onBlur={() => handleBlur("email")} aria-invalid={!!showError("email")} placeholder="aminata@email.com" />
+                    <Input
+                      id="email"
+                      type="email"
+                      maxLength={100}
+                      value={formData.email}
+                      onChange={(e) => {
+                        setFormData({ ...formData, email: e.target.value });
+                        setEmailSuggestion(null);
+                      }}
+                      onBlur={() => {
+                        handleBlur("email");
+                        setEmailSuggestion(
+                          isValidEmail(formData.email)
+                            ? suggestEmailCorrection(formData.email)
+                            : null,
+                        );
+                      }}
+                      aria-invalid={!!showError("email")}
+                      placeholder="aminata@email.com"
+                    />
                     <FieldError message={showError("email")} />
+                    {!showError("email") && emailSuggestion && (
+                      <p className="mt-1.5 text-xs text-accent">
+                        Vouliez-vous dire{" "}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData({ ...formData, email: emailSuggestion });
+                            setEmailSuggestion(null);
+                          }}
+                          className="font-semibold underline underline-offset-2 decoration-dashed hover:decoration-solid"
+                        >
+                          {emailSuggestion}
+                        </button>
+                        {" ?"}
+                      </p>
+                    )}
                   </div>
                   <div className="mt-4">
                     <RequiredLabel htmlFor="password" required>Mot de passe</RequiredLabel>
