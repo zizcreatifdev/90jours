@@ -1,6 +1,6 @@
 import { BookOpen, Calendar, FileText, Megaphone, Send, Loader2, Search, Download, Users, CreditCard, ClipboardList, Award, ChevronDown, Menu, Play, ExternalLink, FileSignature, AlertCircle, RefreshCw } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { StudentDashboardSkeleton } from "@/components/DashboardSkeletons";
 import StatsCard from "@/components/StatsCard";
@@ -58,6 +58,7 @@ const RESOURCE_TYPE_CONFIG: Record<string, { Icon: React.ElementType; className:
 
 const StudentDashboard = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const activeTab = searchParams.get("tab") || "dashboard";
   const { user, profile } = useAuth();
@@ -143,6 +144,41 @@ const StudentDashboard = () => {
     if (!cohort || !user) { setLoading(false); return; }
     const fetchCohortData = async () => {
       try {
+        // Onboarding gate: redirect if an active contract template exists and is not yet signed
+        const formationId = cohort.formation_id;
+        let templateFound = false;
+        if (formationId) {
+          const { data } = await supabase
+            .from("contract_templates")
+            .select("id")
+            .eq("is_active", true)
+            .eq("formation_id", formationId)
+            .maybeSingle();
+          if (data) templateFound = true;
+        }
+        if (!templateFound) {
+          const { data } = await supabase
+            .from("contract_templates")
+            .select("id")
+            .eq("is_active", true)
+            .is("formation_id", null)
+            .limit(1)
+            .maybeSingle();
+          if (data) templateFound = true;
+        }
+        if (templateFound) {
+          const { data: sc } = await supabase
+            .from("student_contracts")
+            .select("signed_at")
+            .eq("user_id", user.id)
+            .eq("cohort_id", cohort.id)
+            .maybeSingle();
+          if (!sc?.signed_at) {
+            navigate(`/onboarding?cohort_id=${cohort.id}`);
+            return;
+          }
+        }
+
         const [resRes, annRes, countRes, seenRes] = await Promise.all([
           supabase.from("resources").select("*").eq("cohort_id", cohort.id).order("created_at", { ascending: false }),
           supabase.from("announcements").select("*").eq("cohort_id", cohort.id).order("created_at", { ascending: false }),

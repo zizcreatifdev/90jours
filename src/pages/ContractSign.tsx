@@ -244,7 +244,7 @@ const ContractSign = () => {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Contrat signé.", description: "Votre inscription est confirmée. Bienvenue !" });
-      navigate("/student");
+      navigate(`/onboarding?cohort_id=${cohortId}`);
     }
   };
 
