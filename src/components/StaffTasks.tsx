@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, ListTodo, MessageSquare, Clock, AlertTriangle, ArrowUp, ArrowRight, ArrowDown } from "lucide-react";
+import TaskBoard, { type BoardTask } from "@/components/tasks/TaskBoard";
+import { STATUS_CONFIG, PRIORITY_CONFIG, isTaskOverdue, type TaskStatus } from "@/lib/task-config";
+import { Loader2, ListTodo, MessageSquare } from "lucide-react";
 
 interface Task {
   id: string;
@@ -15,39 +16,31 @@ interface Task {
   description: string | null;
   priority: string;
   status: string;
+  assigned_to: string;
   cohort_id: string | null;
   deadline: string | null;
   created_at: string;
+  assignee_name: string;
+  assignee_avatar_url: string | null;
   cohort_name: string | null;
   comment_count: number;
 }
-
-const priorityConfig = {
-  high: { label: "Haute", icon: ArrowUp, className: "bg-destructive/10 text-destructive border-destructive/20" },
-  medium: { label: "Moyenne", icon: ArrowRight, className: "bg-amber-500/10 text-amber-600 border-amber-500/20" },
-  low: { label: "Basse", icon: ArrowDown, className: "bg-muted text-muted-foreground border-border" },
-};
-
-const statusConfig = {
-  todo: { label: "À faire", className: "bg-secondary text-muted-foreground" },
-  in_progress: { label: "En cours", className: "bg-primary/10 text-primary" },
-  done: { label: "Terminé", className: "bg-green-500/10 text-green-600" },
-};
 
 const StaffTasks = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState("all");
   const [detailTask, setDetailTask] = useState<Task | null>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
+  // Pendant un drag, on suspend le refetch realtime pour eviter la "carte qui saute".
+  const isDraggingRef = useRef(false);
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (opts?: { silent?: boolean }) => {
     if (!user) return;
-    setLoading(true);
+    if (!opts?.silent) setLoading(true);
 
     const { data: tasksData } = await supabase
       .from("staff_tasks" as any)
@@ -70,6 +63,24 @@ const StaffTasks = () => {
         }
       }
 
+      // Nom + avatar de l'assigne (jointure client-side profiles.user_id).
+      // Ici l'assigne est le formateur lui-meme (filtre assigned_to=user.id).
+      const assigneeIds = [...new Set((tasksData as any[]).map((t: any) => t.assigned_to))];
+      let nameMap: Record<string, string> = {};
+      let avatarMap: Record<string, string | null> = {};
+      if (assigneeIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("user_id, first_name, last_name, avatar_url")
+          .in("user_id", assigneeIds);
+        if (profiles) {
+          for (const p of profiles) {
+            nameMap[p.user_id] = `${p.first_name} ${p.last_name}`;
+            avatarMap[p.user_id] = (p as { avatar_url: string | null }).avatar_url || null;
+          }
+        }
+      }
+
       const cohortIds = [...new Set((tasksData as any[]).filter((t: any) => t.cohort_id).map((t: any) => t.cohort_id))];
       let cohortMap: Record<string, string> = {};
       if (cohortIds.length > 0) {
@@ -79,30 +90,47 @@ const StaffTasks = () => {
 
       setTasks((tasksData as any[]).map((t: any) => ({
         ...t,
+        assignee_name: nameMap[t.assigned_to] || "Inconnu",
+        assignee_avatar_url: avatarMap[t.assigned_to] || null,
         cohort_name: t.cohort_id ? cohortMap[t.cohort_id] || null : null,
         comment_count: commentCounts[t.id] || 0,
       })));
     }
-    setLoading(false);
+    if (!opts?.silent) setLoading(false);
   };
 
   useEffect(() => { fetchTasks(); }, [user]);
 
+  // Realtime filtre sur SES taches. Pendant un drag, on ignore l'evenement (le
+  // refetch global ferait sauter la carte) ; l'update optimiste suffit a
+  // l'affichage et l'evenement post-commit reconcilie en silence. Quand l'admin
+  // deplace une carte assignee a ce formateur, cet evenement met sa vue a jour.
   useEffect(() => {
     if (!user) return;
     const channel = supabase
       .channel("my_staff_tasks")
       .on("postgres_changes", { event: "*", schema: "public", table: "staff_tasks", filter: `assigned_to=eq.${user.id}` }, () => {
-        fetchTasks();
+        if (isDraggingRef.current) return;
+        fetchTasks({ silent: true });
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
-  const handleStatusChange = async (taskId: string, newStatus: string) => {
+  // Update optimiste : on deplace la carte localement immediatement, puis on
+  // persiste. En cas d'erreur DB, on restaure l'etat precedent.
+  const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
+    const previous = tasks;
+    setTasks((ts) => ts.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)));
     const { error } = await supabase.from("staff_tasks" as any).update({ status: newStatus }).eq("id", taskId);
-    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else fetchTasks();
+    if (error) {
+      setTasks(previous);
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleDragStateChange = (dragging: boolean) => {
+    isDraggingRef.current = dragging;
   };
 
   const openDetail = async (task: Task) => {
@@ -142,9 +170,6 @@ const StaffTasks = () => {
     }
   };
 
-  const filteredTasks = tasks.filter(t => filterStatus === "all" || t.status === filterStatus);
-  const isOverdue = (task: Task) => task.deadline && new Date(task.deadline) < new Date() && task.status !== "done";
-
   const todoCount = tasks.filter(t => t.status === "todo").length;
   const inProgressCount = tasks.filter(t => t.status === "in_progress").length;
 
@@ -160,76 +185,19 @@ const StaffTasks = () => {
           {todoCount > 0 && <Badge variant="secondary" className="ml-1">{todoCount} à faire</Badge>}
           {inProgressCount > 0 && <Badge variant="outline" className="ml-1 bg-primary/10 text-primary">{inProgressCount} en cours</Badge>}
         </h2>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous</SelectItem>
-            <SelectItem value="todo">À faire</SelectItem>
-            <SelectItem value="in_progress">En cours</SelectItem>
-            <SelectItem value="done">Terminé</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="p-4">
-        {filteredTasks.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8 text-sm">Aucune tâche assignée.</p>
-        ) : (
-          <div className="space-y-3">
-            {filteredTasks.map((task) => {
-              const priority = priorityConfig[task.priority as keyof typeof priorityConfig] || priorityConfig.medium;
-              const status = statusConfig[task.status as keyof typeof statusConfig] || statusConfig.todo;
-              const PriorityIcon = priority.icon;
-              const overdue = isOverdue(task);
-
-              return (
-                <div
-                  key={task.id}
-                  className={`rounded-xl border p-4 cursor-pointer hover:shadow-sm transition-shadow ${overdue ? "border-destructive/40 bg-destructive/5" : "border-border"}`}
-                  onClick={() => openDetail(task)}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-display font-semibold text-foreground text-sm truncate">{task.title}</h3>
-                        {overdue && <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />}
-                      </div>
-                      {task.description && (
-                        <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{task.description}</p>
-                      )}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="outline" className={`text-xs ${priority.className}`}>
-                          <PriorityIcon className="h-3 w-3 mr-1" /> {priority.label}
-                        </Badge>
-                        {task.cohort_name && <span className="text-xs text-muted-foreground">• {task.cohort_name}</span>}
-                        {task.deadline && (
-                          <span className={`text-xs flex items-center gap-1 ${overdue ? "text-destructive font-medium" : "text-muted-foreground"}`}>
-                            <Clock className="h-3 w-3" /> {new Date(task.deadline).toLocaleDateString("fr-FR")}
-                          </span>
-                        )}
-                        {task.comment_count > 0 && (
-                          <span className="text-xs text-muted-foreground flex items-center gap-1">
-                            <MessageSquare className="h-3 w-3" /> {task.comment_count}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div onClick={e => e.stopPropagation()}>
-                      <Select value={task.status} onValueChange={v => handleStatusChange(task.id, v)}>
-                        <SelectTrigger className="h-7 w-24 text-xs border-0 bg-secondary"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="todo">À faire</SelectItem>
-                          <SelectItem value="in_progress">En cours</SelectItem>
-                          <SelectItem value="done">Terminé</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {/* Le filtre par statut a disparu (les colonnes du Kanban jouent ce role).
+            Toutes les taches affichees appartiennent au formateur (filtre
+            assigned_to), donc il peut toutes les deplacer : editable=true. */}
+        <TaskBoard
+          tasks={tasks as BoardTask[]}
+          editable
+          onStatusChange={handleStatusChange}
+          onCardClick={(bt) => { const full = tasks.find(t => t.id === bt.id); if (full) openDetail(full); }}
+          onDragStateChange={handleDragStateChange}
+        />
       </div>
 
       {/* Detail Dialog */}
@@ -245,15 +213,15 @@ const StaffTasks = () => {
                   <p className="text-sm text-muted-foreground">{detailTask.description}</p>
                 )}
                 <div className="flex flex-wrap gap-2 text-xs">
-                  <Badge variant="outline" className={priorityConfig[detailTask.priority as keyof typeof priorityConfig]?.className}>
-                    {priorityConfig[detailTask.priority as keyof typeof priorityConfig]?.label}
+                  <Badge variant="outline" className={PRIORITY_CONFIG[detailTask.priority as keyof typeof PRIORITY_CONFIG]?.className}>
+                    {PRIORITY_CONFIG[detailTask.priority as keyof typeof PRIORITY_CONFIG]?.label || detailTask.priority}
                   </Badge>
-                  <Badge variant="secondary" className={statusConfig[detailTask.status as keyof typeof statusConfig]?.className}>
-                    {statusConfig[detailTask.status as keyof typeof statusConfig]?.label}
+                  <Badge variant="secondary" className={STATUS_CONFIG[detailTask.status as keyof typeof STATUS_CONFIG]?.className}>
+                    {STATUS_CONFIG[detailTask.status as keyof typeof STATUS_CONFIG]?.label || detailTask.status}
                   </Badge>
                   {detailTask.cohort_name && <span className="text-muted-foreground">Cohorte: {detailTask.cohort_name}</span>}
                   {detailTask.deadline && (
-                    <span className={isOverdue(detailTask) ? "text-destructive font-medium" : "text-muted-foreground"}>
+                    <span className={isTaskOverdue(detailTask.deadline, detailTask.status) ? "text-destructive font-medium" : "text-muted-foreground"}>
                       Deadline: {new Date(detailTask.deadline).toLocaleString("fr-FR")}
                     </span>
                   )}
