@@ -18,10 +18,41 @@ ne les exécute pas). Pour chaque étape : **[Supabase]**, **[Vercel]** ou **[Ap
       (Database > Extensions). Le script les active via `CREATE EXTENSION IF NOT EXISTS`,
       mais certains plans exigent de les activer depuis le dashboard.
 
-## 3. Déployer les 8 Edge Functions — **[Supabase]**
-- [ ] Déployer : `invite-staff`, `delete-user`, `list-user-emails`,
-      `send-push-notification`, `get-vapid-key`, `brief-reminders`, `payment-reminders`,
-      `send-email` (ex. `supabase functions deploy <nom>` ou via le dashboard).
+## 3. Déployer les 8 Edge Functions — **[GitHub Actions]** (automatique)
+
+Le déploiement est automatisé via `.github/workflows/deploy-functions.yml`.
+
+### Prérequis : secrets GitHub (à créer une seule fois)
+
+Aller dans **GitHub > Settings > Secrets and variables > Actions > New repository secret**
+et créer les deux secrets suivants :
+
+| Nom du secret | Valeur | Où le trouver |
+|---|---|---|
+| `SUPABASE_ACCESS_TOKEN` | Token personnel Supabase | supabase.com > Account > Access Tokens > Generate new token |
+| `SUPABASE_PROJECT_REF` | `vlfugigvqfqflfenuwkb` | Déjà connu (supabase/config.toml ligne 1), ou Supabase Dashboard > Project Settings > General > Reference ID |
+
+### Premier déploiement (débloquer le CORS immédiatement)
+
+Une fois les secrets créés :
+1. Aller dans l'onglet **Actions** du repo GitHub.
+2. Cliquer sur le workflow **"Deploy Supabase Edge Functions"**.
+3. Cliquer sur **"Run workflow"** > **"Run workflow"** (branche main).
+4. Toutes les 8 fonctions sont déployées en une passe.
+
+### Fonctionnement automatique ensuite
+
+Tout push sur `main` qui modifie un fichier dans `supabase/functions/**` ou
+`supabase/config.toml` déclenche automatiquement le workflow.
+Plus besoin de déployer à la main.
+
+### Déploiement manuel (CLI, si le workflow n'est pas encore configuré)
+
+```bash
+supabase link --project-ref vlfugigvqfqflfenuwkb
+supabase functions deploy
+```
+
 - [ ] Le fichier `supabase/config.toml` porte la planification cron — il sera
       réappliqué au déploiement (voir étape 8).
 
@@ -48,11 +79,16 @@ ne les exécute pas). Pour chaque étape : **[Supabase]**, **[Vercel]** ou **[Ap
 - [ ] Utiliser **uniquement** l'URL + la **clé anon/publishable** de la nouvelle
       instance. **JAMAIS** la clé `service_role` côté front.
 
-## 6. Mettre à jour le CORS des Edge Functions — **[Supabase]**
-- [ ] Dans `invite-staff`, `delete-user`, `list-user-emails`, mettre à jour la
-      constante `ALLOWED_ORIGINS` avec le domaine Vercel final
-      (actuellement codé en dur : `https://90jours.com`, `https://formations90jours.netlify.app`).
-- [ ] Redéployer ces 3 functions après modification.
+## 6. CORS des Edge Functions — déjà configuré
+
+L'allowlist CORS est à jour dans toutes les fonctions. Origines autorisées :
+- `https://60jours.com`
+- `https://www.60jours.com`
+- `https://60jours.vercel.app`
+- `http://localhost:8080`
+
+Fonctions `get-vapid-key` et `send-push-notification` : `"*"` (origines ouvertes, fonctions non sensibles).
+Aucune action manuelle requise sur le CORS.
 
 ## 7. Créer le compte super_admin — **[App]** ou **[Supabase]**, puis **[Supabase]**
 - [ ] Créer le compte : inscription via l'app (`/register`) **OU** Authentication >
