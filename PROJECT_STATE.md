@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 30 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: branding : suppression complete de l'ancien logo 90 jours, remplacement par 60jours partout
+**Prompt actuel**: contrat : template HTML responsive sur mobile (media queries)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.

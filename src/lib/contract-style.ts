@@ -44,6 +44,21 @@ export const CONTRACT_STYLE = `<style>
 .contract-doc h3{font-size:15px;margin:18px 0 8px}
 .contract-doc strong{color:var(--navy)}
 .contract-doc ol{margin:8px 0 12px;padding-left:20px}
+.contract-doc .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:#f8fafc;border-radius:8px;padding:20px}
+@media (max-width:600px){
+.contract-doc .page{padding:28px 16px}
+.contract-doc .doc-title{font-size:22px}
+.contract-doc .doc-head{margin-bottom:28px}
+.contract-doc .parties{font-size:14px}
+.contract-doc .art-title{font-size:15px;flex-wrap:wrap}
+.contract-doc .sign .name{font-size:18px}
+.contract-doc h1{font-size:20px}
+.contract-doc h2{font-size:16px}
+.contract-doc .fin{padding:12px 14px}
+.contract-doc .fin .row{flex-wrap:wrap;gap:2px}
+.contract-doc .info-grid{grid-template-columns:1fr !important;gap:8px !important}
+.contract-doc [style*="grid-template-columns"]{grid-template-columns:1fr !important;gap:16px !important}
+}
 </style>`;
 
 const ENVELOPE_OPEN = '<div class="contract-doc"><div class="page">';
