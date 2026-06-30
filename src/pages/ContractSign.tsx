@@ -289,6 +289,21 @@ const ContractSign = () => {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Contrat signe.", description: "Votre inscription est confirmee. Bienvenue !" });
+      // Non-bloquant : notifie les admins sans bloquer la navigation
+      supabase.from("user_roles").select("user_id").eq("role", "super_admin").then(({ data: adminRoles }) => {
+        if (adminRoles && adminRoles.length > 0) {
+          const studentName = `${profile?.first_name || ""} ${profile?.last_name || ""}`.trim();
+          supabase.from("notifications").insert(
+            adminRoles.map((r: any) => ({
+              user_id: r.user_id,
+              type: "info",
+              title: "Contrat signe",
+              message: `${studentName} a signe son contrat de formation.`,
+              created_by: user.id,
+            }))
+          );
+        }
+      });
       navigate(`/onboarding?cohort_id=${cohortId}`);
     }
   };

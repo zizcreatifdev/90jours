@@ -157,10 +157,22 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
     } else {
       toast({ title: publishAt && new Date(publishAt) > new Date() ? "Brief programmé !" : "Brief publié !" });
 
-      // Send push to enrolled students if published now
+      // Notification push + in-app pour les etudiants inscrits (publication immediate uniquement)
       if (!publishAt || new Date(publishAt) <= new Date()) {
         const studentIds = students.map((s: any) => s.user_id);
         sendPushToUsers(studentIds, `Nouveau brief : ${title}`, description?.substring(0, 200) || "Un nouveau brief a été ajouté.");
+        if (studentIds.length > 0) {
+          await supabase.from("notifications").insert(
+            studentIds.map((uid: string) => ({
+              user_id: uid,
+              cohort_id: selectedCohort,
+              type: "brief",
+              title: `Nouveau brief disponible : ${title}`,
+              message: description?.substring(0, 200) || "Un nouveau brief a été publié dans votre cohorte.",
+              created_by: user?.id ?? null,
+            }))
+          );
+        }
       }
 
       setTitle(""); setDescription(""); setDeadline(""); setPublishAt(""); setCategoryId(""); setBriefFrequency(""); setOpen(false);

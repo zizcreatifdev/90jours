@@ -72,6 +72,8 @@ const AdminDashboard = () => {
   const [formationFilter, setFormationFilter] = useState("all");
   const [archiving, setArchiving] = useState<string | null>(null);
   const [monthlyData, setMonthlyData] = useState<{ name: string; inscrits: number }[]>([]);
+  const [paidRevenue, setPaidRevenue] = useState(0);
+  const [dashboardRefreshTick, setDashboardRefreshTick] = useState(0);
 
   interface ActivityItem {
     id: string;
@@ -130,7 +132,7 @@ const AdminDashboard = () => {
       }
     };
     fetchStudents();
-  }, []);
+  }, [dashboardRefreshTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch real monthly enrollment data
   useEffect(() => {
@@ -159,7 +161,7 @@ const AdminDashboard = () => {
       }
     };
     fetchMonthlyData();
-  }, []);
+  }, [dashboardRefreshTick]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const fetchActivity = async () => {
@@ -232,6 +234,34 @@ const AdminDashboard = () => {
       }
     };
     fetchActivity();
+  }, [dashboardRefreshTick]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Revenue reel : somme des paiements confirmes
+  useEffect(() => {
+    const fetchRevenue = async () => {
+      const { data } = await supabase
+        .from("payments")
+        .select("amount")
+        .eq("status", "paid")
+        .is("deleted_at", null);
+      if (data) {
+        setPaidRevenue(data.reduce((s: number, p: any) => s + (p.amount || 0), 0));
+      }
+    };
+    fetchRevenue();
+  }, [dashboardRefreshTick]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Realtime : met a jour les stats quand un enrollment ou un paiement arrive
+  useEffect(() => {
+    const ch = supabase.channel("admin-dashboard-rt")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "enrollments" }, () => {
+        setDashboardRefreshTick(t => t + 1);
+      })
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "payments" }, () => {
+        setDashboardRefreshTick(t => t + 1);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
   }, []);
 
   useEffect(() => {
@@ -282,10 +312,16 @@ const AdminDashboard = () => {
     await supabase.from("enrollments").delete().eq("cohort_id", cohortId);
     await supabase.from("announcements").delete().eq("cohort_id", cohortId);
     await supabase.from("resources").delete().eq("cohort_id", cohortId);
+    const { data: cohortBriefs } = await supabase.from("briefs").select("id").eq("cohort_id", cohortId);
+    if (cohortBriefs && cohortBriefs.length > 0) {
+      await supabase.from("brief_submissions").delete().in("brief_id", cohortBriefs.map((b: any) => b.id));
+    }
     await supabase.from("briefs").delete().eq("cohort_id", cohortId);
     await supabase.from("payments").delete().eq("cohort_id", cohortId);
     await supabase.from("portfolios").delete().eq("cohort_id", cohortId);
     await supabase.from("attestations").delete().eq("cohort_id", cohortId);
+    await supabase.from("messages").delete().eq("cohort_id", cohortId);
+    await supabase.from("student_contracts").delete().eq("cohort_id", cohortId);
     await supabase.from("notifications").delete().eq("cohort_id", cohortId);
     const { error } = await supabase.from("cohorts").delete().eq("id", cohortId);
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
@@ -428,9 +464,9 @@ const AdminDashboard = () => {
             <StatsCard icon={GraduationCap} label="Cohortes actives" value={cohorts.filter(c => c.status === "active").length} subtitle="en cours" />
             <StatsCard icon={TrendingUp} label="Taux de remplissage" value={`${fillRate}%`} variant="accent" />
             <div className="rounded-xl bg-primary p-4 text-primary-foreground">
-              <h3 className="font-display text-xs font-semibold opacity-80">Revenus estimés</h3>
-              <p className="mt-0.5 font-display text-2xl font-bold">{(totalEnrolled * 150000 / 1000000).toFixed(1)}M</p>
-              <p className="mt-0.5 text-[11px] opacity-60">FCFA ce trimestre</p>
+              <h3 className="font-display text-xs font-semibold opacity-80">Revenus encaissés</h3>
+              <p className="mt-0.5 font-display text-2xl font-bold">{(paidRevenue / 1000000).toFixed(1)}M</p>
+              <p className="mt-0.5 text-[11px] opacity-60">FCFA (paiements confirmés)</p>
             </div>
           </div>
 

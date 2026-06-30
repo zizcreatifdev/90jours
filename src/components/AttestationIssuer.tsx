@@ -310,6 +310,14 @@ const AttestationIssuer = () => {
     } else {
       toast({ title: "Attestation délivrée." });
       setStudents(prev => prev.map(s => s.user_id === studentId ? { ...s, has_attestation: true } : s));
+      await supabase.from("notifications").insert({
+        user_id: studentId,
+        cohort_id: selectedCohort,
+        type: "attestation",
+        title: "Votre attestation est disponible",
+        message: "Votre attestation de formation est prête. Vous pouvez la télécharger depuis votre espace.",
+        created_by: user.id,
+      });
     }
     setIssuing(null);
   };
@@ -353,6 +361,15 @@ const AttestationIssuer = () => {
       setStudents(prev => prev.map(s =>
         eligible.find(e => e.user_id === s.user_id) ? { ...s, has_attestation: true } : s
       ));
+      const notifRows = eligible.map(s => ({
+        user_id: s.user_id,
+        cohort_id: selectedCohort,
+        type: "attestation",
+        title: "Votre attestation est disponible",
+        message: "Votre attestation de formation est prête. Vous pouvez la télécharger depuis votre espace.",
+        created_by: user!.id,
+      }));
+      await supabase.from("notifications").insert(notifRows);
     }
     setIssuing(null);
   };

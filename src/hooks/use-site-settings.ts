@@ -20,7 +20,7 @@ const defaults: SiteSettings = {
   hero_title: "Révélez votre potentiel créatif en 60 jours",
   hero_subtitle: "Que vous soyez en reconversion, en quête de perfectionnement ou simplement curieux d'apprendre, nos formations intensives transforment votre créativité.",
   logo_url: null,
-  footer_email: "info@60jours.com",
+  footer_email: "contact@60jours.com",
   footer_phone: "+221 77 000 00 00",
   footer_text: "Des formations intensives qui transforment votre créativité en 60 jours.",
   wave_payment_url: WAVE_PAYMENT_URL_FALLBACK,

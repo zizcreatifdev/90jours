@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 30 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: delete-user : purge complete de toutes les tables liees avant suppression du compte
+**Prompt actuel**: integrations : purge cohorte complete, notifications attestation+contrat, dashboard realtime, revenus reels, carousel cleanup
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -76,7 +76,7 @@
 | Liste d'attente (WaitlistManager) | ✅ Complet | 100% |
 
 **Complétion globale**: 100%
-**Bugs connus**: Aucun identifié
+**Bugs connus**: Aucun (9 bugs d'intégration corrigés : purge cohorte, notifications, realtime, revenus, carousel)
 **Prochaines étapes**: Tests d'intégration des flux critiques
 
 ---

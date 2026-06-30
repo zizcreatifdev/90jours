@@ -31,49 +31,57 @@ const SignedContractsPanel = () => {
   const [cohortFilter, setCohortFilter] = useState("all");
   const [viewContract, setViewContract] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchContracts = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("student_contracts")
-        .select("*, cohorts:cohort_id(name)")
-        .not("signed_at", "is", null)
-        .order("signed_at", { ascending: false });
+  const fetchContracts = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("student_contracts")
+      .select("*, cohorts:cohort_id(name)")
+      .not("signed_at", "is", null)
+      .order("signed_at", { ascending: false });
 
-      if (error) {
-        toast({ title: "Erreur", description: error.message, variant: "destructive" });
-        setLoading(false);
-        return;
-      }
-
-      // Pas de FK student_contracts -> profiles : jointure cote client via Map sur user_id
-      const userIds = [...new Set((data || []).map((c: any) => c.user_id).filter(Boolean))];
-      let profileMap = new Map<string, { first_name: string; last_name: string }>();
-      if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("user_id, first_name, last_name")
-          .in("user_id", userIds);
-        profileMap = new Map((profiles || []).map((p: any) => [p.user_id, { first_name: p.first_name, last_name: p.last_name }]));
-      }
-
-      const mapped = (data || []).map((c: any) => ({
-        id: c.id,
-        user_id: c.user_id,
-        cohort_id: c.cohort_id,
-        signed_at: c.signed_at,
-        signature_name: c.signature_name,
-        ip_address: c.ip_address,
-        contract_snapshot: c.contract_snapshot,
-        created_at: c.created_at,
-        profile: profileMap.get(c.user_id) ?? null,
-        cohort_name: (c.cohorts as { name: string } | null)?.name ?? "-",
-      })) as SignedContract[];
-
-      setContracts(mapped);
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
       setLoading(false);
-    };
+      return;
+    }
+
+    // Pas de FK student_contracts -> profiles : jointure cote client via Map sur user_id
+    const userIds = [...new Set((data || []).map((c: any) => c.user_id).filter(Boolean))];
+    let profileMap = new Map<string, { first_name: string; last_name: string }>();
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, first_name, last_name")
+        .in("user_id", userIds);
+      profileMap = new Map((profiles || []).map((p: any) => [p.user_id, { first_name: p.first_name, last_name: p.last_name }]));
+    }
+
+    const mapped = (data || []).map((c: any) => ({
+      id: c.id,
+      user_id: c.user_id,
+      cohort_id: c.cohort_id,
+      signed_at: c.signed_at,
+      signature_name: c.signature_name,
+      ip_address: c.ip_address,
+      contract_snapshot: c.contract_snapshot,
+      created_at: c.created_at,
+      profile: profileMap.get(c.user_id) ?? null,
+      cohort_name: (c.cohorts as { name: string } | null)?.name ?? "-",
+    })) as SignedContract[];
+
+    setContracts(mapped);
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchContracts();
+    const ch = supabase
+      .channel("signed-contracts-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "student_contracts" }, () => {
+        fetchContracts();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filtered = cohortFilter === "all"
