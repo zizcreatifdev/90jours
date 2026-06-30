@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 30 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: dashboard : progression automatique calculee depuis les briefs livres
+**Prompt actuel**: portfolio : label contextuel par formation (deliverable_label) + champ description
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -22,7 +22,7 @@
 | Pages | 11 |
 | Hooks custom | 10 |
 | Tables Supabase | 34 |
-| Migrations SQL | 46 |
+| Migrations SQL | 47 |
 | Edge Functions | 8 (send-email durci) |
 | CI/CD | GitHub Actions (deploy-functions.yml) |
 | Utilitaires lib | email-suggestion.ts (Levenshtein, 20 domaines) |

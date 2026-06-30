@@ -15,6 +15,7 @@ interface Portfolio {
   user_id: string;
   cohort_id: string;
   url: string;
+  description?: string | null;
   submitted_at: string;
   status: string;
   admin_notes: string | null;
@@ -165,9 +166,17 @@ const PortfolioManager = ({ filterCohortIds }: PortfolioManagerProps = {}) => {
           </DialogHeader>
           <div className="space-y-4 pt-2">
             {currentPortfolio && (
-              <a href={currentPortfolio.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-accent hover:underline">
-                <ExternalLink className="h-4 w-4" /> Ouvrir le portfolio
-              </a>
+              <>
+                <a href={currentPortfolio.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm text-accent hover:underline">
+                  <ExternalLink className="h-4 w-4" /> Ouvrir le portfolio
+                </a>
+                {currentPortfolio.description && (
+                  <div className="rounded-lg bg-secondary p-3 text-sm text-muted-foreground">
+                    <p className="font-medium text-foreground text-xs mb-1">Description de l'etudiant :</p>
+                    <p className="whitespace-pre-wrap">{currentPortfolio.description}</p>
+                  </div>
+                )}
+              </>
             )}
             <div>
               <Label>Notes / Commentaires</Label>
