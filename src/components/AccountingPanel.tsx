@@ -16,7 +16,7 @@ import {
   TrendingUp, TrendingDown, DollarSign, Download, Plus, Search, Check, FileText, ArrowUpRight, ArrowDownRight,
   Loader2, Receipt, Users as UsersIcon,
 } from "lucide-react";
-import { format, startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, subWeeks, subQuarters, subYears, startOfWeek, endOfWeek, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
 import { fr } from "date-fns/locale";
 
 // Types
@@ -146,9 +146,26 @@ const AccountingPanel = () => {
   // Computed
   const range = getPeriodRange(periodFilter);
   const prevRange = useMemo(() => {
-    if (periodFilter !== "month") return null;
-    const prev = subMonths(new Date(), 1);
-    return { start: startOfMonth(prev), end: endOfMonth(prev) };
+    const now = new Date();
+    switch (periodFilter) {
+      case "week": {
+        const prev = subWeeks(now, 1);
+        return { start: startOfWeek(prev, { locale: fr }), end: endOfWeek(prev, { locale: fr }) };
+      }
+      case "month": {
+        const prev = subMonths(now, 1);
+        return { start: startOfMonth(prev), end: endOfMonth(prev) };
+      }
+      case "quarter": {
+        const prev = subQuarters(now, 1);
+        return { start: startOfQuarter(prev), end: endOfQuarter(prev) };
+      }
+      case "year": {
+        const prev = subYears(now, 1);
+        return { start: startOfYear(prev), end: endOfYear(prev) };
+      }
+      default: return null;
+    }
   }, [periodFilter]);
 
   const inRange = (dateStr: string) => {
@@ -167,8 +184,9 @@ const AccountingPanel = () => {
   const currentExpenses = expenses.filter(e => inRange(e.expense_date)).reduce((s, e) => s + e.amount, 0);
   const prevExpenses = expenses.filter(e => inPrevRange(e.expense_date)).reduce((s, e) => s + e.amount, 0);
   const staffExpenses = staffPayments.filter(sp => sp.status === "paid" && inRange(sp.paid_at || sp.created_at)).reduce((s, sp) => s + sp.amount, 0);
+  const prevStaffExpenses = staffPayments.filter(sp => sp.status === "paid" && inPrevRange(sp.paid_at || sp.created_at)).reduce((s, sp) => s + sp.amount, 0);
   const totalExpenses = currentExpenses + staffExpenses;
-  const prevTotalExpenses = prevExpenses;
+  const prevTotalExpenses = prevExpenses + prevStaffExpenses;
   const netProfit = currentRevenue - totalExpenses;
   const prevNetProfit = prevRevenue - prevTotalExpenses;
 
@@ -317,7 +335,7 @@ const AccountingPanel = () => {
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary">
           <Icon className="h-5 w-5 text-foreground" />
         </div>
-        {change !== undefined && periodFilter === "month" && (
+        {change !== undefined && periodFilter !== "all" && (
           <span className={`flex items-center gap-1 text-xs font-semibold ${positive ? "text-green-600" : "text-destructive"}`}>
             {positive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
             {Math.abs(change)}%
