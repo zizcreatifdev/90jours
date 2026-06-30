@@ -27,7 +27,7 @@ interface CohortRow {
   start_date: string;
   end_date: string;
   formation_id: string | null;
-  formations: {
+  formation: {
     name: string;
     price: number | null;
     registration_fee: number | null;
@@ -115,7 +115,7 @@ const ContractSign = () => {
       // 2. Fetch cohort + formation
       const { data: cohort } = await supabase
         .from("cohorts")
-        .select("id, name, start_date, end_date, formation_id, formations:formation_id(name, price, registration_fee, total_price, deliverable_label)")
+        .select("id, name, start_date, end_date, formation_id, formation:formations(name, price, registration_fee, total_price, deliverable_label)")
         .eq("id", cohortId)
         .maybeSingle();
 
@@ -127,7 +127,7 @@ const ContractSign = () => {
       }
 
       const c = cohort as unknown as CohortRow;
-      const formation = c.formations;
+      const formation = c.formation;
 
       // 3. Fetch active template : meme logique que StudentDashboard.fetchCohortData
       // (formation-specifique d'abord, puis generique), avec .limit(1) sur les deux
