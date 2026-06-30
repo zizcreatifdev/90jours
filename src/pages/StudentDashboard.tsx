@@ -74,6 +74,7 @@ const StudentDashboard = () => {
   const { toast } = useToast();
   const [searchRes, setSearchRes] = useState("");
   const [briefSubmissions, setBriefSubmissions] = useState<any[]>([]);
+  const [publishedBriefCount, setPublishedBriefCount] = useState(0);
   const [seenAnnouncements, setSeenAnnouncements] = useState<Set<string>>(new Set());
 
   // Fetch all enrollments
@@ -202,12 +203,18 @@ const StudentDashboard = () => {
 
   const fetchSubs = async () => {
     if (!user || !cohort) return;
-    // Only fetch delivered submissions for briefs belonging to the current cohort
+    // Only published briefs count toward progression (publish_at <= now)
     const { data: cohortBriefs } = await supabase
       .from("briefs")
       .select("id")
-      .eq("cohort_id", cohort.id);
-    if (!cohortBriefs || cohortBriefs.length === 0) { setBriefSubmissions([]); return; }
+      .eq("cohort_id", cohort.id)
+      .lte("publish_at", new Date().toISOString());
+    if (!cohortBriefs || cohortBriefs.length === 0) {
+      setBriefSubmissions([]);
+      setPublishedBriefCount(0);
+      return;
+    }
+    setPublishedBriefCount(cohortBriefs.length);
     const briefIds = cohortBriefs.map(b => b.id);
     const { data } = await supabase
       .from("brief_submissions")
@@ -331,7 +338,8 @@ const StudentDashboard = () => {
     );
   }
 
-  const progress = enrollment.progress ?? 0;
+  const deliveredCount = briefSubmissions.length;
+  const progress = publishedBriefCount > 0 ? Math.round((deliveredCount / publishedBriefCount) * 100) : 0;
   const startDate = new Date(cohort.start_date);
   const endDate = new Date(cohort.end_date);
   const daysTotal = enrollment.formation_duration_days || Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));

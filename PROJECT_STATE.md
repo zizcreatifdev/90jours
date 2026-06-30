@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 30 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: messages : etudiant peut initier un nouveau message vers son formateur
+**Prompt actuel**: dashboard : progression automatique calculee depuis les briefs livres
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
