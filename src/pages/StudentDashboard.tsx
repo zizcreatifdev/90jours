@@ -120,7 +120,7 @@ const StudentDashboard = () => {
         setAllEnrollments(enriched);
 
         // Auto-select: restore from storage or pick the first active
-        const stored = localStorage.getItem("90jours-active-enrollment");
+        const stored = localStorage.getItem("60jours-active-enrollment");
         const valid = enriched.find(e => e.id === stored);
         setSelectedEnrollmentId(valid ? valid.id : enriched[0].id);
       } catch (err) {
@@ -138,7 +138,7 @@ const StudentDashboard = () => {
 
   // Persist selection
   useEffect(() => {
-    if (selectedEnrollmentId) localStorage.setItem("90jours-active-enrollment", selectedEnrollmentId);
+    if (selectedEnrollmentId) localStorage.setItem("60jours-active-enrollment", selectedEnrollmentId);
   }, [selectedEnrollmentId]);
 
   // Fetch cohort-specific data when selection changes

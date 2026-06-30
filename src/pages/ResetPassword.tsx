@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import logoDark from "@/assets/logo-dark.png";
-import logoWhite from "@/assets/logo-white.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import RequiredLabel from "@/components/ui/required-label";
@@ -9,12 +7,14 @@ import FieldError from "@/components/ui/field-error";
 import { useFormValidation } from "@/hooks/use-form-validation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 import { KeyRound, Loader2, AlertTriangle } from "lucide-react";
 import PasswordStrengthIndicator, { getPasswordStrength } from "@/components/PasswordStrengthIndicator";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { settings } = useSiteSettings();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -103,7 +103,13 @@ const ResetPassword = () => {
       <div className="hidden w-1/2 items-center justify-center bg-primary lg:flex">
         <div className="max-w-md px-12 text-center">
           <div className="mx-auto mb-6">
-            <img src={logoWhite} alt="60jours" className="mx-auto h-16" />
+            {settings.logo_url ? (
+              <img src={settings.logo_url} alt="60jours" className="h-16 mx-auto" />
+            ) : (
+              <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-accent">
+                <span className="font-display text-3xl font-bold text-primary">60</span>
+              </div>
+            )}
           </div>
           <h2 className="mb-4 font-display text-3xl font-bold text-primary-foreground">
             60 jours de formation
@@ -118,8 +124,13 @@ const ResetPassword = () => {
       <div className="flex w-full items-center justify-center bg-background px-4 lg:w-1/2">
         <div className="w-full max-w-sm">
           <div className="mb-6 flex items-center justify-center lg:hidden">
-            <img src={logoDark} alt="60jours" className="h-10 dark:hidden" />
-            <img src={logoWhite} alt="60jours" className="hidden h-10 dark:block" />
+            {settings.logo_url ? (
+              <img src={settings.logo_url} alt="60jours" className="h-10" />
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+                <span className="font-display text-sm font-bold text-primary-foreground">60</span>
+              </div>
+            )}
           </div>
 
           {checking ? (

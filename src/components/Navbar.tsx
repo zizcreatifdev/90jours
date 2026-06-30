@@ -4,8 +4,7 @@ import { Menu, X, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/components/ThemeProvider";
-import logoDark from "@/assets/logo-dark.png";
-import logoWhite from "@/assets/logo-white.png";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,6 +12,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, roles, activeRole, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { settings } = useSiteSettings();
   const isDark = theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
 
   const links = [
@@ -30,8 +30,16 @@ const Navbar = () => {
     <nav className="sticky top-0 z-50 glass-nav">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2.5">
-          <img src={logoDark} alt="60jours" className="h-8 w-auto object-contain dark:hidden" />
-          <img src={logoWhite} alt="60jours" className="h-8 w-auto object-contain hidden dark:block" />
+          {settings.logo_url ? (
+            <img src={settings.logo_url} alt="60jours" className="h-8 w-auto object-contain" />
+          ) : (
+            <>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                <span className="font-display text-xs font-bold text-primary-foreground">60</span>
+              </div>
+              <span className="font-display text-sm font-bold text-foreground">jours</span>
+            </>
+          )}
         </Link>
 
         <div className="hidden items-center gap-6 md:flex">

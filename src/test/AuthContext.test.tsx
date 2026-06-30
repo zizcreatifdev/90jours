@@ -110,7 +110,7 @@ describe("AuthContext, priorité des rôles (super_admin > staff > student)", ()
 describe("AuthContext, persistance localStorage", () => {
   it("restaure le rôle stocké si l'utilisateur le possède toujours", async () => {
     // super_admin est le rôle prioritaire, mais le storage dit "staff"
-    localStorage.setItem("90jours-active-role", "staff");
+    localStorage.setItem("60jours-active-role", "staff");
     setupRolesMock(["super_admin", "staff"]);
     const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -120,7 +120,7 @@ describe("AuthContext, persistance localStorage", () => {
   });
 
   it("ignore le rôle stocké si l'utilisateur ne le possède plus", async () => {
-    localStorage.setItem("90jours-active-role", "super_admin");
+    localStorage.setItem("60jours-active-role", "super_admin");
     setupRolesMock(["student"]);
     const { result } = renderHook(() => useAuth(), { wrapper });
 
@@ -139,7 +139,7 @@ describe("AuthContext, persistance localStorage", () => {
     act(() => { result.current.setActiveRole("staff"); });
 
     expect(result.current.activeRole).toBe("staff");
-    expect(localStorage.getItem("90jours-active-role")).toBe("staff");
+    expect(localStorage.getItem("60jours-active-role")).toBe("staff");
   });
 });
 
@@ -161,7 +161,7 @@ describe("AuthContext, SIGNED_OUT", () => {
     await waitFor(() => expect(result.current.user).toBeNull());
     expect(result.current.roles).toEqual([]);
     expect(result.current.activeRole).toBeNull();
-    expect(localStorage.getItem("90jours-active-role")).toBeNull();
+    expect(localStorage.getItem("60jours-active-role")).toBeNull();
   });
 });
 
@@ -178,7 +178,7 @@ describe("AuthContext, setActiveRole invalide", () => {
     act(() => { result.current.setActiveRole("staff"); }); // non accordé
 
     expect(result.current.activeRole).toBe("student"); // inchangé
-    expect(localStorage.getItem("90jours-active-role")).not.toBe("staff");
+    expect(localStorage.getItem("60jours-active-role")).not.toBe("staff");
   });
 
   it("rejette un rôle invalide même pour un super_admin (rôle non attribué)", async () => {

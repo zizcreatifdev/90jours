@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const setActiveRole = (role: AppRole) => {
     if (roles.includes(role)) {
       setActiveRoleState(role);
-      localStorage.setItem("90jours-active-role", role);
+      localStorage.setItem("60jours-active-role", role);
     }
   };
 
@@ -58,13 +58,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (profileRes.data) setProfile(profileRes.data as any);
 
     // Set active role: restore from storage if valid, otherwise use highest priority
-    const stored = localStorage.getItem("90jours-active-role") as AppRole | null;
+    const stored = localStorage.getItem("60jours-active-role") as AppRole | null;
     if (stored && fetchedRoles.includes(stored)) {
       setActiveRoleState(stored);
     } else {
       const defaultRole = rolePriority.find(r => fetchedRoles.includes(r)) || fetchedRoles[0] || null;
       setActiveRoleState(defaultRole);
-      if (defaultRole) localStorage.setItem("90jours-active-role", defaultRole);
+      if (defaultRole) localStorage.setItem("60jours-active-role", defaultRole);
     }
   };
 
@@ -83,7 +83,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setRoles([]);
         setProfile(null);
         setActiveRoleState(null);
-        localStorage.removeItem("90jours-active-role");
+        localStorage.removeItem("60jours-active-role");
       }
 
       setLoading(false);
@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signOut = async () => {
-    localStorage.removeItem("90jours-active-role");
+    localStorage.removeItem("60jours-active-role");
     await supabase.auth.signOut();
   };
 

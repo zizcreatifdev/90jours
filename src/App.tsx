@@ -27,7 +27,7 @@ const StudentProfilePage = React.lazy(() => import("./pages/StudentProfilePage")
 const queryClient = new QueryClient();
 
 const App = () => (
-  <ThemeProvider defaultTheme="light" storageKey="90jours-theme">
+  <ThemeProvider defaultTheme="light" storageKey="60jours-theme">
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />

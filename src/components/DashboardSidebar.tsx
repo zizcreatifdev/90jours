@@ -320,14 +320,14 @@ const DashboardSidebar = ({ role, mobileOpen, onMobileOpenChange }: DashboardSid
   const links = role === "admin" ? adminLinks : role === "staff" ? staffLinks : studentLinks;
   const [expanded, setExpanded] = useState(false);
   const [focusMode, setFocusMode] = useState(
-    () => localStorage.getItem("90jours-focus-mode") === "true"
+    () => localStorage.getItem("60jours-focus-mode") === "true"
   );
   const { unreadCount } = useUnreadNotifications();
 
   const toggleFocusMode = () => {
     const next = !focusMode;
     setFocusMode(next);
-    localStorage.setItem("90jours-focus-mode", String(next));
+    localStorage.setItem("60jours-focus-mode", String(next));
   };
 
   return (

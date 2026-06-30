@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import logoDark from "@/assets/logo-dark.png";
-import logoWhite from "@/assets/logo-white.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import RequiredLabel from "@/components/ui/required-label";
@@ -56,7 +54,13 @@ const Login = () => {
       <div className="hidden w-1/2 items-center justify-center bg-primary lg:flex">
         <div className="max-w-md px-12 text-center">
           <div className="mx-auto mb-6">
-            <img src={settings.logo_url || logoWhite} alt="60jours" className="h-16 mx-auto" />
+            {settings.logo_url ? (
+              <img src={settings.logo_url} alt="60jours" className="h-16 mx-auto" />
+            ) : (
+              <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-accent">
+                <span className="font-display text-3xl font-bold text-primary">60</span>
+              </div>
+            )}
           </div>
           <h2 className="mb-4 font-display text-3xl font-bold text-primary-foreground">
             60 jours de formation
@@ -74,10 +78,9 @@ const Login = () => {
             {settings.logo_url ? (
               <img src={settings.logo_url} alt="60jours" className="h-10" />
             ) : (
-              <>
-                <img src={logoDark} alt="60jours" className="h-10 dark:hidden" />
-                <img src={logoWhite} alt="60jours" className="h-10 hidden dark:block" />
-              </>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+                <span className="font-display text-sm font-bold text-primary-foreground">60</span>
+              </div>
             )}
           </div>
 
