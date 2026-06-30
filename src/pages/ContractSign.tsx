@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import RequiredLabel from "@/components/ui/required-label";
 import FieldError from "@/components/ui/field-error";
-import { Loader2, ArrowDown, CheckCircle2, FileSignature } from "lucide-react";
+import { Loader2, ArrowDown, CheckCircle2, FileSignature, AlertCircle, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { extractContractBody, renderContractDocument } from "@/lib/contract-style";
 
@@ -41,6 +41,34 @@ interface TemplateRow {
   content: string;
 }
 
+type LoadError = "no-cohort" | "no-template";
+
+// ── Ecran d'erreur generique ──────────────────────────────────────────────────
+
+const ContractErrorScreen = ({
+  title,
+  message,
+  onAction,
+  actionLabel,
+}: {
+  title: string;
+  message: string;
+  onAction: () => void;
+  actionLabel: string;
+}) => (
+  <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="max-w-md w-full text-center rounded-2xl border border-border bg-card p-10 shadow-card">
+      <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+      <h2 className="font-display text-xl font-bold text-foreground mb-2">{title}</h2>
+      <p className="text-muted-foreground mb-6">{message}</p>
+      <Button onClick={onAction} className="gap-2">
+        <ArrowLeft className="h-4 w-4" />
+        {actionLabel}
+      </Button>
+    </div>
+  </div>
+);
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const ContractSign = () => {
@@ -52,6 +80,7 @@ const ContractSign = () => {
   const cohortId = searchParams.get("cohort_id") ?? "";
 
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<LoadError | null>(null);
   const [alreadySigned, setAlreadySigned] = useState(false);
   const [contractHtml, setContractHtml] = useState("");
   const [templateId, setTemplateId] = useState<string | null>(null);
@@ -91,14 +120,18 @@ const ContractSign = () => {
         .maybeSingle();
 
       if (!cohort) {
-        navigate("/student");
+        // Afficher une erreur au lieu de rediriger (redirection cree une boucle via le gate de StudentDashboard)
+        setLoadError("no-cohort");
+        setLoading(false);
         return;
       }
 
       const c = cohort as unknown as CohortRow;
       const formation = c.formations;
 
-      // 3. Fetch active template (formation-specific first, then generic)
+      // 3. Fetch active template : meme logique que StudentDashboard.fetchCohortData
+      // (formation-specifique d'abord, puis generique), avec .limit(1) sur les deux
+      // requetes pour eviter PGRST116 si plusieurs templates actifs existent.
       let template: TemplateRow | null = null;
       if (c.formation_id) {
         const { data } = await supabase
@@ -106,6 +139,8 @@ const ContractSign = () => {
           .select("id, content")
           .eq("is_active", true)
           .eq("formation_id", c.formation_id)
+          .order("created_at", { ascending: false })
+          .limit(1)
           .maybeSingle();
         template = data as TemplateRow | null;
       }
@@ -115,20 +150,20 @@ const ContractSign = () => {
           .select("id, content")
           .eq("is_active", true)
           .is("formation_id", null)
-          .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
         template = data as TemplateRow | null;
       }
 
       if (!template) {
-        // No template available : skip contract step
-        navigate("/student");
+        // Afficher une erreur au lieu de rediriger (evite la boucle /student -> /onboarding)
+        setLoadError("no-template");
+        setLoading(false);
         return;
       }
 
       // 4. Fetch formateur for this formation
-      let formateurName = "L'équipe pédagogique";
+      let formateurName = "L'equipe pedagogique";
       if (c.formation_id) {
         const { data: sf } = await supabase
           .from("staff_formations" as "staff_formations")
@@ -136,12 +171,11 @@ const ContractSign = () => {
           .eq("formation_id", c.formation_id)
           .limit(1)
           .maybeSingle();
-        // Pas de FK staff_formations -> profiles : chargement separe du profil
-        if (sf && (sf as any).staff_id) {
+        if (sf && (sf as unknown as { staff_id: string }).staff_id) {
           const { data: p } = await supabase
             .from("profiles")
             .select("first_name, last_name")
-            .eq("user_id", (sf as any).staff_id)
+            .eq("user_id", (sf as unknown as { staff_id: string }).staff_id)
             .maybeSingle();
           if (p) {
             formateurName = `${p.first_name || ""} ${p.last_name || ""}`.trim() || formateurName;
@@ -168,13 +202,13 @@ const ContractSign = () => {
           ? `${formation.price.toLocaleString("fr-FR")} FCFA`
           : formation?.total_price != null
             ? `${formation.total_price.toLocaleString("fr-FR")} FCFA`
-            : "À définir",
+            : "A definir",
         frais_inscription: formation?.registration_fee != null
           ? `${formation.registration_fee.toLocaleString("fr-FR")} FCFA`
-          : "À définir",
+          : "A definir",
         cout_total: formation?.total_price != null
           ? `${formation.total_price.toLocaleString("fr-FR")} FCFA`
-          : "À définir",
+          : "A definir",
         livrable: formation?.deliverable_label?.trim() || "le livrable final",
         date_signature: now.toLocaleDateString("fr-FR", {
           day: "numeric", month: "long", year: "numeric",
@@ -186,9 +220,6 @@ const ContractSign = () => {
       };
 
       setTemplateId(template.id);
-      // Le contenu stocké ne contient que le corps : on réinjecte le style premium
-      // (CONTRACT_STYLE + enveloppe) puis on remplit les variables. Pour un template
-      // existant (style déja inclus), extractContractBody le retire d'abord : rendu identique.
       const rendered = renderContractDocument(extractContractBody(template.content));
       setContractHtml(fillTemplate(rendered, vars));
       setLoading(false);
@@ -220,7 +251,6 @@ const ContractSign = () => {
 
     setSubmitting(true);
 
-    // Freeze the snapshot with the actual signature name filled in
     const finalHtml = contractHtml
       .replace(/{{signature_name}}/g, sigName.trim())
       .replace(/{{date_signature}}/g, new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }))
@@ -243,16 +273,22 @@ const ContractSign = () => {
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Contrat signé.", description: "Votre inscription est confirmée. Bienvenue !" });
+      toast({ title: "Contrat signe.", description: "Votre inscription est confirmee. Bienvenue !" });
       navigate(`/onboarding?cohort_id=${cohortId}`);
     }
   };
 
-  // ── Redirect if no cohortId ───────────────────────────────────────────────
+  // ── Cohort ID manquant (URL invalide) ─────────────────────────────────────
 
   if (!cohortId) {
-    navigate("/student");
-    return null;
+    return (
+      <ContractErrorScreen
+        title="Lien invalide"
+        message="Ce lien de contrat est invalide. Veuillez acceder au contrat depuis votre espace etudiant."
+        onAction={() => navigate("/student")}
+        actionLabel="Mon espace etudiant"
+      />
+    );
   }
 
   // ── Already signed ────────────────────────────────────────────────────────
@@ -262,11 +298,35 @@ const ContractSign = () => {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center rounded-2xl border border-border bg-card p-10 shadow-card">
           <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
-          <h2 className="font-display text-xl font-bold text-foreground mb-2">Contrat déjà signé</h2>
-          <p className="text-muted-foreground mb-6">Vous avez déjà signé votre contrat pour cette cohorte.</p>
-          <Button onClick={() => navigate("/student")}>Accéder à mon espace</Button>
+          <h2 className="font-display text-xl font-bold text-foreground mb-2">Contrat deja signe</h2>
+          <p className="text-muted-foreground mb-6">Vous avez deja signe votre contrat pour cette cohorte.</p>
+          <Button onClick={() => navigate("/student")}>Acceder a mon espace</Button>
         </div>
       </div>
+    );
+  }
+
+  // ── Erreurs de chargement (sans redirection pour eviter la boucle) ────────
+
+  if (!loading && loadError === "no-cohort") {
+    return (
+      <ContractErrorScreen
+        title="Impossible de charger le contrat"
+        message="Impossible de charger les informations de cette cohorte. Verifiez votre connexion et reessayez."
+        onAction={() => window.location.reload()}
+        actionLabel="Reessayer"
+      />
+    );
+  }
+
+  if (!loading && loadError === "no-template") {
+    return (
+      <ContractErrorScreen
+        title="Aucun contrat disponible"
+        message="Aucun contrat n'est disponible pour cette formation. Contactez l'administration."
+        onAction={() => navigate(`/onboarding?cohort_id=${cohortId}`)}
+        actionLabel="Retour a l'onboarding"
+      />
     );
   }
 
@@ -296,14 +356,14 @@ const ContractSign = () => {
             </div>
             <div>
               <p className="font-display text-sm font-bold text-foreground">Contrat de Formation</p>
-              <p className="text-xs text-muted-foreground">Veuillez lire l'intégralité avant de signer</p>
+              <p className="text-xs text-muted-foreground">Veuillez lire l'integralite avant de signer</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <FileSignature className="h-5 w-5 text-muted-foreground" />
             {!scrolledToBottom && (
               <span className="animate-bounce text-xs text-muted-foreground hidden sm:inline">
-                Scroll jusqu'en bas ↓
+                Scroll jusqu'en bas
               </span>
             )}
           </div>
@@ -314,15 +374,13 @@ const ContractSign = () => {
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Contract document */}
           <div className="lg:col-span-2">
-            {/* Scroll indicator */}
             {!scrolledToBottom && (
               <div className="mb-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-800/40 dark:bg-amber-950/20 dark:text-amber-400">
                 <ArrowDown className="h-4 w-4 shrink-0 animate-bounce" />
-                Faites défiler jusqu'en bas pour activer la signature
+                Faites defiler jusqu'en bas pour activer la signature
               </div>
             )}
 
-            {/* Contract iframe-like container */}
             <div
               ref={scrollRef}
               onScroll={handleScroll}
@@ -352,7 +410,7 @@ const ContractSign = () => {
                 {scrolledToBottom
                   ? <CheckCircle2 className="h-4 w-4 shrink-0" />
                   : <ArrowDown className="h-4 w-4 shrink-0 animate-bounce" />}
-                Lire l'intégralité du contrat
+                Lire l'integralite du contrat
               </div>
 
               {/* Step 2 : Checkbox */}
@@ -369,7 +427,7 @@ const ContractSign = () => {
                     className="mt-0.5 h-4 w-4 rounded accent-accent disabled:opacity-40"
                   />
                   <span className={cn(!scrolledToBottom && "opacity-40")}>
-                    J'ai lu et j'accepte l'intégralité de ce contrat de formation.
+                    J'ai lu et j'accepte l'integralite de ce contrat de formation.
                     <span className="ml-0.5 text-destructive" aria-hidden="true">*</span>
                     <span className="sr-only"> (requis)</span>
                   </span>
@@ -379,19 +437,19 @@ const ContractSign = () => {
               {/* Step 3 : Name */}
               <div className="space-y-2">
                 <RequiredLabel htmlFor="sig-name" required className={cn(!accepted && "opacity-40")}>
-                  Votre nom complet (signature numérique)
+                  Votre nom complet (signature numerique)
                 </RequiredLabel>
                 <Input
                   id="sig-name"
                   value={sigName}
                   onChange={e => setSigName(e.target.value)}
                   disabled={!accepted}
-                  placeholder={fullName || "Prénom Nom"}
+                  placeholder={fullName || "Prenom Nom"}
                   aria-invalid={accepted && sigName.trim() !== "" && sigName.trim().toLowerCase() !== fullName.toLowerCase()}
                   className={cn(!accepted && "opacity-40")}
                 />
                 {accepted && sigName.trim() !== "" && sigName.trim().toLowerCase() !== fullName.toLowerCase() && (
-                  <FieldError message={`Doit correspondre à : ${fullName}`} />
+                  <FieldError message={`Doit correspondre a : ${fullName}`} />
                 )}
                 {accepted && sigName.trim().toLowerCase() === fullName.toLowerCase() && sigName.trim() !== "" && (
                   <p className="text-xs text-green-600 dark:text-green-400">Signature valide</p>
@@ -411,7 +469,7 @@ const ContractSign = () => {
               </Button>
 
               <p className="text-center text-[10px] text-muted-foreground">
-                Signature numérique légalement équivalente à une signature manuscrite. Horodatée et archivée.
+                Signature numerique legalement equivalente a une signature manuscrite. Horodatee et archivee.
               </p>
             </div>
           </div>
