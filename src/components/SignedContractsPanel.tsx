@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Skeleton } from "@/components/ui/skeleton";
 import { exportToCsv } from "@/lib/export-csv";
 import { Eye, Download, FileSignature } from "lucide-react";
+import { sanitizeContractHtml } from "@/lib/sanitize-html";
 import { useCohorts } from "@/hooks/use-cohorts";
 
 interface SignedContract {
@@ -197,7 +198,7 @@ const SignedContractsPanel = () => {
           </DialogHeader>
           <div
             className="rounded-xl border border-border bg-white text-[13px]"
-            dangerouslySetInnerHTML={{ __html: viewSnap || "<p>Snapshot non disponible.</p>" }}
+            dangerouslySetInnerHTML={{ __html: sanitizeContractHtml(viewSnap || "<p>Snapshot non disponible.</p>") }}
           />
         </DialogContent>
       </Dialog>

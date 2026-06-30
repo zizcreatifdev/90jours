@@ -10,6 +10,7 @@ import FieldError from "@/components/ui/field-error";
 import { Loader2, ArrowDown, CheckCircle2, FileSignature, AlertCircle, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { extractContractBody, renderContractDocument } from "@/lib/contract-style";
+import { sanitizeContractHtml } from "@/lib/sanitize-html";
 
 // ── Variable replacement ──────────────────────────────────────────────────────
 
@@ -392,7 +393,7 @@ const ContractSign = () => {
             >
               <div
                 className="text-[13px]"
-                dangerouslySetInnerHTML={{ __html: contractHtml }}
+                dangerouslySetInnerHTML={{ __html: sanitizeContractHtml(contractHtml) }}
               />
             </div>
           </div>

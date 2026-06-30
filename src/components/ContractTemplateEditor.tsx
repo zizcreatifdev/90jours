@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ContractRichEditor from "@/components/ContractRichEditor";
 import { extractContractBody, renderContractDocument } from "@/lib/contract-style";
+import { sanitizeContractHtml } from "@/lib/sanitize-html";
 import { CONTRACT_VARIABLES } from "@/lib/contract-variable";
 import type { Editor } from "@tiptap/react";
 import { Loader2, Plus, Pencil, Trash2, Eye, FileSignature, ToggleLeft, ToggleRight } from "lucide-react";
@@ -318,7 +319,7 @@ const ContractTemplateEditor = () => {
           </DialogHeader>
           <div
             className="rounded-xl border border-border bg-white text-[13px]"
-            dangerouslySetInnerHTML={{ __html: previewHtml || "" }}
+            dangerouslySetInnerHTML={{ __html: sanitizeContractHtml(previewHtml || "") }}
           />
         </DialogContent>
       </Dialog>

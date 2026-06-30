@@ -27,6 +27,7 @@ import BadgeShowcase from "@/components/BadgeShowcase";
 import PaymentSummaryCard from "@/components/PaymentSummaryCard";
 import { useStudentBadges } from "@/hooks/use-student-badges";
 import { useProfileCompleteness } from "@/hooks/use-profile-completeness";
+import { sanitizeContractHtml } from "@/lib/sanitize-html";
 
 interface EnrollmentWithCohort {
   id: string;
@@ -646,7 +647,7 @@ const StudentDashboard = () => {
                   </DialogHeader>
                   <div
                     className="rounded-xl border border-border bg-white text-[13px]"
-                    dangerouslySetInnerHTML={{ __html: contract?.contract_snapshot || "" }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeContractHtml(contract?.contract_snapshot || "") }}
                   />
                 </DialogContent>
               </Dialog>
