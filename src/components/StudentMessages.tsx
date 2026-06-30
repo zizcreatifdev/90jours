@@ -1,13 +1,17 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { MessageSquare, Send, Loader2, User, ChevronDown, ChevronUp } from "lucide-react";
+import { MessageSquare, Send, Loader2, ChevronDown, ChevronUp, Plus, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Message {
   id: string;
@@ -21,12 +25,18 @@ interface Message {
   sender_name?: string;
 }
 
-interface StudentMessagesProps {
-  cohortId: string;
+interface Recipient {
+  id: string;
+  label: string;
 }
 
-const StudentMessages = ({ cohortId }: StudentMessagesProps) => {
-  const { user } = useAuth();
+interface StudentMessagesProps {
+  cohortId: string;
+  formationId?: string | null;
+}
+
+const StudentMessages = ({ cohortId, formationId }: StudentMessagesProps) => {
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
   const [replies, setReplies] = useState<Record<string, Message[]>>({});
@@ -37,10 +47,17 @@ const StudentMessages = ({ cohortId }: StudentMessagesProps) => {
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
   const [profiles, setProfiles] = useState<Record<string, { first_name: string; last_name: string }>>({});
 
+  // New message dialog state
+  const [newMsgOpen, setNewMsgOpen] = useState(false);
+  const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [newMsgRecipientId, setNewMsgRecipientId] = useState("");
+  const [newMsgTitle, setNewMsgTitle] = useState("");
+  const [newMsgContent, setNewMsgContent] = useState("");
+  const [sendingNew, setSendingNew] = useState(false);
+
   const fetchMessages = async () => {
     if (!user) return;
 
-    // Fetch top-level messages (no parent)
     const { data } = await supabase
       .from("messages")
       .select("*")
@@ -52,7 +69,6 @@ const StudentMessages = ({ cohortId }: StudentMessagesProps) => {
     if (data) {
       setMessages(data as Message[]);
 
-      // Fetch replies for all messages
       const msgIds = data.map((m: any) => m.id);
       if (msgIds.length > 0) {
         const { data: replyData } = await supabase
@@ -71,7 +87,6 @@ const StudentMessages = ({ cohortId }: StudentMessagesProps) => {
         }
       }
 
-      // Fetch sender profiles
       const senderIds = [...new Set([...data.map((m: any) => m.sender_id)])];
       if (senderIds.length > 0) {
         const { data: profilesData } = await supabase
@@ -89,11 +104,46 @@ const StudentMessages = ({ cohortId }: StudentMessagesProps) => {
     setLoading(false);
   };
 
+  // Fetch possible recipients: formateur(s) for this formation + admins
+  const fetchRecipients = async () => {
+    const list: Recipient[] = [];
+
+    if (formationId) {
+      const { data: staffRows } = await supabase
+        .from("staff_formations")
+        .select("user_id, profiles:user_id(first_name, last_name)")
+        .eq("formation_id", formationId);
+
+      (staffRows || []).forEach((row: any) => {
+        const p = row.profiles;
+        const label = p ? `${p.first_name || ""} ${p.last_name || ""}`.trim() || "Formateur" : "Formateur";
+        list.push({ id: row.user_id, label });
+      });
+    }
+
+    // Add super admins as fallback "Administration" option
+    const { data: admins } = await supabase
+      .from("profiles")
+      .select("user_id, first_name, last_name")
+      .eq("role", "super_admin");
+
+    (admins || []).forEach((a: any) => {
+      const alreadyAdded = list.some(r => r.id === a.user_id);
+      if (!alreadyAdded) {
+        list.push({ id: a.user_id, label: "Administration" });
+      }
+    });
+
+    setRecipients(list);
+    if (list.length > 0 && !newMsgRecipientId) {
+      setNewMsgRecipientId(list[0].id);
+    }
+  };
+
   useEffect(() => {
     fetchMessages();
   }, [user, cohortId]);
 
-  // Realtime
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -128,6 +178,51 @@ const StudentMessages = ({ cohortId }: StudentMessagesProps) => {
     setSending(false);
   };
 
+  const handleSendNew = async () => {
+    if (!user || !newMsgRecipientId || !newMsgTitle.trim() || !newMsgContent.trim()) return;
+    setSendingNew(true);
+
+    const { error } = await supabase.from("messages").insert({
+      sender_id: user.id,
+      recipient_id: newMsgRecipientId,
+      title: newMsgTitle.trim(),
+      content: newMsgContent.trim(),
+      cohort_id: cohortId,
+      parent_id: null,
+    });
+
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      setSendingNew(false);
+      return;
+    }
+
+    // Notification for the recipient
+    const senderName = profile
+      ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "un etudiant"
+      : "un etudiant";
+    await supabase.from("notifications").insert({
+      user_id: newMsgRecipientId,
+      title: "Nouveau message",
+      message: `Nouveau message de ${senderName} : ${newMsgTitle.trim()}`,
+      type: "message",
+      created_by: user.id,
+      cohort_id: cohortId,
+    });
+
+    toast({ title: "Message envoye", description: "Votre message a ete transmis." });
+    setNewMsgOpen(false);
+    setNewMsgTitle("");
+    setNewMsgContent("");
+    fetchMessages();
+    setSendingNew(false);
+  };
+
+  const openNewMsg = () => {
+    fetchRecipients();
+    setNewMsgOpen(true);
+  };
+
   const toggleReplies = (msgId: string) => {
     setExpandedReplies(prev => {
       const next = new Set(prev);
@@ -148,7 +243,7 @@ const StudentMessages = ({ cohortId }: StudentMessagesProps) => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
-    if (minutes < 1) return "À l'instant";
+    if (minutes < 1) return "A l'instant";
     if (minutes < 60) return `Il y a ${minutes}min`;
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return `Il y a ${hours}h`;
@@ -181,28 +276,101 @@ const StudentMessages = ({ cohortId }: StudentMessagesProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-          <MessageSquare className="h-5 w-5 text-primary-foreground" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+            <MessageSquare className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h2 className="font-display text-lg font-bold text-foreground">Messages</h2>
+            <p className="text-sm text-muted-foreground">Echanges avec vos formateurs</p>
+          </div>
         </div>
-        <div>
-          <h2 className="font-display text-lg font-bold text-foreground">Messages</h2>
-          <p className="text-sm text-muted-foreground">Messages de vos formateurs</p>
-        </div>
+        <Button size="sm" onClick={openNewMsg} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Nouveau message
+        </Button>
       </div>
+
+      {/* New message dialog */}
+      <Dialog open={newMsgOpen} onOpenChange={setNewMsgOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display">Nouveau message</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 mt-2">
+            {recipients.length > 0 ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="nm-recipient">Destinataire</Label>
+                <Select value={newMsgRecipientId} onValueChange={setNewMsgRecipientId}>
+                  <SelectTrigger id="nm-recipient">
+                    <SelectValue placeholder="Choisir un destinataire" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {recipients.map(r => (
+                      <SelectItem key={r.id} value={r.id}>{r.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground rounded-xl bg-secondary px-4 py-3">
+                Aucun formateur associe a cette formation. Le message sera transmis a l'administration.
+              </p>
+            )}
+
+            <div className="space-y-1.5">
+              <Label htmlFor="nm-title">Objet</Label>
+              <Input
+                id="nm-title"
+                placeholder="Objet de votre message"
+                value={newMsgTitle}
+                onChange={e => setNewMsgTitle(e.target.value)}
+                maxLength={120}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="nm-content">Message</Label>
+              <Textarea
+                id="nm-content"
+                placeholder="Ecrivez votre message ici..."
+                value={newMsgContent}
+                onChange={e => setNewMsgContent(e.target.value)}
+                className="min-h-[120px]"
+                rows={5}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="ghost" onClick={() => setNewMsgOpen(false)} disabled={sendingNew}>
+                <X className="h-4 w-4 mr-1" /> Annuler
+              </Button>
+              <Button
+                onClick={handleSendNew}
+                disabled={sendingNew || !newMsgTitle.trim() || !newMsgContent.trim() || !newMsgRecipientId}
+                className="gap-2"
+              >
+                {sendingNew ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                Envoyer
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {messages.length === 0 ? (
         <EmptyState
           icon={MessageSquare}
           title="Aucun message pour l'instant"
-          description="Les messages et annonces de vos formateurs apparaîtront ici."
+          description="Les messages de vos formateurs apparaitront ici. Vous pouvez aussi initier un echange."
         />
       ) : (
         <div className="space-y-4">
           {messages.map(msg => {
             const msgReplies = replies[msg.id] || [];
             const isExpanded = expandedReplies.has(msg.id);
-            const isOwn = msg.sender_id === user?.id;
 
             return (
               <div key={msg.id} className="rounded-2xl border border-border bg-card shadow-card overflow-hidden">
@@ -216,7 +384,9 @@ const StudentMessages = ({ cohortId }: StudentMessagesProps) => {
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-foreground">{getSenderName(msg.sender_id)}</span>
+                        <span className="text-sm font-semibold text-foreground">
+                          {msg.sender_id === user?.id ? "Vous" : getSenderName(msg.sender_id)}
+                        </span>
                         {msg.recipient_id ? (
                           <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent">Personnel</span>
                         ) : (
@@ -240,7 +410,7 @@ const StudentMessages = ({ cohortId }: StudentMessagesProps) => {
                       className="flex w-full items-center gap-1.5 px-5 py-2.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                      {msgReplies.length} réponse{msgReplies.length > 1 ? "s" : ""}
+                      {msgReplies.length} reponse{msgReplies.length > 1 ? "s" : ""}
                     </button>
                   )}
 
@@ -270,7 +440,7 @@ const StudentMessages = ({ cohortId }: StudentMessagesProps) => {
                     <div className="px-5 py-3 border-t border-border/50">
                       <div className="flex gap-2">
                         <Textarea
-                          placeholder="Écrire une réponse..."
+                          placeholder="Ecrire une reponse..."
                           value={replyContent}
                           onChange={e => setReplyContent(e.target.value)}
                           className="min-h-[60px] text-sm bg-background"
@@ -291,7 +461,7 @@ const StudentMessages = ({ cohortId }: StudentMessagesProps) => {
                       onClick={() => { setReplyingTo(msg.id); setExpandedReplies(prev => new Set([...prev, msg.id])); }}
                       className="flex w-full items-center gap-1.5 px-5 py-2.5 text-xs font-medium text-accent hover:text-accent/80 transition-colors border-t border-border/50"
                     >
-                      <MessageSquare className="h-3.5 w-3.5" /> Répondre
+                      <MessageSquare className="h-3.5 w-3.5" /> Repondre
                     </button>
                   )}
                 </div>

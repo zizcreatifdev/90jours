@@ -641,7 +641,7 @@ const StudentDashboard = () => {
           )}
 
           {activeTab === "messages" && (
-            <StudentMessages cohortId={cohort.id} />
+            <StudentMessages cohortId={cohort.id} formationId={cohort.formation_id} />
           )}
 
           {activeTab === "briefs" && (

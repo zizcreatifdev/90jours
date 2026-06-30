@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 30 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: calendrier : evenements personnels etudiant (table personal_events + creation + affichage + suppression)
+**Prompt actuel**: messages : etudiant peut initier un nouveau message vers son formateur
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -22,7 +22,7 @@
 | Pages | 11 |
 | Hooks custom | 10 |
 | Tables Supabase | 34 |
-| Migrations SQL | 45 |
+| Migrations SQL | 46 |
 | Edge Functions | 8 (send-email durci) |
 | CI/CD | GitHub Actions (deploy-functions.yml) |
 | Utilitaires lib | email-suggestion.ts (Levenshtein, 20 domaines) |
