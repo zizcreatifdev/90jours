@@ -37,15 +37,22 @@ const NotificationPanel = () => {
   const getNotificationRoute = (notif: Notification) => {
     const rolePrefix = activeRole === "super_admin" ? "/admin" : activeRole === "staff" ? "/staff" : "/student";
     const typeMap: Record<string, string> = {
-      brief: `${rolePrefix}?tab=briefs`,
-      payment: activeRole === "student" ? "/student?tab=payments" : "/admin?tab=payments",
-      message: activeRole === "student" ? "/student?tab=messages" : `${rolePrefix}?tab=messages`,
-      official: activeRole === "student" ? "/student?tab=messages" : `${rolePrefix}?tab=messages`,
-      celebration: activeRole === "student" ? "/student?tab=messages" : `${rolePrefix}?tab=messages`,
-      urgent: activeRole === "student" ? "/student?tab=messages" : `${rolePrefix}?tab=messages`,
-      task: activeRole === "staff" ? "/staff?tab=tasks" : "/admin?tab=tasks",
-      portfolio: activeRole === "student" ? "/student?tab=portfolio" : `${rolePrefix}?tab=portfolios`,
+      // Content navigation
+      brief:       `${rolePrefix}?tab=briefs`,
+      feedback:    activeRole === "student" ? "/student?tab=briefs" : `${rolePrefix}?tab=briefs`,
+      portfolio:   activeRole === "student" ? "/student?tab=portfolio" : `${rolePrefix}?tab=portfolios`,
       attestation: activeRole === "student" ? "/student?tab=dashboard" : `${rolePrefix}?tab=attestations`,
+      payment:     activeRole === "student" ? "/student?tab=payments" : "/admin?tab=payments",
+      // Messages navigation
+      message:      activeRole === "student" ? "/student?tab=messages" : `${rolePrefix}?tab=messages`,
+      official:     activeRole === "student" ? "/student?tab=messages" : `${rolePrefix}?tab=messages`,
+      celebration:  activeRole === "student" ? "/student?tab=messages" : `${rolePrefix}?tab=messages`,
+      urgent:       activeRole === "student" ? "/student?tab=messages" : `${rolePrefix}?tab=messages`,
+      announcement: activeRole === "student" ? "/student?tab=messages" : activeRole === "staff" ? "/staff?tab=announcements" : `${rolePrefix}?tab=messages`,
+      // Info : task assignment for staff/admin, broadcast message for student
+      info: activeRole === "student" ? "/student?tab=messages" : activeRole === "staff" ? "/staff?tab=tasks" : "/admin?tab=tasks",
+      // Task management
+      task: activeRole === "staff" ? "/staff?tab=tasks" : "/admin?tab=tasks",
     };
     return typeMap[notif.type] || rolePrefix;
   };

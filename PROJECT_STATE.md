@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 30 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: briefs : upload fichier et lien de soumission (etudiant soumet son livrable)
+**Prompt actuel**: notifications : deep-links corriges vers les bons onglets (messages, paiements, briefs)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
