@@ -31,7 +31,19 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [createOpen, setCreateOpen] = useState(false);
   const [createPersonalOpen, setCreatePersonalOpen] = useState(false);
+  const [typeFilter, setTypeFilter] = useState<Set<string>>(
+    () => new Set(Object.keys(EVENT_COLORS))
+  );
   const { user } = useAuth();
+
+  const toggleType = (type: string) => {
+    setTypeFilter((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) next.delete(type);
+      else next.add(type);
+      return next;
+    });
+  };
   const { toast } = useToast();
 
   const { events, loading, formations, refetch } = useCalendarEvents({
@@ -40,24 +52,29 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
     role,
   });
 
+  const filteredEvents = useMemo(
+    () => (role === "student" ? events.filter((e) => typeFilter.has(e.type)) : events),
+    [events, typeFilter, role]
+  );
+
   // Events for selected date
   const selectedEvents = useMemo(() => {
     if (!selectedDate) return [];
-    return events
+    return filteredEvents
       .filter((e) => isSameDay(e.date, selectedDate))
       .sort((a, b) => a.date.getTime() - b.date.getTime());
-  }, [events, selectedDate]);
+  }, [filteredEvents, selectedDate]);
 
   // Dates that have events (for calendar dots)
   const eventDates = useMemo(() => {
     const map = new Map<string, Set<string>>();
-    events.forEach((e) => {
+    filteredEvents.forEach((e) => {
       const key = format(e.date, "yyyy-MM-dd");
       if (!map.has(key)) map.set(key, new Set());
       map.get(key)!.add(e.type);
     });
     return map;
-  }, [events]);
+  }, [filteredEvents]);
 
   return (
     <div className="space-y-6">
@@ -99,6 +116,29 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
         </div>
       </div>
 
+      {role === "student" && (
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(EVENT_COLORS).map(([type, colors]) => {
+            const active = typeFilter.has(type);
+            return (
+              <button
+                key={type}
+                onClick={() => toggleType(type)}
+                aria-pressed={active}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border transition-all ${
+                  active
+                    ? `${colors.bg} ${colors.text} border-transparent`
+                    : "bg-card text-muted-foreground border-border opacity-40"
+                }`}
+              >
+                <div className={`h-2 w-2 rounded-full ${active ? colors.dot : "bg-muted-foreground"}`} />
+                {colors.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
         {/* Calendar */}
         <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
@@ -132,17 +172,19 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
               },
             }}
           />
-          {/* Legend */}
-          <div className="mt-3 flex flex-wrap gap-3 px-2">
-            {Object.entries(EVENT_COLORS)
-              .filter(([key]) => key !== "personal" || role === "student")
-              .map(([key, val]) => (
-                <div key={key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <div className={`h-2 w-2 rounded-full ${val.dot}`} />
-                  {val.label}
-                </div>
-              ))}
-          </div>
+          {/* Legend (hidden for student : chips above serve as legend) */}
+          {role !== "student" && (
+            <div className="mt-3 flex flex-wrap gap-3 px-2">
+              {Object.entries(EVENT_COLORS)
+                .filter(([key]) => key !== "personal")
+                .map(([key, val]) => (
+                  <div key={key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <div className={`h-2 w-2 rounded-full ${val.dot}`} />
+                    {val.label}
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
 
         {/* Events list */}

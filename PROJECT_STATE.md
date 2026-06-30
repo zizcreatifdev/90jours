@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 30 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: contrat : template HTML responsive sur mobile (media queries)
+**Prompt actuel**: calendrier etudiant : filtre par type d'evenement (briefs, masterclass, recherche, personnel)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
