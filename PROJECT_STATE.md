@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 30 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: profil etudiant : indicateur de completude avec suggestions
+**Prompt actuel**: badges : icone portfolio adaptee par formation (ou neutre si non graphisme)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.

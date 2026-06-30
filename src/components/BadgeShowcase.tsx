@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Lock, PenLine, Flame, Palette, GraduationCap, Zap, Award } from "lucide-react";
+import { Lock, PenLine, Flame, FolderCheck, GraduationCap, Zap, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BadgeType, StudentBadge } from "@/hooks/use-student-badges";
 import type { LucideIcon } from "lucide-react";
@@ -29,7 +29,7 @@ const BADGE_DEFS: Record<BadgeType, BadgeDef> = {
       "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-800",
   },
   portfolio_validated: {
-    Icon: Palette,
+    Icon: FolderCheck,
     label: "Portfolio",
     description: "Portfolio approuvé par un formateur",
     earned:
