@@ -29,7 +29,6 @@ interface CohortRow {
   formation_id: string | null;
   formation: {
     name: string;
-    price: number | null;
     registration_fee: number | null;
     total_price: number | null;
     deliverable_label: string | null;
@@ -113,12 +112,15 @@ const ContractSign = () => {
       }
 
       // 2. Fetch cohort + formation
-      const { data: cohort } = await supabase
+      const { data: cohort, error: cohortError } = await supabase
         .from("cohorts")
-        .select("id, name, start_date, end_date, formation_id, formation:formations(name, price, registration_fee, total_price, deliverable_label)")
+        .select("id, name, start_date, end_date, formation_id, formation:formations(name, registration_fee, total_price, deliverable_label)")
         .eq("id", cohortId)
         .maybeSingle();
 
+      if (cohortError) {
+        console.error("[ContractSign] cohort query error:", cohortError.code, cohortError.message);
+      }
       if (!cohort) {
         // Afficher une erreur au lieu de rediriger (redirection cree une boucle via le gate de StudentDashboard)
         setLoadError("no-cohort");
@@ -134,7 +136,7 @@ const ContractSign = () => {
       // requetes pour eviter PGRST116 si plusieurs templates actifs existent.
       let template: TemplateRow | null = null;
       if (c.formation_id) {
-        const { data } = await supabase
+        const { data, error: tplErr1 } = await supabase
           .from("contract_templates")
           .select("id, content")
           .eq("is_active", true)
@@ -142,16 +144,18 @@ const ContractSign = () => {
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
+        if (tplErr1) console.error("[ContractSign] template (formation) error:", tplErr1.code, tplErr1.message);
         template = data as TemplateRow | null;
       }
       if (!template) {
-        const { data } = await supabase
+        const { data, error: tplErr2 } = await supabase
           .from("contract_templates")
           .select("id, content")
           .eq("is_active", true)
           .is("formation_id", null)
           .limit(1)
           .maybeSingle();
+        if (tplErr2) console.error("[ContractSign] template (generic) error:", tplErr2.code, tplErr2.message);
         template = data as TemplateRow | null;
       }
 
@@ -165,18 +169,20 @@ const ContractSign = () => {
       // 4. Fetch formateur for this formation
       let formateurName = "L'equipe pedagogique";
       if (c.formation_id) {
-        const { data: sf } = await supabase
-          .from("staff_formations" as "staff_formations")
-          .select("staff_id")
+        const { data: sf, error: sfError } = await supabase
+          .from("staff_formations" as any)
+          .select("user_id")
           .eq("formation_id", c.formation_id)
           .limit(1)
           .maybeSingle();
-        if (sf && (sf as unknown as { staff_id: string }).staff_id) {
-          const { data: p } = await supabase
+        if (sfError) console.error("[ContractSign] staff_formations error:", sfError.code, sfError.message);
+        if (sf && (sf as unknown as { user_id: string }).user_id) {
+          const { data: p, error: profileError } = await supabase
             .from("profiles")
             .select("first_name, last_name")
-            .eq("user_id", (sf as unknown as { staff_id: string }).staff_id)
+            .eq("user_id", (sf as unknown as { user_id: string }).user_id)
             .maybeSingle();
+          if (profileError) console.error("[ContractSign] profiles error:", profileError.code, profileError.message);
           if (p) {
             formateurName = `${p.first_name || ""} ${p.last_name || ""}`.trim() || formateurName;
           }
@@ -198,11 +204,9 @@ const ContractSign = () => {
         date_fin: new Date(c.end_date).toLocaleDateString("fr-FR", {
           day: "numeric", month: "long", year: "numeric",
         }),
-        montant: formation?.price != null
-          ? `${formation.price.toLocaleString("fr-FR")} FCFA`
-          : formation?.total_price != null
-            ? `${formation.total_price.toLocaleString("fr-FR")} FCFA`
-            : "A definir",
+        montant: formation?.total_price != null
+          ? `${formation.total_price.toLocaleString("fr-FR")} FCFA`
+          : "A definir",
         frais_inscription: formation?.registration_fee != null
           ? `${formation.registration_fee.toLocaleString("fr-FR")} FCFA`
           : "A definir",
