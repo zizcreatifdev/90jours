@@ -170,7 +170,7 @@ const ContractSign = () => {
       let formateurName = "L'equipe pedagogique";
       if (c.formation_id) {
         const { data: sf, error: sfError } = await supabase
-          .from("staff_formations" as any)
+          .from("staff_formations")
           .select("user_id")
           .eq("formation_id", c.formation_id)
           .limit(1)

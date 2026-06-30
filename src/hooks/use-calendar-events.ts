@@ -137,7 +137,7 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
 
       // Fetch personal events (student only, RLS garantit que seul le proprietaire les voit)
       if (role === "student" && user) {
-        const { data: personalEvts } = await (supabase as any)
+        const { data: personalEvts } = await supabase
           .from("personal_events")
           .select("id, title, description, event_date, event_time, user_id")
           .eq("user_id", user.id);

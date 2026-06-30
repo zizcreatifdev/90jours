@@ -38,7 +38,7 @@ const Register = () => {
   useEffect(() => {
     if (!user) return;
     const fetchStaffFormations = async () => {
-      const { data } = await supabase.from("staff_formations" as any).select("formation_id").eq("user_id", user.id);
+      const { data } = await supabase.from("staff_formations").select("formation_id").eq("user_id", user.id);
       if (data) setStaffFormationIds((data as any[]).map(d => d.formation_id));
     };
     fetchStaffFormations();

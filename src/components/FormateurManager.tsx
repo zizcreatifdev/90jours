@@ -53,14 +53,14 @@ const FormateurManager = () => {
     const { data: staffRoles } = await supabase
       .from("user_roles")
       .select("user_id")
-      .eq("role", "staff" as any);
+      .eq("role", "staff");
 
     const staffUserIds = staffRoles?.map((r: any) => r.user_id) || [];
 
     if (staffUserIds.length > 0) {
       // Fetch staff_formations
       const { data: staffFormations } = await supabase
-        .from("staff_formations" as any)
+        .from("staff_formations")
         .select("id, user_id, formation_id, formations(id, name)")
         .in("user_id", staffUserIds);
 
@@ -146,13 +146,13 @@ const FormateurManager = () => {
   };
 
   const handleRemoveAssignment = async (staffFormationId: string, formateurName: string, formationName: string) => {
-    const { error } = await supabase.from("staff_formations" as any).delete().eq("id", staffFormationId);
+    const { error } = await supabase.from("staff_formations").delete().eq("id", staffFormationId);
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Affectation supprimée" });
       if (user) {
-        await supabase.from("audit_logs" as any).insert({
+        await supabase.from("audit_logs").insert({
           performed_by: user.id,
           action: "staff_formation_removed",
           details: { formateur: formateurName, formation: formationName },
@@ -164,19 +164,19 @@ const FormateurManager = () => {
 
   const handleRemoveFormateur = async (userId: string, formateurName: string) => {
     // Delete all staff_formations for this user
-    const { error: sfError } = await supabase.from("staff_formations" as any).delete().eq("user_id", userId);
+    const { error: sfError } = await supabase.from("staff_formations").delete().eq("user_id", userId);
     if (sfError) {
       toast({ title: "Erreur", description: sfError.message, variant: "destructive" });
       return;
     }
     // Delete the staff role row (keep student role)
-    const { error: roleError } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", "staff" as any);
+    const { error: roleError } = await supabase.from("user_roles").delete().eq("user_id", userId).eq("role", "staff");
     if (roleError) {
       toast({ title: "Erreur", description: roleError.message, variant: "destructive" });
       return;
     }
     if (user) {
-      await supabase.from("audit_logs" as any).insert({
+      await supabase.from("audit_logs").insert({
         performed_by: user.id,
         action: "staff_role_removed",
         target_user_id: userId,

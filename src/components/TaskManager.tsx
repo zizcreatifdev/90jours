@@ -83,7 +83,7 @@ const TaskManager = () => {
     const { data: staffRoles } = await supabase
       .from("user_roles")
       .select("user_id")
-      .eq("role", "staff" as any);
+      .eq("role", "staff");
     const staffIds = staffRoles?.map((r: any) => r.user_id) || [];
 
     if (staffIds.length > 0) {
@@ -100,7 +100,7 @@ const TaskManager = () => {
 
     // Fetch tasks
     const { data: tasksData } = await supabase
-      .from("staff_tasks" as any)
+      .from("staff_tasks")
       .select("*")
       .order("created_at", { ascending: false });
 
@@ -110,7 +110,7 @@ const TaskManager = () => {
       let commentCounts: Record<string, number> = {};
       if (taskIds.length > 0) {
         const { data: commentsData } = await supabase
-          .from("staff_task_comments" as any)
+          .from("staff_task_comments")
           .select("task_id")
           .in("task_id", taskIds);
         if (commentsData) {
@@ -192,7 +192,7 @@ const TaskManager = () => {
     if (form.cohort_id) body.cohort_id = form.cohort_id;
     if (form.deadline) body.deadline = new Date(form.deadline).toISOString();
 
-    const { error } = await supabase.from("staff_tasks" as any).insert(body);
+    const { error } = await supabase.from("staff_tasks").insert(body);
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
@@ -216,7 +216,7 @@ const TaskManager = () => {
   };
 
   const handleDelete = async (taskId: string) => {
-    const { error } = await supabase.from("staff_tasks" as any).delete().eq("id", taskId);
+    const { error } = await supabase.from("staff_tasks").delete().eq("id", taskId);
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
     else { toast({ title: "Tâche supprimée" }); fetchData({ silent: true }); setDetailTask(null); }
   };
@@ -226,7 +226,7 @@ const TaskManager = () => {
   const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
     const previous = tasks;
     setTasks((ts) => ts.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)));
-    const { error } = await supabase.from("staff_tasks" as any).update({ status: newStatus }).eq("id", taskId);
+    const { error } = await supabase.from("staff_tasks").update({ status: newStatus }).eq("id", taskId);
     if (error) {
       setTasks(previous);
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
@@ -241,7 +241,7 @@ const TaskManager = () => {
     setDetailTask(task);
     setCommentLoading(true);
     const { data } = await supabase
-      .from("staff_task_comments" as any)
+      .from("staff_task_comments")
       .select("*")
       .eq("task_id", task.id)
       .order("created_at", { ascending: true });
@@ -262,7 +262,7 @@ const TaskManager = () => {
 
   const handleAddComment = async () => {
     if (!newComment.trim() || !detailTask || !user) return;
-    const { error } = await supabase.from("staff_task_comments" as any).insert({
+    const { error } = await supabase.from("staff_task_comments").insert({
       task_id: detailTask.id,
       author_id: user.id,
       content: newComment.trim(),

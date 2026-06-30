@@ -210,8 +210,7 @@ const Index = () => {
 
   // Load visible testimonials
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (supabase as any)
+    supabase
       .from("testimonials")
       .select("id, name, role, content, photo_url")
       .eq("is_visible", true)

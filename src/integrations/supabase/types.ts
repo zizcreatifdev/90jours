@@ -192,6 +192,8 @@ export type Database = {
           id: string
           is_late: boolean
           status: string
+          submission_file_url: string | null
+          submission_url: string | null
           user_id: string
         }
         Insert: {
@@ -202,6 +204,8 @@ export type Database = {
           id?: string
           is_late?: boolean
           status?: string
+          submission_file_url?: string | null
+          submission_url?: string | null
           user_id: string
         }
         Update: {
@@ -212,6 +216,8 @@ export type Database = {
           id?: string
           is_late?: boolean
           status?: string
+          submission_file_url?: string | null
+          submission_url?: string | null
           user_id?: string
         }
         Relationships: [
@@ -324,6 +330,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "cohorts_formation_id_fkey"
+            columns: ["formation_id"]
+            isOneToOne: false
+            referencedRelation: "formations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_templates: {
+        Row: {
+          content: string
+          created_at: string
+          description: string | null
+          formation_id: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          description?: string | null
+          formation_id?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          description?: string | null
+          formation_id?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_templates_formation_id_fkey"
             columns: ["formation_id"]
             isOneToOne: false
             referencedRelation: "formations"
@@ -692,6 +739,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      personal_events: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          event_date: string
+          event_time: string | null
+          id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          event_date: string
+          event_time?: string | null
+          id?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          event_date?: string
+          event_time?: string | null
+          id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       portfolios: {
         Row: {
@@ -1205,6 +1285,90 @@ export type Database = {
           },
         ]
       }
+      student_contracts: {
+        Row: {
+          cohort_id: string
+          contract_snapshot: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          signature_name: string | null
+          signed_at: string | null
+          template_id: string | null
+          user_id: string
+        }
+        Insert: {
+          cohort_id: string
+          contract_snapshot?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          signature_name?: string | null
+          signed_at?: string | null
+          template_id?: string | null
+          user_id: string
+        }
+        Update: {
+          cohort_id?: string
+          contract_snapshot?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          signature_name?: string | null
+          signed_at?: string | null
+          template_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_contracts_cohort_id_fkey"
+            columns: ["cohort_id"]
+            isOneToOne: false
+            referencedRelation: "cohorts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_contracts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "contract_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      testimonials: {
+        Row: {
+          content: string
+          created_at: string
+          display_order: number
+          id: string
+          is_visible: boolean
+          name: string
+          photo_url: string | null
+          role: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_visible?: boolean
+          name: string
+          photo_url?: string | null
+          role: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_visible?: boolean
+          name?: string
+          photo_url?: string | null
+          role?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -1222,6 +1386,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      waitlist: {
+        Row: {
+          consent_marketing: boolean
+          created_at: string
+          email: string
+          formation_id: string | null
+          formation_other: string | null
+          full_name: string
+          id: string
+          message: string | null
+          phone: string
+          status: string
+        }
+        Insert: {
+          consent_marketing?: boolean
+          created_at?: string
+          email: string
+          formation_id?: string | null
+          formation_other?: string | null
+          full_name: string
+          id?: string
+          message?: string | null
+          phone: string
+          status?: string
+        }
+        Update: {
+          consent_marketing?: boolean
+          created_at?: string
+          email?: string
+          formation_id?: string | null
+          formation_other?: string | null
+          full_name?: string
+          id?: string
+          message?: string | null
+          phone?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_formation_id_fkey"
+            columns: ["formation_id"]
+            isOneToOne: false
+            referencedRelation: "formations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

@@ -72,7 +72,7 @@ const StaffDashboard = () => {
     const fetchAssignments = async () => {
       if (!user) return;
       const { data } = await supabase
-        .from("staff_formations" as any)
+        .from("staff_formations")
         .select("formation_id")
         .eq("user_id", user.id);
       if (data) {

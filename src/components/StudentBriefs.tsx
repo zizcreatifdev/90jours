@@ -189,7 +189,7 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
     if (deliverUrl.trim()) updatePayload.submission_url = deliverUrl.trim();
     if (fileUrl) updatePayload.submission_file_url = fileUrl;
 
-    const { error } = await (supabase.from("brief_submissions") as any).update(updatePayload).eq("id", submission.id);
+    const { error } = await supabase.from("brief_submissions").update(updatePayload as any).eq("id", submission.id);
     setDelivering(false);
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });

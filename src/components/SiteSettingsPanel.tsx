@@ -47,7 +47,7 @@ const SiteSettingsPanel = ({ settings, onUpdated }: SiteSettingsPanelProps) => {
 
   const updateField = async (fields: Record<string, any>) => {
     const { error } = await supabase
-      .from("site_settings" as any)
+      .from("site_settings")
       .update({ ...fields, updated_at: new Date().toISOString() } as any)
       .eq("id", "default");
     if (error) throw error;

@@ -225,7 +225,7 @@ const EventCard = ({ event, role, onDeleted }: { event: CalendarEvent; role: str
     let error: { message: string } | null = null;
 
     if (isPersonal) {
-      const res = await (supabase as any).from("personal_events").delete().eq("id", event.id);
+      const res = await supabase.from("personal_events").delete().eq("id", event.id);
       error = res.error;
     } else {
       const table = event.type === "masterclass" ? "masterclass_sessions" : "research_sessions";
@@ -311,7 +311,7 @@ const CreatePersonalEventDialog = ({ open, onOpenChange, onCreated }: CreatePers
     if (!user || !title.trim() || !date) return;
     setSaving(true);
 
-    const { error } = await (supabase as any).from("personal_events").insert({
+    const { error } = await supabase.from("personal_events").insert({
       user_id: user.id,
       title: title.trim(),
       description: description.trim() || null,

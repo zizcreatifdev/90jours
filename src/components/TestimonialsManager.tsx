@@ -60,14 +60,9 @@ const TestimonialsManager = () => {
     },
   );
 
-  // supabase typed as any throughout this component because "testimonials"
-  // is a new table not yet in the auto-generated types file.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabase as any;
-
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await db
+    const { data, error } = await supabase
       .from("testimonials")
       .select("*")
       .order("display_order", { ascending: true });
@@ -126,11 +121,11 @@ const TestimonialsManager = () => {
     };
     let err: { message: string } | null = null;
     if (editing) {
-      const { error } = await db.from("testimonials").update(payload).eq("id", editing.id);
+      const { error } = await supabase.from("testimonials").update(payload).eq("id", editing.id);
       err = error;
     } else {
       const maxOrder = items.length > 0 ? Math.max(...items.map((t) => t.display_order)) + 1 : 0;
-      const { error } = await db.from("testimonials").insert({ ...payload, display_order: maxOrder });
+      const { error } = await supabase.from("testimonials").insert({ ...payload, display_order: maxOrder });
       err = error;
     }
     if (err) {
@@ -159,7 +154,7 @@ const TestimonialsManager = () => {
   const handleDelete = async (id: string) => {
     if (!confirm("Supprimer ce témoignage ?")) return;
     setDeletingId(id);
-    const { error } = await db.from("testimonials").delete().eq("id", id);
+    const { error } = await supabase.from("testimonials").delete().eq("id", id);
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
     else setItems((prev) => prev.filter((t) => t.id !== id));
     setDeletingId(null);
@@ -188,7 +183,7 @@ const TestimonialsManager = () => {
     // Persist new order
     await Promise.all(
       updated.map((t) =>
-        db.from("testimonials").update({ display_order: t.display_order }).eq("id", t.id)
+        supabase.from("testimonials").update({ display_order: t.display_order }).eq("id", t.id)
       )
     );
     toast({ title: "Ordre mis à jour" });

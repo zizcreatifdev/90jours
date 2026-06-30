@@ -33,12 +33,12 @@ export const useSiteSettings = () => {
   const fetchSettings = async () => {
     try {
       const { data } = await supabase
-        .from("site_settings" as any)
+        .from("site_settings")
         .select("hero_image_url, hero_title, hero_subtitle, logo_url, footer_email, footer_phone, footer_text, wave_payment_url")
         .eq("id", "default")
         .single();
       if (data) {
-        const merged = { ...defaults, ...(data as any) } as SiteSettings;
+        const merged = { ...defaults, ...data } as SiteSettings;
         // Repli sur le lien historique si la colonne est vide ou absente.
         if (!merged.wave_payment_url) merged.wave_payment_url = WAVE_PAYMENT_URL_FALLBACK;
         setSettings(merged);

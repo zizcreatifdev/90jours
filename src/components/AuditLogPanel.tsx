@@ -39,7 +39,7 @@ const AuditLogPanel = () => {
       const to = from + PAGE_SIZE - 1;
 
       const { data, count } = await supabase
-        .from("audit_logs" as any)
+        .from("audit_logs")
         .select("*", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(from, to);
