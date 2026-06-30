@@ -151,13 +151,13 @@ const TEMPLATES: Record<string, (vars: Record<string, string>, appUrl: string) =
       </p>
       <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
         Nous sommes ravis de vous compter parmi nous. Votre inscription a
-        <strong style="color:${NAVY};">${formation}</strong> est bien enregistree.
+        <strong style="color:${NAVY};">${formation}</strong> est bien enregistrée.
       </p>
       <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
-        Prochaine etape : finaliser votre paiement depuis votre espace etudiant pour
+        Prochaine étape : finaliser votre paiement depuis votre espace étudiant pour
         confirmer votre place.
       </p>
-      ${ctaButton("Acceder a mon espace de paiement", link)}
+      ${ctaButton("Accéder à mon espace de paiement", link)}
       <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:${MUTED};">
         Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br />
         <a href="${esc(link)}" target="_blank" style="color:${GOLD};text-decoration:underline;">${esc(link)}</a>
@@ -215,10 +215,10 @@ Deno.serve(async (req) => {
     const { data: { user: authUser } } = await supabaseClient.auth.getUser();
 
     if (!authUser?.email) {
-      return json({ ok: false, error: "Non autorise." }, 401, corsHeaders);
+      return json({ ok: false, error: "Non autorisé." }, 401, corsHeaders);
     }
     if (recipientEmail.toLowerCase() !== authUser.email.toLowerCase()) {
-      return json({ ok: false, error: "Destinataire non autorise." }, 403, corsHeaders);
+      return json({ ok: false, error: "Destinataire non autorisé." }, 403, corsHeaders);
     }
     // ── Fin verification ───────────────────────────────────────────────────────
 
