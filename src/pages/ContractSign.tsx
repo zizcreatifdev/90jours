@@ -256,6 +256,16 @@ const ContractSign = () => {
 
     setSubmitting(true);
 
+    // Capture IP non bloquant : echec silencieux si indisponible
+    let ipAddress: string | null = null;
+    try {
+      const res = await fetch("https://api.ipify.org?format=json");
+      const json = await res.json();
+      ipAddress = typeof json.ip === "string" ? json.ip : null;
+    } catch {
+      // Non bloquant : la signature reussit meme sans IP
+    }
+
     const finalHtml = contractHtml
       .replace(/{{signature_name}}/g, sigName.trim())
       .replace(/{{date_signature}}/g, new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }))
@@ -269,7 +279,7 @@ const ContractSign = () => {
         template_id: templateId,
         signed_at: new Date().toISOString(),
         signature_name: sigName.trim(),
-        ip_address: null,
+        ip_address: ipAddress,
         contract_snapshot: finalHtml,
       }, { onConflict: "user_id,cohort_id" });
 
