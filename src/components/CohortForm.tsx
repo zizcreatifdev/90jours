@@ -154,8 +154,9 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
               <FieldError message={showError("start_date")} />
             </div>
             <div>
-              <Label htmlFor="end">Date fin (auto)</Label>
-              <Input id="end" type="date" value={form.end_date} readOnly className="bg-muted cursor-not-allowed" />
+              <Label htmlFor="end">Date fin</Label>
+              <Input id="end" type="date" value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} />
+              <p className="mt-1 text-xs text-muted-foreground">Calculee automatiquement, modifiable si besoin.</p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -182,7 +183,11 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
             <Select value={form.cohort_type} onValueChange={v => { setForm({ ...form, cohort_type: v }); handleBlur("cohort_type"); }}>
               <SelectTrigger aria-invalid={!!showError("cohort_type")}><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="standard">Standard (60 jours)</SelectItem>
+                <SelectItem value="standard">
+                  {form.formation_id && formations.find(f => f.id === form.formation_id)
+                    ? `Standard (${formations.find(f => f.id === form.formation_id)!.duration_days} jours)`
+                    : "Standard"}
+                </SelectItem>
                 <SelectItem value="initiation">Initiation</SelectItem>
               </SelectContent>
             </Select>

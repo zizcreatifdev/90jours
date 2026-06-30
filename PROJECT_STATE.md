@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 30 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: portfolio : label contextuel par formation (deliverable_label) + champ description
+**Prompt actuel**: cohort form : date fin modifiable + type de cohorte avec vraie duree
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
