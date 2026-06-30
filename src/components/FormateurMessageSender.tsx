@@ -18,7 +18,9 @@ import { Send, Loader2, MessageSquare, Globe } from "lucide-react";
 const FormateurMessageSender = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { cohorts } = useCohorts();
+  const { cohorts: allCohorts } = useCohorts();
+  const [assignedFormationIds, setAssignedFormationIds] = useState<string[]>([]);
+  const [loadingFormations, setLoadingFormations] = useState(true);
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [title, setTitle] = useState("");
@@ -34,6 +36,19 @@ const FormateurMessageSender = () => {
       content: { required: "Le message est requis." },
     },
   );
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("staff_formations").select("formation_id").eq("user_id", user.id)
+      .then(({ data }) => {
+        if (data) setAssignedFormationIds(data.map((d: any) => d.formation_id));
+        setLoadingFormations(false);
+      });
+  }, [user]);
+
+  const cohorts = loadingFormations ? [] : assignedFormationIds.length > 0
+    ? allCohorts.filter(c => c.formation_id && assignedFormationIds.includes(c.formation_id))
+    : [];
 
   // Fetch students when cohort changes
   useEffect(() => {

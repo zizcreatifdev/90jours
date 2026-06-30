@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCohorts } from "@/hooks/use-cohorts";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,6 +31,7 @@ const PortfolioManager = ({ filterCohortIds }: PortfolioManagerProps = {}) => {
   const { cohorts: allCohorts } = useCohorts();
   const cohorts = filterCohortIds ? allCohorts.filter(c => filterCohortIds.includes(c.id)) : allCohorts;
   const { toast } = useToast();
+  const { user } = useAuth();
   const [selectedCohort, setSelectedCohort] = useState("");
   const [portfolios, setPortfolios] = useState<(Portfolio & { profile?: any })[]>([]);
   const [loading, setLoading] = useState(false);
@@ -37,6 +39,12 @@ const PortfolioManager = ({ filterCohortIds }: PortfolioManagerProps = {}) => {
   const [currentPortfolio, setCurrentPortfolio] = useState<Portfolio | null>(null);
   const [adminNotes, setAdminNotes] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (filterCohortIds && filterCohortIds.length === 1 && !selectedCohort) {
+      setSelectedCohort(filterCohortIds[0]);
+    }
+  }, [filterCohortIds, selectedCohort]);
 
   useEffect(() => {
     if (!selectedCohort) return;
@@ -73,6 +81,18 @@ const PortfolioManager = ({ filterCohortIds }: PortfolioManagerProps = {}) => {
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
+      await supabase.from("notifications").insert({
+        user_id: currentPortfolio.user_id,
+        cohort_id: currentPortfolio.cohort_id,
+        type: "portfolio",
+        title: status === "validated" ? "Portfolio validé" : "Portfolio rejeté",
+        message: adminNotes
+          ? adminNotes.substring(0, 200)
+          : status === "validated"
+            ? "Votre portfolio a été validé."
+            : "Votre portfolio a été rejeté.",
+        created_by: user?.id ?? null,
+      });
       toast({ title: status === "validated" ? "Portfolio validé" : "Portfolio rejeté" });
       setReviewOpen(false);
       setPortfolios(prev => prev.map(p => p.id === currentPortfolio.id ? { ...p, status, admin_notes: adminNotes, validated_at: status === "validated" ? new Date().toISOString() : null } : p));

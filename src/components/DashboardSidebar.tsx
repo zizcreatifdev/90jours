@@ -30,6 +30,7 @@ import {
   ChevronDown,
   FileSignature,
   MessageSquareQuote,
+  MessageSquare,
   ListPlus,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -82,9 +83,11 @@ const adminLinks: SidebarLink[] = [
 const staffLinks: SidebarLink[] = [
   { href: "/staff", label: "Mes cohortes", icon: LayoutDashboard },
   { href: "/staff?tab=calendar", label: "Calendrier", icon: CalendarDays },
+  { href: "/staff?tab=messages", label: "Messages", icon: MessageSquare },
   { href: "/staff?tab=tasks", label: "Mes tâches", icon: ClipboardList },
   { href: "/staff?tab=briefs", label: "Briefs", icon: BookOpen },
   { href: "/staff?tab=portfolios", label: "Portfolios", icon: Briefcase },
+  { href: "/staff?tab=attestations", label: "Attestations", icon: Award },
   { href: "/staff?tab=announcements", label: "Annonces", icon: Megaphone },
   { href: "/staff?tab=resources", label: "Ressources", icon: Upload },
 ];

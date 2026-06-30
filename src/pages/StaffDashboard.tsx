@@ -86,7 +86,7 @@ const StaffDashboard = () => {
   // Filter cohorts based on assigned formations
   const cohorts = assignedFormationIds.length > 0
     ? allCohorts.filter(c => c.formation_id && assignedFormationIds.includes(c.formation_id))
-    : allCohorts;
+    : [];
 
   // Set first cohort as default
   useEffect(() => {

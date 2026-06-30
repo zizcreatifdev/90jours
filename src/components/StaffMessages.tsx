@@ -94,7 +94,7 @@ const StaffMessages = () => {
     if (!user) return;
     const channel = supabase
       .channel("staff-messages-" + user.id)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `recipient_id=eq.${user.id}` }, () => {
         fetchMessages();
       })
       .subscribe();
