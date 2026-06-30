@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 30 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: dashboard etudiant : carte resume paiement (montant restant, prochaine echeance, indicateur vert/ambre/rouge)
+**Prompt actuel**: calendrier : evenements personnels etudiant (table personal_events + creation + affichage + suppression)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -21,8 +21,8 @@
 | Composants React | 103 |
 | Pages | 11 |
 | Hooks custom | 10 |
-| Tables Supabase | 33 |
-| Migrations SQL | 44 |
+| Tables Supabase | 34 |
+| Migrations SQL | 45 |
 | Edge Functions | 8 (send-email durci) |
 | CI/CD | GitHub Actions (deploy-functions.yml) |
 | Utilitaires lib | email-suggestion.ts (Levenshtein, 20 domaines) |
