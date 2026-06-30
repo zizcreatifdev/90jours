@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, FileText, Megaphone, Send, Loader2, Search, Download, Users, CreditCard, ClipboardList, Award, ChevronDown, Menu, Play, ExternalLink, FileSignature, AlertCircle, RefreshCw } from "lucide-react";
+import { BookOpen, Calendar, FileText, Megaphone, Send, Loader2, Search, Download, Users, CreditCard, ClipboardList, Award, ChevronDown, Menu, Play, ExternalLink, FileSignature, AlertCircle, RefreshCw, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import DashboardSidebar from "@/components/DashboardSidebar";
@@ -26,6 +26,7 @@ import ActivityHeatmap from "@/components/ActivityHeatmap";
 import BadgeShowcase from "@/components/BadgeShowcase";
 import PaymentSummaryCard from "@/components/PaymentSummaryCard";
 import { useStudentBadges } from "@/hooks/use-student-badges";
+import { useProfileCompleteness } from "@/hooks/use-profile-completeness";
 
 interface EnrollmentWithCohort {
   id: string;
@@ -63,6 +64,7 @@ const StudentDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const activeTab = searchParams.get("tab") || "dashboard";
   const { user, profile } = useAuth();
+  const { percent: profilePercent, loading: profileLoading } = useProfileCompleteness();
   const [allEnrollments, setAllEnrollments] = useState<EnrollmentWithCohort[]>([]);
   const [selectedEnrollmentId, setSelectedEnrollmentId] = useState<string>("");
   const [resources, setResources] = useState<any[]>([]);
@@ -384,6 +386,15 @@ const StudentDashboard = () => {
             </div>
             <div className="flex items-center gap-2 md:gap-3">
               <StudentProfile />
+              {!profileLoading && profilePercent < 100 && (
+                <Link
+                  to="/profile"
+                  className="hidden sm:flex items-center gap-1 rounded-full border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-950/40 transition-colors whitespace-nowrap"
+                >
+                  <User className="h-3 w-3" />
+                  Profil {profilePercent}%
+                </Link>
+              )}
               <Link to="/profile">
                 <Avatar className="h-9 w-9 md:h-10 md:w-10 cursor-pointer hover:ring-2 hover:ring-accent/50 transition-all">
                   <AvatarImage src={profile?.avatar_url || undefined} alt="Profil" className="object-cover" />

@@ -9,8 +9,9 @@ import RequiredLabel from "@/components/ui/required-label";
 import FieldError from "@/components/ui/field-error";
 import { useFormValidation } from "@/hooks/use-form-validation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2, Camera, Save, ArrowLeft, LogOut, Menu } from "lucide-react";
+import { Loader2, Camera, Save, ArrowLeft, LogOut, Menu, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Progress } from "@/components/ui/progress";
 
 const ProfilePage = () => {
   const { user, profile, roles, refreshProfile, signOut } = useAuth();
@@ -170,6 +171,17 @@ const ProfilePage = () => {
   const role = roles.includes("super_admin") ? "admin" : roles.includes("staff") ? "staff" : "student";
   const dashboardPath = role === "admin" ? "/admin" : role === "staff" ? "/staff" : "/student";
 
+  const completenessFields = [
+    { key: "first_name", filled: !!firstName.trim(), suggestion: "Renseignez votre prénom" },
+    { key: "last_name",  filled: !!lastName.trim(),  suggestion: "Renseignez votre nom" },
+    { key: "phone",      filled: !!phone.trim(),      suggestion: "Renseignez votre numéro de téléphone" },
+    { key: "avatar_url", filled: !!avatarUrl,         suggestion: "Ajoutez une photo de profil" },
+  ];
+  const completenessPercent = Math.round(
+    completenessFields.filter(f => f.filled).length / completenessFields.length * 100
+  );
+  const completenessMissing = completenessFields.filter(f => !f.filled);
+
   if (loading) {
     return (
       <div className="flex min-h-screen bg-background">
@@ -229,6 +241,29 @@ const ProfilePage = () => {
             </div>
             <p className="mt-3 text-sm text-muted-foreground">Cliquez pour changer la photo</p>
           </div>
+
+          {/* Completeness indicator */}
+          {completenessPercent < 100 && (
+            <div className="mb-6 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/20 p-4">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                  Profil complété à {completenessPercent}%
+                </span>
+                <span className="text-xs text-amber-600 dark:text-amber-500">
+                  {completenessFields.filter(f => f.filled).length}/{completenessFields.length} champs
+                </span>
+              </div>
+              <Progress value={completenessPercent} className="h-1.5 mb-3" />
+              <ul className="space-y-1.5">
+                {completenessMissing.map(f => (
+                  <li key={f.key} className="flex items-center gap-1.5 text-xs text-amber-700 dark:text-amber-400">
+                    <ChevronRight className="h-3 w-3 shrink-0" />
+                    {f.suggestion}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSave} className="space-y-5">
