@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AttestationPreview } from "@/components/AttestationTemplateEditor";
 import { fetchStudentDiscount } from "@/lib/student-discount";
 import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 
 interface StudentAttestationProps {
   cohortId: string;
@@ -90,13 +91,35 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
         useCORS: true,
         backgroundColor: "#ffffff",
       });
-      const link = document.createElement("a");
-      link.download = `attestation-${cohort?.name || "formation"}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-      toast({ title: "Attestation téléchargée." });
+      const imgData = canvas.toDataURL("image/png");
+
+      // A4 paysage (297 x 210 mm) - ratio 1.414 identique au preview attestation
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const pdfW = pdf.internal.pageSize.getWidth();
+      const pdfH = pdf.internal.pageSize.getHeight();
+
+      // Centrage avec conservation du ratio au cas ou le preview deborderait
+      const canvasRatio = canvas.width / canvas.height;
+      const pageRatio = pdfW / pdfH;
+      let imgX = 0, imgY = 0, imgW = pdfW, imgH = pdfH;
+      if (canvasRatio > pageRatio) {
+        imgH = pdfW / canvasRatio;
+        imgY = (pdfH - imgH) / 2;
+      } else {
+        imgW = pdfH * canvasRatio;
+        imgX = (pdfW - imgW) / 2;
+      }
+
+      pdf.addImage(imgData, "PNG", imgX, imgY, imgW, imgH);
+
+      const firstName = (profile?.first_name || "").replace(/[^a-zA-Z0-9]/g, "_");
+      const lastName = (profile?.last_name || "").replace(/[^a-zA-Z0-9]/g, "_");
+      const formName = (formation?.name || "Formation").replace(/[^a-zA-Z0-9]/g, "_");
+      pdf.save(`Attestation_${firstName}_${lastName}_${formName}.pdf`);
+
+      toast({ title: "Attestation telechargee." });
     } catch {
-      toast({ title: "Erreur lors du téléchargement", variant: "destructive" });
+      toast({ title: "Erreur lors du telechargement", variant: "destructive" });
     }
     setDownloading(false);
   };

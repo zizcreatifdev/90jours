@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import html2canvas from "html2canvas";
 import JSZip from "jszip";
+import { jsPDF } from "jspdf";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -425,9 +426,11 @@ const AttestationIssuer = () => {
         };
 
         const dataUrl = await renderAttestationToDataUrl(template, vars);
-        const base64 = dataUrl.split(",")[1];
+        // Template 842x595px = A4 paysage exact (297x210mm)
+        const pdfDoc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+        pdfDoc.addImage(dataUrl, "PNG", 0, 0, 297, 210);
         const safeName = `${s.first_name}_${s.last_name}`.replace(/[^a-zA-Z0-9]/g, "_");
-        zip.file(`${safeName}_attestation.png`, base64, { base64: true });
+        zip.file(`${safeName}_attestation.pdf`, pdfDoc.output("blob"));
       } catch (err: unknown) {
         console.error(
           `Erreur attestation ${s.first_name} ${s.last_name}:`,
