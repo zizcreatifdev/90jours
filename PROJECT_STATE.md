@@ -1,8 +1,8 @@
 # PROJECT_STATE.md — État du Projet
 
-**Dernière mise à jour**: 26 juin 2026
+**Dernière mise à jour**: 30 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: fix : boucle contrat corrigee (requete template alignee + etats erreur au lieu de redirect)
+**Prompt actuel**: dashboard etudiant : carte resume paiement (montant restant, prochaine echeance, indicateur vert/ambre/rouge)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -18,7 +18,7 @@
 
 | Métrique | Valeur |
 |---------|--------|
-| Composants React | 102 |
+| Composants React | 103 |
 | Pages | 11 |
 | Hooks custom | 10 |
 | Tables Supabase | 33 |

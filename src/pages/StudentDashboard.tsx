@@ -24,6 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import ActivityHeatmap from "@/components/ActivityHeatmap";
 import BadgeShowcase from "@/components/BadgeShowcase";
+import PaymentSummaryCard from "@/components/PaymentSummaryCard";
 import { useStudentBadges } from "@/hooks/use-student-badges";
 
 interface EnrollmentWithCohort {
@@ -422,12 +423,19 @@ const StudentDashboard = () => {
           {activeTab === "dashboard" && (
             <>
               {/* Stats row */}
-              <div className="mb-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard icon={BookOpen} label="Progression globale" value={`${progress}%`} variant="accent" />
                 <StatsCard icon={FileText} label="Ressources disponibles" value={resources.length} />
                 <StatsCard icon={Calendar} label="Jours restants" value={daysLeft} subtitle={`sur ${daysTotal} jours`} />
                 <StatsCard icon={Users} label="Participants" value={enrollmentCount} subtitle={`sur ${cohort.capacity} places`} />
               </div>
+
+              {/* Payment summary card */}
+              <PaymentSummaryCard
+                cohortId={cohort.id}
+                cohortStartDate={cohort.start_date}
+                formationId={cohort.formation_id}
+              />
 
               {/* Cohort info card */}
               <div className="mb-8 rounded-2xl bg-primary p-6 text-primary-foreground">
