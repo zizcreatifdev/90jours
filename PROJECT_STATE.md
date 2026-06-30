@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 30 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: attestation : telechargement PDF au lieu de PNG (format professionnel)
+**Prompt actuel**: briefs : upload fichier et lien de soumission (etudiant soumet son livrable)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -22,7 +22,7 @@
 | Pages | 11 |
 | Hooks custom | 10 |
 | Tables Supabase | 34 |
-| Migrations SQL | 47 |
+| Migrations SQL | 48 |
 | Edge Functions | 8 (send-email durci) |
 | CI/CD | GitHub Actions (deploy-functions.yml) |
 | Utilitaires lib | email-suggestion.ts (Levenshtein, 20 domaines) |
@@ -108,7 +108,7 @@
 | Feature | Status | % |
 |---------|--------|---|
 | Profil étudiant | ✅ Complet | 100% |
-| Briefs & soumissions | ✅ Complet | 100% |
+| Briefs & soumissions (+ upload fichier/lien) | ✅ Complet | 100% |
 | Portfolio | ✅ Complet | 100% |
 | Attestations | ✅ Complet | 100% |
 | Statut paiement | ✅ Complet | 100% |

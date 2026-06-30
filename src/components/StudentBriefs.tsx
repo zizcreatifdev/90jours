@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { ClipboardList, CheckCircle2, Clock, AlertTriangle, Loader2, Tag, Send } from "lucide-react";
+import { ClipboardList, CheckCircle2, Clock, AlertTriangle, Loader2, Tag, Send, Link, Paperclip } from "lucide-react";
 import EmptyState from "@/components/ui/EmptyState";
 
 interface Brief {
@@ -28,6 +31,8 @@ interface Submission {
   completed_at: string;
   status: string;
   feedback?: string | null;
+  submission_url?: string | null;
+  submission_file_url?: string | null;
 }
 
 interface StudentBriefsProps {
@@ -82,6 +87,12 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [deliverOpen, setDeliverOpen] = useState(false);
+  const [deliverTarget, setDeliverTarget] = useState<{ brief: Brief; submission: Submission } | null>(null);
+  const [deliverUrl, setDeliverUrl] = useState("");
+  const [deliverFile, setDeliverFile] = useState<File | null>(null);
+  const [delivering, setDelivering] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   // QW-07 : descriptions expandables
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
 
@@ -142,17 +153,50 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
     }
   };
 
-  // Mark as "Livré"
-  const handleDeliver = async (brief: Brief, submission: Submission) => {
-    if (!user) return;
-    setSubmitting(brief.id);
+  const handleOpenDeliver = (brief: Brief, submission: Submission) => {
+    setDeliverTarget({ brief, submission });
+    setDeliverUrl("");
+    setDeliverFile(null);
+    setDeliverOpen(true);
+  };
 
-    const { error } = await supabase.from("brief_submissions").update({ status: "delivered" }).eq("id", submission.id);
-    setSubmitting(null);
+  const handleDeliverSubmit = async () => {
+    if (!user || !deliverTarget) return;
+    const { brief, submission } = deliverTarget;
+    setDelivering(true);
+
+    let fileUrl: string | null = null;
+    if (deliverFile) {
+      if (deliverFile.size > 10 * 1024 * 1024) {
+        toast({ title: "Fichier trop volumineux", description: "Maximum 10 Mo.", variant: "destructive" });
+        setDelivering(false);
+        return;
+      }
+      const filePath = `${user.id}/${submission.id}/${deliverFile.name}`;
+      const { error: uploadErr } = await supabase.storage
+        .from("brief-submissions")
+        .upload(filePath, deliverFile, { upsert: true });
+      if (uploadErr) {
+        toast({ title: "Erreur lors de l'upload", description: uploadErr.message, variant: "destructive" });
+        setDelivering(false);
+        return;
+      }
+      const { data: urlData } = supabase.storage.from("brief-submissions").getPublicUrl(filePath);
+      fileUrl = urlData.publicUrl;
+    }
+
+    const updatePayload: Record<string, unknown> = { status: "delivered" };
+    if (deliverUrl.trim()) updatePayload.submission_url = deliverUrl.trim();
+    if (fileUrl) updatePayload.submission_file_url = fileUrl;
+
+    const { error } = await (supabase.from("brief_submissions") as any).update(updatePayload).eq("id", submission.id);
+    setDelivering(false);
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
       toast({ title: submission.is_late ? `Brief livré avec ${submission.delay_days} jour(s) de retard` : "Brief livré avec succès." });
+      setDeliverOpen(false);
+      setDeliverTarget(null);
 
       if (submission.is_late) {
         const { data: admins } = await supabase.from("user_roles").select("user_id").eq("role", "super_admin");
@@ -327,6 +371,22 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
                       )}
                     </div>
 
+                    {/* Liens de livraison */}
+                    {isDelivered && (sub?.submission_url || sub?.submission_file_url) && (
+                      <div className="ml-6 mt-1 flex items-center gap-3">
+                        {sub.submission_url && (
+                          <a href={sub.submission_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-accent hover:underline">
+                            <Link className="h-3 w-3" /> Livrable
+                          </a>
+                        )}
+                        {sub.submission_file_url && (
+                          <a href={sub.submission_file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-accent hover:underline">
+                            <Paperclip className="h-3 w-3" /> Fichier joint
+                          </a>
+                        )}
+                      </div>
+                    )}
+
                     {/* Feedback formateur */}
                     {sub?.feedback && (
                       <div className="ml-6 mt-2 rounded-lg border border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20 px-3 py-2">
@@ -351,10 +411,10 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
                     {isCompleted && sub && (
                       <Button
                         size="sm"
-                        onClick={() => handleDeliver(brief, sub)}
+                        onClick={() => handleOpenDeliver(brief, sub)}
                         disabled={submitting === brief.id}
                       >
-                        {submitting === brief.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="mr-1 h-3.5 w-3.5" /> Livrer</>}
+                        <Send className="mr-1 h-3.5 w-3.5" /> Livrer
                       </Button>
                     )}
                     {isDelivered && (
@@ -369,6 +429,47 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
           })}
         </div>
       )}
+
+      {/* Delivery dialog */}
+      <Dialog open={deliverOpen} onOpenChange={open => { setDeliverOpen(open); if (!open) { setDeliverUrl(""); setDeliverFile(null); } }}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display">Livrer le brief</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div>
+              <Label htmlFor="deliver-url">Lien vers le livrable (Figma, GitHub, Notion...)</Label>
+              <Input
+                id="deliver-url"
+                value={deliverUrl}
+                onChange={e => setDeliverUrl(e.target.value)}
+                placeholder="https://..."
+                type="url"
+              />
+            </div>
+            <div>
+              <Label htmlFor="deliver-file">Ou joindre un fichier (PDF, image, ZIP - max 10 Mo)</Label>
+              <Input
+                id="deliver-file"
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.gif,.zip,.sketch,.xd,.ai"
+                onChange={e => setDeliverFile(e.target.files?.[0] ?? null)}
+                className="cursor-pointer"
+              />
+              {deliverFile && (
+                <p className="mt-1 text-xs text-muted-foreground flex items-center gap-1">
+                  <Paperclip className="h-3 w-3" /> {deliverFile.name}
+                </p>
+              )}
+            </div>
+            <Button onClick={handleDeliverSubmit} disabled={delivering} className="w-full">
+              {delivering ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+              Livrer
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

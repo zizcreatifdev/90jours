@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Progress } from "@/components/ui/progress";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Trash2, ClipboardList, CheckCircle2, Clock, AlertTriangle, Tag, MessageSquare, ChevronDown, ChevronUp, Save } from "lucide-react";
+import { Plus, Loader2, Trash2, ClipboardList, CheckCircle2, Clock, AlertTriangle, Tag, MessageSquare, ChevronDown, ChevronUp, Save, ExternalLink, Paperclip } from "lucide-react";
 
 interface BriefCategory {
   id: string;
@@ -45,6 +45,8 @@ interface BriefSubmission {
   delay_days: number;
   status?: string;
   feedback?: string | null;
+  submission_url?: string | null;
+  submission_file_url?: string | null;
 }
 
 interface BriefManagerProps {
@@ -407,6 +409,20 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
                                         </span>
                                       )}
                                     </div>
+                                    {sub && (sub.submission_url || sub.submission_file_url) && (
+                                      <div className="flex items-center gap-3 mb-2">
+                                        {sub.submission_url && (
+                                          <a href={sub.submission_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-accent hover:underline">
+                                            <ExternalLink className="h-3 w-3" /> Livrable
+                                          </a>
+                                        )}
+                                        {sub.submission_file_url && (
+                                          <a href={sub.submission_file_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-accent hover:underline">
+                                            <Paperclip className="h-3 w-3" /> Fichier
+                                          </a>
+                                        )}
+                                      </div>
+                                    )}
                                     {sub && (
                                       <div className="flex gap-2">
                                         <Textarea
