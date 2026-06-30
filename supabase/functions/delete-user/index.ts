@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Vous ne pouvez pas supprimer votre propre compte" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Get target user info for audit log
+    // Get target user info for audit log (before deletion)
     const { data: targetProfile } = await supabaseAdmin
       .from("profiles")
       .select("first_name, last_name")
@@ -72,19 +72,41 @@ Deno.serve(async (req) => {
       .select("role")
       .eq("user_id", user_id);
 
-    // Delete related data first
+    // Step 1 : child tables (attestation_actions before attestations)
+    await supabaseAdmin.from("attestation_actions").delete().eq("user_id", user_id);
+    await supabaseAdmin.from("attestations").delete().eq("user_id", user_id);
+
+    // Staff tasks : comments first, then tasks
+    await supabaseAdmin.from("staff_task_comments").delete().eq("author_id", user_id);
+    await supabaseAdmin.from("staff_tasks").delete().eq("assigned_to", user_id);
+
+    // Step 2 : independent data tables
+    await supabaseAdmin.from("brief_submissions").delete().eq("user_id", user_id);
+    await supabaseAdmin.from("portfolios").delete().eq("user_id", user_id);
+    await supabaseAdmin.from("payments").delete().eq("user_id", user_id);
+    await supabaseAdmin.from("push_subscriptions").delete().eq("user_id", user_id);
+    await supabaseAdmin.from("promo_code_usage").delete().eq("user_id", user_id);
+    await supabaseAdmin.from("seen_announcements").delete().eq("user_id", user_id);
+    await supabaseAdmin.from("messages").delete().eq("sender_id", user_id);
+    await supabaseAdmin.from("staff_payments").delete().eq("staff_user_id", user_id);
+
+    // Step 3 : nullify FK references that are not CASCADE (resources.uploaded_by, announcements.author_id)
+    await supabaseAdmin.from("resources").update({ uploaded_by: null }).eq("uploaded_by", user_id);
+    await supabaseAdmin.from("announcements").update({ author_id: null }).eq("author_id", user_id);
+
+    // Step 4 : profile-level data (already handled previously, preserved order)
     await supabaseAdmin.from("staff_formations").delete().eq("user_id", user_id);
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", user_id);
     await supabaseAdmin.from("notifications").delete().eq("user_id", user_id);
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", user_id);
     await supabaseAdmin.from("profiles").delete().eq("user_id", user_id);
 
-    // Delete auth user
+    // Step 5 : delete auth user (CASCADE handles enrollments, student_badges, student_contracts, personal_events)
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
     if (deleteError) {
       return new Response(JSON.stringify({ error: deleteError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Audit log
+    // Step 6 : audit log (target_user_id is now gone from auth, but UUID is still valid as a record)
     await supabaseAdmin.from("audit_logs").insert({
       performed_by: caller.id,
       action: "user_deleted",

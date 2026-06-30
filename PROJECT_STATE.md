@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 30 juin 2026
 **Branche active**: `main`
-**Prompt actuel**: types : tables manquantes ajoutees, casts as any supprimes
+**Prompt actuel**: delete-user : purge complete de toutes les tables liees avant suppression du compte
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -284,6 +284,8 @@
 | TEST-02 | 🔴 Critique | ProtectedRoute.tsx | Zéro test sur protection des routes | ✅ Corrigé (prompt-04) — 8 tests |
 | FEAT-01 | 🔴 Critique | Login.tsx | Reset de mot de passe absent | ✅ Corrigé (prompt-03) |
 | SEC-05 | 🟠 Important | Register/ResetPassword/SetupAccount | Aucun indicateur de force de mot de passe, minLength=6 | ✅ Corrigé (prompt-12) |
+| SEC-06 | 🟠 Important | delete-user Edge Function | Suppression partielle : enrollments, payments, brief_submissions, push_subscriptions etc. non purgés avant suppression auth | ✅ Corrigé (prompt-30) |
+| SEC-07 | 🟠 Important | ContractSign, StudentDashboard, ContractTemplateEditor, SignedContractsPanel | XSS via dangerouslySetInnerHTML sans sanitisation | ✅ Corrigé (prompt-29) |
 
 ---
 
