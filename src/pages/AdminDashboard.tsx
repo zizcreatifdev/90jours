@@ -712,9 +712,6 @@ const AdminDashboard = () => {
                               {cohort.formation ? (
                                 <div className="flex flex-col gap-0.5">
                                   <span className="text-sm font-medium text-foreground">{cohort.formation.name}</span>
-                                  <span className={`text-xs ${cohort.formation.level === "avance" ? "text-primary" : "text-accent"}`}>
-                                    {cohort.formation.level === "avance" ? "Avancé" : "Débutant"}
-                                  </span>
                                 </div>
                               ) : (
                                 <span className="text-xs text-muted-foreground">-</span>

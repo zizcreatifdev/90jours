@@ -7,7 +7,6 @@ import FieldError from "@/components/ui/field-error";
 import { useFormValidation } from "@/hooks/use-form-validation";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -26,13 +25,7 @@ interface Formation {
   attestation_logo_url: string | null;
   attestation_color: string | null;
   is_active: boolean;
-  level: string;
   created_at: string;
-  registration_fee: number;
-  total_price: number;
-  tranche_1_amount: number;
-  tranche_2_amount: number;
-  duration_days: number;
 }
 
 const emptyForm = {
@@ -45,10 +38,6 @@ const emptyForm = {
   attestation_body: "",
   attestation_color: "#1a1a2e",
   is_active: true,
-  level: "debutant",
-  registration_fee: 10000,
-  total_price: 50000,
-  duration_days: 60,
 };
 
 const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved: () => void }) => {
@@ -67,10 +56,6 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
           attestation_body: formation.attestation_body || "",
           attestation_color: formation.attestation_color || "#1a1a2e",
           is_active: formation.is_active,
-          level: formation.level || "debutant",
-          registration_fee: formation.registration_fee ?? 10000,
-          total_price: formation.total_price ?? 50000,
-          duration_days: formation.duration_days ?? 60,
         }
       : { ...emptyForm }
   );
@@ -79,32 +64,14 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
     {
       name: form.name,
       slug: form.slug,
-      level: form.level,
-      duration_days: form.duration_days,
-      registration_fee: form.registration_fee,
-      total_price: form.total_price,
       deliverable_label: form.deliverable_label,
     },
     {
       name: { required: "Le nom de la formation est requis." },
       slug: { required: "Le slug est requis." },
-      level: { required: "Le niveau est requis." },
-      duration_days: { required: true, validate: (v) => Number(v) > 0 ? null : "La durée doit être supérieure à 0." },
-      registration_fee: { required: "Les frais d'inscription sont requis." },
-      total_price: {
-        required: "Le coût total est requis.",
-        validate: (_v, all) =>
-          Number(all.total_price) > Number(all.registration_fee)
-            ? null
-            : "Le coût total doit être supérieur aux frais d'inscription.",
-      },
       deliverable_label: { required: "Le nom du livrable est requis." },
     },
   );
-
-  const coutFormation = Number(form.total_price) - Number(form.registration_fee);
-  const tranche1Preview = Math.floor(coutFormation / 2);
-  const tranche2Preview = coutFormation - tranche1Preview;
 
   useEffect(() => {
     if (open) reset();
@@ -118,29 +85,24 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
     if (!validateAll()) return;
     setSaving(true);
     try {
-      const cout = Number(form.total_price) - Number(form.registration_fee);
-      const t1 = Math.floor(cout / 2);
-      const t2 = cout - t1;
       const payload = {
         ...form,
         slug: form.slug || generateSlug(form.name),
-        tranche_1_amount: t1,
-        tranche_2_amount: t2,
       };
       if (formation) {
         const { error } = await supabase.from("formations").update(payload).eq("id", formation.id);
         if (error) throw error;
-        toast({ title: "Formation modifiée" });
+        toast({ title: "Formation modifiee" });
       } else {
         const { error } = await supabase.from("formations").insert(payload);
         if (error) throw error;
-        toast({ title: "Formation créée" });
+        toast({ title: "Formation creee" });
       }
       setOpen(false);
       onSaved();
       if (!formation) setForm({ ...emptyForm });
-    } catch (err: any) {
-      toast({ title: "Erreur", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      toast({ title: "Erreur", description: (err as Error).message, variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -161,7 +123,7 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-display">{formation ? "Modifier la formation" : "Créer une formation"}</DialogTitle>
+          <DialogTitle className="font-display">{formation ? "Modifier la formation" : "Creer une formation"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div>
@@ -176,45 +138,7 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
           </div>
           <div>
             <Label htmlFor="fdesc">Description</Label>
-            <Textarea id="fdesc" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Décrivez cette formation..." rows={2} />
-          </div>
-          <div>
-            <RequiredLabel required>Niveau</RequiredLabel>
-            <Select value={form.level} onValueChange={v => { setForm({ ...form, level: v }); handleBlur("level"); }}>
-              <SelectTrigger aria-invalid={!!showError("level")}><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="debutant">Débutant</SelectItem>
-                <SelectItem value="avance">Avancé</SelectItem>
-              </SelectContent>
-            </Select>
-            <FieldError message={showError("level")} />
-          </div>
-          <div>
-            <RequiredLabel htmlFor="fduration" required>Durée (en jours)</RequiredLabel>
-            <Input id="fduration" type="number" min={1} value={form.duration_days} onChange={e => setForm({ ...form, duration_days: parseInt(e.target.value) || 60 })} onBlur={() => handleBlur("duration_days")} aria-invalid={!!showError("duration_days")} placeholder="60" />
-            <FieldError message={showError("duration_days")} />
-          </div>
-
-          <div className="border-t border-border pt-4">
-            <h4 className="font-display text-sm font-semibold mb-3">Tarification</h4>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <RequiredLabel htmlFor="regfee" required>Frais d'inscription (FCFA)</RequiredLabel>
-                <Input id="regfee" type="number" min={0} value={form.registration_fee} onChange={e => setForm({ ...form, registration_fee: parseInt(e.target.value) || 0 })} onBlur={() => handleBlur("registration_fee")} aria-invalid={!!showError("registration_fee")} />
-                <FieldError message={showError("registration_fee")} />
-              </div>
-              <div>
-                <RequiredLabel htmlFor="tprice" required>Coût total TTC (FCFA)</RequiredLabel>
-                <Input id="tprice" type="number" min={0} value={form.total_price} onChange={e => setForm({ ...form, total_price: parseInt(e.target.value) || 0 })} onBlur={() => handleBlur("total_price")} aria-invalid={!!showError("total_price")} />
-                <FieldError message={showError("total_price")} />
-              </div>
-            </div>
-            {coutFormation > 0 && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                Cout de formation : {coutFormation.toLocaleString("fr-FR")} FCFA, payable en deux tranches de{" "}
-                {tranche1Preview.toLocaleString("fr-FR")} et {tranche2Preview.toLocaleString("fr-FR")} FCFA.
-              </p>
-            )}
+            <Textarea id="fdesc" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Decrivez cette formation..." rows={2} />
           </div>
 
           <div className="border-t border-border pt-4">
@@ -225,7 +149,7 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
               <FieldError message={showError("deliverable_label")} />
             </div>
             <div className="mt-2">
-              <Label htmlFor="ddesc">Instructions pour l'étudiant</Label>
+              <Label htmlFor="ddesc">Instructions pour l'etudiant</Label>
               <Textarea id="ddesc" value={form.deliverable_description} onChange={e => setForm({ ...form, deliverable_description: e.target.value })} placeholder="Soumettez le lien de votre..." rows={2} />
             </div>
           </div>
@@ -238,7 +162,7 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
             </div>
             <div className="mt-2">
               <Label htmlFor="abody">Corps de l'attestation</Label>
-              <Textarea id="abody" value={form.attestation_body} onChange={e => setForm({ ...form, attestation_body: e.target.value })} placeholder="Utilisez {student_name} pour le nom de l'étudiant" rows={3} />
+              <Textarea id="abody" value={form.attestation_body} onChange={e => setForm({ ...form, attestation_body: e.target.value })} placeholder="Utilisez {student_name} pour le nom de l'etudiant" rows={3} />
             </div>
             <div className="mt-2">
               <Label htmlFor="acolor">Couleur principale</Label>
@@ -256,7 +180,7 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
 
           <Button type="submit" disabled={saving || !isValid} className="w-full">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {formation ? "Enregistrer" : "Créer"}
+            {formation ? "Enregistrer" : "Creer"}
           </Button>
         </form>
       </DialogContent>
@@ -271,11 +195,14 @@ const FormationManager = () => {
 
   const fetchFormations = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from("formations").select("*").order("created_at", { ascending: true });
+    const { data, error } = await supabase
+      .from("formations")
+      .select("id, name, slug, description, deliverable_label, deliverable_description, attestation_title, attestation_body, attestation_logo_url, attestation_color, is_active, created_at")
+      .order("created_at", { ascending: true });
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
-      setFormations(data || []);
+      setFormations((data || []) as Formation[]);
     }
     setLoading(false);
   };
@@ -287,7 +214,7 @@ const FormationManager = () => {
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Formation supprimée" });
+      toast({ title: "Formation supprimee" });
       fetchFormations();
     }
   };
@@ -314,7 +241,7 @@ const FormationManager = () => {
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: f.attestation_color || "#1a1a2e" }}>
-                    <span className="font-display text-xs font-bold text-white">{f.duration_days}</span>
+                    <BookOpen className="h-5 w-5 text-white" />
                   </div>
                   <div>
                     <h3 className="font-display font-semibold text-foreground">{f.name}</h3>
@@ -330,7 +257,7 @@ const FormationManager = () => {
                       </button>
                     }
                     title="Supprimer cette formation ?"
-                    description={`La formation "${f.name}" sera supprimée. Les cohortes liées ne seront pas supprimées.`}
+                    description={`La formation "${f.name}" sera supprimee. Les cohortes liées ne seront pas supprimees.`}
                     confirmLabel="Supprimer"
                     onConfirm={() => handleDelete(f.id)}
                   />
@@ -339,16 +266,7 @@ const FormationManager = () => {
               {f.description && <p className="mt-2 text-sm text-muted-foreground">{f.description}</p>}
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {f.duration_days} jours
-                </span>
-                <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {f.total_price.toLocaleString("fr-FR")} FCFA (inscr. {f.registration_fee.toLocaleString("fr-FR")})
-                </span>
-                <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
                   Livrable : {f.deliverable_label}
-                </span>
-                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${f.level === "avance" ? "bg-primary/10 text-primary" : "bg-accent/10 text-accent"}`}>
-                  {f.level === "avance" ? "Avancé" : "Débutant"}
                 </span>
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold ${f.is_active ? "bg-accent/10 text-accent" : "bg-muted text-muted-foreground"}`}>
                   {f.is_active ? "Active" : "Inactive"}

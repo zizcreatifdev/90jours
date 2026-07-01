@@ -50,7 +50,6 @@ interface EnrollmentWithCohort {
   };
   formation_name?: string;
   formation_color?: string;
-  formation_duration_days?: number;
 }
 
 const COHORT_STATUS_PRIORITY: Record<string, number> = { active: 0, upcoming: 1, completed: 2, archived: 3 };
@@ -101,17 +100,16 @@ const StudentDashboard = () => {
 
         // Fetch formation names for each cohort
         const formationIds = [...new Set(enrollments.map((e: any) => e.cohorts?.formation_id).filter(Boolean))];
-        let formationMap = new Map<string, { name: string; color: string | null; duration_days: number }>();
+        let formationMap = new Map<string, { name: string; color: string | null }>();
         if (formationIds.length > 0) {
-          const { data: formations } = await supabase.from("formations").select("id, name, attestation_color, duration_days").in("id", formationIds);
-          if (formations) formationMap = new Map(formations.map(f => [f.id, { name: f.name, color: f.attestation_color, duration_days: f.duration_days }]));
+          const { data: formations } = await supabase.from("formations").select("id, name, attestation_color").in("id", formationIds);
+          if (formations) formationMap = new Map(formations.map(f => [f.id, { name: f.name, color: f.attestation_color }]));
         }
 
         const enriched = enrollments.map((e: any) => ({
           ...e,
           formation_name: e.cohorts?.formation_id ? formationMap.get(e.cohorts.formation_id)?.name : undefined,
           formation_color: e.cohorts?.formation_id ? formationMap.get(e.cohorts.formation_id)?.color : undefined,
-          formation_duration_days: e.cohorts?.formation_id ? formationMap.get(e.cohorts.formation_id)?.duration_days : undefined,
         })) as EnrollmentWithCohort[];
 
         // Sort: active first, then upcoming, then completed
@@ -406,7 +404,7 @@ const StudentDashboard = () => {
   const progress = publishedBriefCount > 0 ? Math.round((deliveredCount / publishedBriefCount) * 100) : 0;
   const startDate = new Date(cohort.start_date + "T00:00:00");
   const endDate = new Date(cohort.end_date + "T00:00:00");
-  const daysTotal = enrollment.formation_duration_days || Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+  const daysTotal = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
   const now = new Date();
   const daysPassed = Math.max(0, Math.min(daysTotal, Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))));
   const daysLeft = Math.max(0, daysTotal - daysPassed);

@@ -324,8 +324,8 @@ const StudentFormations = () => {
                           {fmtPrice((cohort.total_price ?? cohort.formation!.total_price) as number)}
                         </span>
                       )}
-                      {cohort.formation?.duration_days != null && (
-                        <span>{cohort.formation.duration_days} jours de formation</span>
+                      {cohort.start_date && cohort.end_date && (
+                        <span>{Math.round((new Date(cohort.end_date + "T00:00:00").getTime() - new Date(cohort.start_date + "T00:00:00").getTime()) / 86400000)} jours de formation</span>
                       )}
                     </div>
                   </div>

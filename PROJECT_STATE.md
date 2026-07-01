@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 1er juillet 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: prix : migration des tarifs de la formation vers la cohorte (avec pre-remplissage et fallback)
+**Prompt actuel**: formations : formulaire simplifie (prix/duree/niveau geres par la cohorte)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
