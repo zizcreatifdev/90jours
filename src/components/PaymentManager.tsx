@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { sendPushToUsers } from "@/hooks/use-push-notifications";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useCohorts } from "@/hooks/use-cohorts";
 import { useSiteSettings, WAVE_PAYMENT_URL_FALLBACK } from "@/hooks/use-site-settings";
@@ -58,6 +59,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; cl
 };
 
 const PaymentManager = () => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const { cohorts } = useCohorts();
   const { settings } = useSiteSettings();
@@ -246,13 +248,20 @@ const PaymentManager = () => {
     } else {
       toast({ title: newStatus === "paid" ? "Marqué comme payé" : "Marqué en attente" });
 
-      // Send push notification when payment is validated
       if (newStatus === "paid" && payment) {
         sendPushToUsers(
           [payment.user_id],
           "Paiement validé",
           `Votre paiement de ${payment.amount.toLocaleString("fr-FR")} FCFA a été validé.`
         );
+        if (user) {
+          await supabase.from("audit_logs").insert({
+            performed_by: user.id,
+            action: "payment_validated",
+            target_user_id: payment.user_id,
+            details: { payment_id: paymentId, amount: payment.amount, payment_type: payment.payment_type, cohort_id: payment.cohort_id },
+          });
+        }
       }
 
       fetchPayments();

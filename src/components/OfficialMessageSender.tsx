@@ -81,6 +81,11 @@ const OfficialMessageSender = () => {
       sendPushToUsers(studentIds, title, message);
 
       toast({ title: `Message envoyé à ${studentIds.length} étudiant(s).` });
+      await supabase.from("audit_logs").insert({
+        performed_by: user.id,
+        action: "official_message_sent",
+        details: { title, type, cohort_id: cohortId === "all" ? null : cohortId, recipient_count: studentIds.length },
+      });
       setTitle("");
       setMessage("");
       setType("official");

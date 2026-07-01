@@ -318,6 +318,12 @@ const AttestationIssuer = () => {
         message: "Votre attestation de formation est prête. Vous pouvez la télécharger depuis votre espace.",
         created_by: user.id,
       });
+      await supabase.from("audit_logs").insert({
+        performed_by: user.id,
+        action: "attestation_issued",
+        target_user_id: studentId,
+        details: { cohort_id: selectedCohort },
+      });
     }
     setIssuing(null);
   };
@@ -370,6 +376,11 @@ const AttestationIssuer = () => {
         created_by: user!.id,
       }));
       await supabase.from("notifications").insert(notifRows);
+      await supabase.from("audit_logs").insert({
+        performed_by: user!.id,
+        action: "attestation_issued",
+        details: { cohort_id: selectedCohort, count: eligible.length, student_ids: eligible.map(s => s.user_id) },
+      });
     }
     setIssuing(null);
   };

@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCohorts } from "@/hooks/use-cohorts";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +36,7 @@ import AuditLogPanel from "@/components/AuditLogPanel";
 import TaskManager from "@/components/TaskManager";
 import AttestationDragDropEditor from "@/components/attestation/AttestationDragDropEditor";
 import AttestationIssuer from "@/components/AttestationIssuer";
+import Pagination from "@/components/ui/Pagination";
 import AttestationTracker from "@/components/attestation/AttestationTracker";
 import DashboardCalendar from "@/components/DashboardCalendar";
 import AdminMessages from "@/components/AdminMessages";
@@ -59,7 +60,7 @@ const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { cohorts, loading: cohortsLoading, isError: cohortsError, refetch } = useCohorts();
-  const { profile, isOwner } = useAuth();
+  const { user, profile, isOwner } = useAuth();
   const { settings: siteSettings, refetch: refetchSettings } = useSiteSettings();
   const { toast } = useToast();
   const [students, setStudents] = useState<any[]>([]);
@@ -74,6 +75,11 @@ const AdminDashboard = () => {
   const [monthlyData, setMonthlyData] = useState<{ name: string; inscrits: number }[]>([]);
   const [paidRevenue, setPaidRevenue] = useState(0);
   const [dashboardRefreshTick, setDashboardRefreshTick] = useState(0);
+  const USERS_PER_PAGE = 20;
+  const [usersPage, setUsersPage] = useState(0);
+  const [usersTotalCount, setUsersTotalCount] = useState(0);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const prevUserSearchRef = useRef(debouncedUserSearch);
 
   interface ActivityItem {
     id: string;
@@ -265,37 +271,55 @@ const AdminDashboard = () => {
   }, []);
 
   useEffect(() => {
+    const searchChanged = prevUserSearchRef.current !== debouncedUserSearch;
+    prevUserSearchRef.current = debouncedUserSearch;
+    if (searchChanged && usersPage !== 0) {
+      setUsersPage(0);
+      return;
+    }
     const fetchUsers = async () => {
+      setUsersLoading(true);
       try {
-      const [profilesRes, rolesRes, emailsRes] = await Promise.all([
-        supabase.from("profiles").select("user_id, first_name, last_name, phone, created_at").order("created_at", { ascending: false }),
-        supabase.from("user_roles").select("user_id, role"),
-        supabase.functions.invoke("list-user-emails"),
-      ]);
-
-      if (profilesRes.error) throw profilesRes.error;
-      if (!profilesRes.data) return;
-
-      const roleMap = new Map<string, string[]>();
-      (rolesRes.data || []).forEach((r: any) => {
-        const existing = roleMap.get(r.user_id) || [];
-        existing.push(r.role);
-        roleMap.set(r.user_id, existing);
-      });
-
-      const emailMap: Record<string, string> = emailsRes.data?.emails || {};
-
-      setUsers(profilesRes.data.map((p: any) => ({
-        ...p,
-        email: emailMap[p.user_id] || "",
-        roles: roleMap.get(p.user_id) || ["student"],
-      })));
+        const from = usersPage * USERS_PER_PAGE;
+        const to = from + USERS_PER_PAGE - 1;
+        let profilesQuery = supabase
+          .from("profiles")
+          .select("user_id, first_name, last_name, phone, created_at", { count: "exact" })
+          .order("created_at", { ascending: false })
+          .range(from, to);
+        if (debouncedUserSearch) {
+          profilesQuery = profilesQuery.or(
+            `first_name.ilike.%${debouncedUserSearch}%,last_name.ilike.%${debouncedUserSearch}%`
+          );
+        }
+        const [profilesRes, rolesRes, emailsRes] = await Promise.all([
+          profilesQuery,
+          supabase.from("user_roles").select("user_id, role"),
+          supabase.functions.invoke("list-user-emails"),
+        ]);
+        if (profilesRes.error) throw profilesRes.error;
+        if (!profilesRes.data) return;
+        setUsersTotalCount(profilesRes.count ?? 0);
+        const roleMap = new Map<string, string[]>();
+        (rolesRes.data || []).forEach((r: any) => {
+          const existing = roleMap.get(r.user_id) || [];
+          existing.push(r.role);
+          roleMap.set(r.user_id, existing);
+        });
+        const emailMap: Record<string, string> = emailsRes.data?.emails || {};
+        setUsers(profilesRes.data.map((p: any) => ({
+          ...p,
+          email: emailMap[p.user_id] || "",
+          roles: roleMap.get(p.user_id) || ["student"],
+        })));
       } catch {
         toast({ title: "Erreur", description: "Impossible de charger la liste des utilisateurs.", variant: "destructive" });
+      } finally {
+        setUsersLoading(false);
       }
     };
     fetchUsers();
-  }, []);
+  }, [usersPage, debouncedUserSearch]);
 
   const handleArchive = async (cohortId: string) => {
     setArchiving(cohortId);
@@ -325,12 +349,22 @@ const AdminDashboard = () => {
     await supabase.from("notifications").delete().eq("cohort_id", cohortId);
     const { error } = await supabase.from("cohorts").delete().eq("id", cohortId);
     if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    else { toast({ title: "Cohorte supprimée définitivement" }); refetch(); }
+    else {
+      toast({ title: "Cohorte supprimée définitivement" });
+      if (user) {
+        await supabase.from("audit_logs").insert({
+          performed_by: user.id,
+          action: "cohort_deleted",
+          details: { cohort_id: cohortId },
+        });
+      }
+      refetch();
+    }
     setDeleting(null);
   };
 
   const handleExportUsers = () => {
-    exportToCsv("utilisateurs.csv", filteredUsers.map(u => ({ ...u, rolesLabel: u.roles.join(", ") })), [
+    exportToCsv("utilisateurs.csv", users.map(u => ({ ...u, rolesLabel: u.roles.join(", ") })), [
       { key: "first_name", label: "Prénom" },
       { key: "last_name", label: "Nom" },
       { key: "email", label: "Email" },
@@ -390,12 +424,6 @@ const AdminDashboard = () => {
     return matchesSearch && matchesStatus && matchesFormation;
   });
 
-  const filteredUsers = users.filter(u =>
-    !debouncedUserSearch ||
-    u.first_name.toLowerCase().includes(debouncedUserSearch.toLowerCase()) ||
-    u.last_name.toLowerCase().includes(debouncedUserSearch.toLowerCase()) ||
-    u.email.toLowerCase().includes(debouncedUserSearch.toLowerCase())
-  );
 
 
 
@@ -802,9 +830,12 @@ const AdminDashboard = () => {
             <TabsContent value="users">
               <div className="rounded-2xl border border-border bg-card shadow-card">
                 <div className="flex items-center justify-between border-b border-border px-6 py-4">
-                  <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
-                    <UserCog className="h-5 w-5" /> Gestion des utilisateurs
-                  </h2>
+                  <div className="flex items-center gap-3">
+                    <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
+                      <UserCog className="h-5 w-5" /> Gestion des utilisateurs
+                    </h2>
+                    <span className="text-sm text-muted-foreground">({usersTotalCount} utilisateur{usersTotalCount !== 1 ? "s" : ""})</span>
+                  </div>
                   <div className="flex items-center gap-3">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -831,7 +862,13 @@ const AdminDashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredUsers.map((u) => (
+                      {usersLoading ? (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-8 text-center">
+                            <Loader2 className="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
+                          </td>
+                        </tr>
+                      ) : users.map((u) => (
                         <tr key={u.user_id} className="border-b border-border last:border-0 hover:bg-secondary/50 transition-colors">
                           <td className="px-6 py-3.5">
                             <div className="flex items-center gap-3">
@@ -876,7 +913,7 @@ const AdminDashboard = () => {
                           </td>
                         </tr>
                       ))}
-                      {filteredUsers.length === 0 && (
+                      {!usersLoading && users.length === 0 && (
                         <tr>
                           <td colSpan={6} className="px-6 py-8 text-center text-sm text-muted-foreground">Aucun utilisateur trouvé</td>
                         </tr>
@@ -884,6 +921,15 @@ const AdminDashboard = () => {
                     </tbody>
                   </table>
                 </div>
+                {Math.ceil(usersTotalCount / USERS_PER_PAGE) > 1 && (
+                  <div className="border-t border-border px-6 py-4 flex justify-center">
+                    <Pagination
+                      page={usersPage}
+                      totalPages={Math.ceil(usersTotalCount / USERS_PER_PAGE)}
+                      onPageChange={setUsersPage}
+                    />
+                  </div>
+                )}
               </div>
             </TabsContent>
 

@@ -1,8 +1,8 @@
 # PROJECT_STATE.md — État du Projet
 
 **Dernière mise à jour**: 1er juillet 2026
-**Branche active**: `main`
-**Prompt actuel**: admin : 6 corrections (isOwner formateur, useEffect calendar, wave dynamique, categories rename, depenses edit, attestation tracker)
+**Branche active**: `claude/elegant-curie-wcw2cl`
+**Prompt actuel**: admin : type cohorte fixe (60/30j), pagination utilisateurs, audit log elargi
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.

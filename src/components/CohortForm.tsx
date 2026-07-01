@@ -8,6 +8,7 @@ import { useFormValidation } from "@/hooks/use-form-validation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Loader2 } from "lucide-react";
 import type { CohortRow } from "@/hooks/use-cohorts";
@@ -26,6 +27,7 @@ interface Formation {
 const COHORT_TYPE_DAYS: Record<string, number> = { standard: 60, initiation: 30 };
 
 const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -95,9 +97,16 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
         if (error) throw error;
         toast({ title: "Cohorte modifiée" });
       } else {
-        const { error } = await supabase.from("cohorts").insert(payload);
+        const { data: inserted, error } = await supabase.from("cohorts").insert(payload).select("id").single();
         if (error) throw error;
         toast({ title: "Cohorte créée" });
+        if (user) {
+          await supabase.from("audit_logs").insert({
+            performed_by: user.id,
+            action: "cohort_created",
+            details: { cohort_name: form.name, start_date: form.start_date, cohort_type: form.cohort_type, cohort_id: inserted?.id },
+          });
+        }
       }
       setOpen(false);
       onSaved();
