@@ -22,6 +22,10 @@ interface Formation {
   id: string;
   name: string;
   duration_days: number;
+  registration_fee: number;
+  total_price: number;
+  tranche_1_amount: number;
+  tranche_2_amount: number;
 }
 
 const COHORT_TYPE_DAYS: Record<string, number> = { standard: 60, initiation: 30 };
@@ -41,6 +45,10 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
     status: cohort?.status || "upcoming",
     cohort_type: cohort?.cohort_type || "standard",
     formation_id: cohort?.formation_id || "",
+    registration_fee: cohort?.registration_fee ?? null as number | null,
+    total_price: cohort?.total_price ?? null as number | null,
+    tranche_1_amount: cohort?.tranche_1_amount ?? null as number | null,
+    tranche_2_amount: cohort?.tranche_2_amount ?? null as number | null,
   });
 
   const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
@@ -68,8 +76,8 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
 
   useEffect(() => {
     const fetchFormations = async () => {
-      const { data } = await supabase.from("formations").select("id, name, duration_days").eq("is_active", true).order("name");
-      if (data) setFormations(data);
+      const { data } = await supabase.from("formations").select("id, name, duration_days, registration_fee, total_price, tranche_1_amount, tranche_2_amount").eq("is_active", true).order("name");
+      if (data) setFormations(data as Formation[]);
     };
     if (open) fetchFormations();
   }, [open]);
@@ -137,7 +145,20 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div>
             <RequiredLabel required>Formation</RequiredLabel>
-            <Select value={form.formation_id} onValueChange={v => { setForm({ ...form, formation_id: v }); handleBlur("formation_id"); }}>
+            <Select value={form.formation_id} onValueChange={v => {
+            const sel = formations.find(f => f.id === v);
+            setForm(prev => ({
+              ...prev,
+              formation_id: v,
+              ...(sel ? {
+                registration_fee: sel.registration_fee,
+                total_price: sel.total_price,
+                tranche_1_amount: sel.tranche_1_amount,
+                tranche_2_amount: sel.tranche_2_amount,
+              } : {}),
+            }));
+            handleBlur("formation_id");
+          }}>
               <SelectTrigger aria-invalid={!!showError("formation_id")}><SelectValue placeholder="Choisir une formation" /></SelectTrigger>
               <SelectContent>
                 {formations.map(f => (
@@ -197,6 +218,56 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
               </SelectContent>
             </Select>
             <FieldError message={showError("cohort_type")} />
+          </div>
+          <div className="rounded-xl border border-border p-4 space-y-3">
+            <p className="text-xs font-semibold text-foreground">Tarification de cette cohorte</p>
+            <p className="text-xs text-muted-foreground">Pre-rempli depuis la formation, modifiable.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="cohort-regfee">Frais d'inscription (FCFA)</Label>
+                <Input
+                  id="cohort-regfee"
+                  type="number"
+                  min={0}
+                  value={form.registration_fee ?? ""}
+                  onChange={e => setForm(prev => ({ ...prev, registration_fee: e.target.value !== "" ? parseInt(e.target.value) : null }))}
+                  placeholder="Ex: 10000"
+                />
+              </div>
+              <div>
+                <Label htmlFor="cohort-tprice">Total formation (FCFA)</Label>
+                <Input
+                  id="cohort-tprice"
+                  type="number"
+                  min={0}
+                  value={form.total_price ?? ""}
+                  onChange={e => setForm(prev => ({ ...prev, total_price: e.target.value !== "" ? parseInt(e.target.value) : null }))}
+                  placeholder="Ex: 50000"
+                />
+              </div>
+              <div>
+                <Label htmlFor="cohort-t1">Tranche 1 (FCFA)</Label>
+                <Input
+                  id="cohort-t1"
+                  type="number"
+                  min={0}
+                  value={form.tranche_1_amount ?? ""}
+                  onChange={e => setForm(prev => ({ ...prev, tranche_1_amount: e.target.value !== "" ? parseInt(e.target.value) : null }))}
+                  placeholder="Ex: 20000"
+                />
+              </div>
+              <div>
+                <Label htmlFor="cohort-t2">Tranche 2 (FCFA)</Label>
+                <Input
+                  id="cohort-t2"
+                  type="number"
+                  min={0}
+                  value={form.tranche_2_amount ?? ""}
+                  onChange={e => setForm(prev => ({ ...prev, tranche_2_amount: e.target.value !== "" ? parseInt(e.target.value) : null }))}
+                  placeholder="Ex: 20000"
+                />
+              </div>
+            </div>
           </div>
           <Button type="submit" disabled={saving || !isValid} className="w-full">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

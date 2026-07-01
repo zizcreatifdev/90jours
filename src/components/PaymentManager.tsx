@@ -74,21 +74,20 @@ const PaymentManager = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
-  const [waveFormationId, setWaveFormationId] = useState("");
+  const [waveCohortId, setWaveCohortId] = useState("");
 
-  const waveFormations = useMemo(() => {
-    const seen = new Set<string>();
-    const result: { id: string; name: string; registration_fee: number; tranche_1_amount: number; tranche_2_amount: number; total_price: number }[] = [];
-    for (const c of cohorts) {
-      if (c.formation && !seen.has(c.formation.id)) {
-        seen.add(c.formation.id);
-        result.push(c.formation as typeof result[0]);
-      }
-    }
-    return result;
+  const waveCohorts = useMemo(() => {
+    return cohorts.map(c => ({
+      id: c.id,
+      label: c.formation?.name ? `${c.formation.name} - ${c.name}` : c.name,
+      registration_fee: c.registration_fee ?? c.formation?.registration_fee ?? 0,
+      tranche_1_amount: c.tranche_1_amount ?? c.formation?.tranche_1_amount ?? 0,
+      tranche_2_amount: c.tranche_2_amount ?? c.formation?.tranche_2_amount ?? 0,
+      total_price: c.total_price ?? c.formation?.total_price ?? 0,
+    }));
   }, [cohorts]);
 
-  const waveFormation = waveFormations.find(f => f.id === waveFormationId) ?? null;
+  const waveCohort = waveCohorts.find(c => c.id === waveCohortId) ?? null;
 
   // Form state
   const [selectedUser, setSelectedUser] = useState("");
@@ -121,16 +120,19 @@ const PaymentManager = () => {
     },
   );
 
-  // Formation tarifaire de la cohorte selectionnee (pour pre-remplir les montants)
-  const selectedFormation = cohorts.find(c => c.id === selectedCohort)?.formation ?? null;
+  // Tarification de la cohorte selectionnee (prix cohorte en priorite, formation en fallback)
+  const selectedCohortData = cohorts.find(c => c.id === selectedCohort) ?? null;
 
-  const expectedAmount = (type: string, formation: typeof selectedFormation): number => {
-    if (!formation) return 0;
+  const expectedAmount = (type: string, cohortData: typeof selectedCohortData): number => {
+    if (!cohortData) return 0;
+    const regFee = cohortData.registration_fee ?? cohortData.formation?.registration_fee ?? 0;
+    const t1 = cohortData.tranche_1_amount ?? cohortData.formation?.tranche_1_amount ?? 0;
+    const t2 = cohortData.tranche_2_amount ?? cohortData.formation?.tranche_2_amount ?? 0;
     switch (type) {
-      case "inscription": return formation.registration_fee;
-      case "tranche_1": return formation.tranche_1_amount;
-      case "tranche_2": return formation.tranche_2_amount;
-      case "formation_complete": return formation.tranche_1_amount + formation.tranche_2_amount;
+      case "inscription": return regFee;
+      case "tranche_1": return t1;
+      case "tranche_2": return t2;
+      case "formation_complete": return t1 + t2;
       default: return 0;
     }
   };
@@ -139,10 +141,10 @@ const PaymentManager = () => {
     if (dialogOpen) reset();
   }, [dialogOpen, reset]);
 
-  // Pre-remplit le montant attendu selon le type et la formation (reste modifiable)
+  // Pre-remplit le montant attendu selon le type et la cohorte (reste modifiable)
   useEffect(() => {
-    if (!paymentType || !selectedFormation) return;
-    setCustomAmount(String(expectedAmount(paymentType, selectedFormation)));
+    if (!paymentType || !selectedCohortData) return;
+    setCustomAmount(String(expectedAmount(paymentType, selectedCohortData)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentType, selectedCohort]);
 
@@ -353,38 +355,38 @@ const PaymentManager = () => {
           <h3 className="font-display text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
             <Wallet className="h-4 w-4" /> Liens Wave Business
           </h3>
-          {waveFormations.length > 0 && (
+          {waveCohorts.length > 0 && (
             <div className="mb-3">
-              <Select value={waveFormationId} onValueChange={setWaveFormationId}>
+              <Select value={waveCohortId} onValueChange={setWaveCohortId}>
                 <SelectTrigger className="w-64">
-                  <SelectValue placeholder="Sélectionner une formation" />
+                  <SelectValue placeholder="Selectionner une cohorte" />
                 </SelectTrigger>
                 <SelectContent>
-                  {waveFormations.map(f => (
-                    <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                  {waveCohorts.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
           )}
           <div className="flex flex-wrap gap-2">
-            {waveFormation ? (
+            {waveCohort ? (
               <>
-                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveFormation.registration_fee)}>
-                  <Copy className="h-3 w-3" /> Inscription ({waveFormation.registration_fee.toLocaleString("fr-FR")} F)
+                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveCohort.registration_fee)}>
+                  <Copy className="h-3 w-3" /> Inscription ({waveCohort.registration_fee.toLocaleString("fr-FR")} F)
                 </Button>
-                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveFormation.tranche_1_amount)}>
-                  <Copy className="h-3 w-3" /> Tranche 1 ({waveFormation.tranche_1_amount.toLocaleString("fr-FR")} F)
+                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveCohort.tranche_1_amount)}>
+                  <Copy className="h-3 w-3" /> Tranche 1 ({waveCohort.tranche_1_amount.toLocaleString("fr-FR")} F)
                 </Button>
-                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveFormation.tranche_2_amount)}>
-                  <Copy className="h-3 w-3" /> Tranche 2 ({waveFormation.tranche_2_amount.toLocaleString("fr-FR")} F)
+                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveCohort.tranche_2_amount)}>
+                  <Copy className="h-3 w-3" /> Tranche 2 ({waveCohort.tranche_2_amount.toLocaleString("fr-FR")} F)
                 </Button>
-                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveFormation.total_price)}>
-                  <Copy className="h-3 w-3" /> Total ({waveFormation.total_price.toLocaleString("fr-FR")} F)
+                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveCohort.total_price)}>
+                  <Copy className="h-3 w-3" /> Total ({waveCohort.total_price.toLocaleString("fr-FR")} F)
                 </Button>
               </>
             ) : (
-              <p className="text-xs text-muted-foreground">Selectionnez une formation pour voir les montants.</p>
+              <p className="text-xs text-muted-foreground">Selectionnez une cohorte pour voir les montants.</p>
             )}
           </div>
           <p className="text-xs text-muted-foreground mt-2">

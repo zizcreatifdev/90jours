@@ -33,26 +33,41 @@ const PaymentSummaryCard = ({ cohortId, cohortStartDate, formationId }: Props) =
     let cancelled = false;
 
     const load = async () => {
-      const [paymentsRes, formationRes, discount] = await Promise.all([
+      const [paymentsRes, cohortRes, discount] = await Promise.all([
         supabase
           .from("payments")
           .select("amount, payment_type, status")
           .eq("user_id", user.id)
           .eq("cohort_id", cohortId),
-        formationId
-          ? supabase
-              .from("formations")
-              .select("registration_fee, total_price, tranche_1_amount, tranche_2_amount")
-              .eq("id", formationId)
-              .single()
-          : Promise.resolve({ data: null, error: null }),
+        supabase
+          .from("cohorts")
+          .select("total_price, registration_fee, tranche_1_amount, tranche_2_amount")
+          .eq("id", cohortId)
+          .single(),
         fetchStudentDiscount(user.id, cohortId),
       ]);
 
       if (cancelled) return;
 
       const payments = paymentsRes.data ?? [];
-      const f = (formationRes as { data: { registration_fee: number; total_price: number; tranche_1_amount: number; tranche_2_amount: number } | null }).data;
+      const cd = cohortRes.data;
+
+      let f: { registration_fee: number; total_price: number; tranche_1_amount: number; tranche_2_amount: number } | null = null;
+      if (cd?.total_price != null) {
+        f = {
+          registration_fee: cd.registration_fee ?? 10000,
+          total_price: cd.total_price,
+          tranche_1_amount: cd.tranche_1_amount ?? 0,
+          tranche_2_amount: cd.tranche_2_amount ?? 0,
+        };
+      } else if (formationId) {
+        const formRes = await supabase
+          .from("formations")
+          .select("registration_fee, total_price, tranche_1_amount, tranche_2_amount")
+          .eq("id", formationId)
+          .single();
+        f = formRes.data;
+      }
 
       const inscriptionAmount = f?.registration_fee ?? 10000;
       const totalDue = f?.total_price ?? 50000;

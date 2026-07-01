@@ -63,11 +63,10 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
       .eq("cohort_id", cohortId)
       .is("deleted_at", null);
 
-    if (paymentsData && cohortData?.formation) {
-      // Montant du total = total_price (grand total TTC, inscription incluse),
-      // diminue de la remise code promo figee (eventuellement appliquee a l'inscription).
+    if (paymentsData && cohortData) {
+      // Montant du total = total_price de la cohorte (surcharge possible), sinon celui de la formation.
       const discount = await fetchStudentDiscount(user.id, cohortId);
-      const totalRequired = (cohortData.formation.total_price || 50000) - discount;
+      const totalRequired = ((cohortData.total_price ?? (cohortData.formation as any)?.total_price) || 50000) - discount;
       const totalPaid = paymentsData
         .filter((p: any) => p.status === "paid")
         .reduce((sum: number, p: any) => sum + p.amount, 0);

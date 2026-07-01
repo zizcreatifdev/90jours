@@ -43,10 +43,10 @@ export const useOnboardingState = (cohortId: string): OnboardingState => {
       setHasAvatar(!!fetchedAvatarUrl);
       setAvatarUrl(fetchedAvatarUrl);
 
-      // 1. Cohort start_date + formation_id
+      // 1. Cohort start_date + formation_id + registration_fee
       const { data: cohortData } = await supabase
         .from("cohorts")
-        .select("start_date, formation_id")
+        .select("start_date, formation_id, registration_fee")
         .eq("id", cohortId)
         .maybeSingle();
 
@@ -58,7 +58,7 @@ export const useOnboardingState = (cohortId: string): OnboardingState => {
       setCohortStartDate(cohortData.start_date);
       const formationId = cohortData.formation_id;
 
-      // 2. Formation name + registration_fee
+      // 2. Formation name (registration_fee falls back to formation if not set on cohort)
       if (formationId) {
         const { data: formation } = await supabase
           .from("formations")
@@ -67,8 +67,10 @@ export const useOnboardingState = (cohortId: string): OnboardingState => {
           .maybeSingle();
         if (formation) {
           setFormationName(formation.name);
-          setRegistrationFee(formation.registration_fee ?? 0);
+          setRegistrationFee(cohortData.registration_fee ?? formation.registration_fee ?? 0);
         }
+      } else {
+        setRegistrationFee(cohortData.registration_fee ?? 0);
       }
 
       // 3. Active template check (formation-specific first, then global)

@@ -297,8 +297,12 @@ export type Database = {
           formation_id: string | null
           id: string
           name: string
+          registration_fee: number | null
           start_date: string
           status: string
+          total_price: number | null
+          tranche_1_amount: number | null
+          tranche_2_amount: number | null
           updated_at: string
         }
         Insert: {
@@ -310,8 +314,12 @@ export type Database = {
           formation_id?: string | null
           id?: string
           name: string
+          registration_fee?: number | null
           start_date: string
           status?: string
+          total_price?: number | null
+          tranche_1_amount?: number | null
+          tranche_2_amount?: number | null
           updated_at?: string
         }
         Update: {
@@ -323,8 +331,12 @@ export type Database = {
           formation_id?: string | null
           id?: string
           name?: string
+          registration_fee?: number | null
           start_date?: string
           status?: string
+          total_price?: number | null
+          tranche_1_amount?: number | null
+          tranche_2_amount?: number | null
           updated_at?: string
         }
         Relationships: [

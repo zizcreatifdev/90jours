@@ -28,6 +28,8 @@ interface CohortRow {
   start_date: string;
   end_date: string;
   formation_id: string | null;
+  total_price: number | null;
+  registration_fee: number | null;
   formation: {
     name: string;
     registration_fee: number | null;
@@ -115,7 +117,7 @@ const ContractSign = () => {
       // 2. Fetch cohort + formation
       const { data: cohort, error: cohortError } = await supabase
         .from("cohorts")
-        .select("id, name, start_date, end_date, formation_id, formation:formations(name, registration_fee, total_price, deliverable_label)")
+        .select("id, name, start_date, end_date, formation_id, total_price, registration_fee, formation:formations(name, registration_fee, total_price, deliverable_label)")
         .eq("id", cohortId)
         .maybeSingle();
 
@@ -205,14 +207,14 @@ const ContractSign = () => {
         date_fin: new Date(c.end_date + "T00:00:00").toLocaleDateString("fr-FR", {
           day: "numeric", month: "long", year: "numeric",
         }),
-        montant: formation?.total_price != null
-          ? `${formation.total_price.toLocaleString("fr-FR")} FCFA`
+        montant: (c.total_price ?? formation?.total_price) != null
+          ? `${(c.total_price ?? formation!.total_price)!.toLocaleString("fr-FR")} FCFA`
           : "A definir",
-        frais_inscription: formation?.registration_fee != null
-          ? `${formation.registration_fee.toLocaleString("fr-FR")} FCFA`
+        frais_inscription: (c.registration_fee ?? formation?.registration_fee) != null
+          ? `${(c.registration_fee ?? formation!.registration_fee)!.toLocaleString("fr-FR")} FCFA`
           : "A definir",
-        cout_total: formation?.total_price != null
-          ? `${formation.total_price.toLocaleString("fr-FR")} FCFA`
+        cout_total: (c.total_price ?? formation?.total_price) != null
+          ? `${(c.total_price ?? formation!.total_price)!.toLocaleString("fr-FR")} FCFA`
           : "A definir",
         livrable: formation?.deliverable_label?.trim() || "le livrable final",
         date_signature: now.toLocaleDateString("fr-FR", {

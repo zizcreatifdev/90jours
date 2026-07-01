@@ -319,9 +319,9 @@ const StudentFormations = () => {
                           ? "Complet"
                           : `${spotsLeft} place${spotsLeft > 1 ? "s" : ""} restante${spotsLeft > 1 ? "s" : ""}`}
                       </span>
-                      {cohort.formation?.total_price != null && (
+                      {(cohort.total_price ?? cohort.formation?.total_price) != null && (
                         <span className="font-semibold text-foreground">
-                          {fmtPrice(cohort.formation.total_price)}
+                          {fmtPrice((cohort.total_price ?? cohort.formation!.total_price) as number)}
                         </span>
                       )}
                       {cohort.formation?.duration_days != null && (

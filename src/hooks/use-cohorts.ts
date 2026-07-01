@@ -13,6 +13,10 @@ export interface CohortRow {
   created_at: string;
   formation_id: string | null;
   cohort_type: string;
+  total_price?: number | null;
+  registration_fee?: number | null;
+  tranche_1_amount?: number | null;
+  tranche_2_amount?: number | null;
   enrollment_count?: number;
   formation?: {
     id: string;

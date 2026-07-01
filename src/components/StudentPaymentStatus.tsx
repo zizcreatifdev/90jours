@@ -84,24 +84,35 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
         .order("created_at", { ascending: true }),
       supabase
         .from("cohorts")
-        .select("formation_id, start_date")
+        .select("formation_id, start_date, registration_fee, total_price, tranche_1_amount, tranche_2_amount")
         .eq("id", cohortId)
         .single(),
     ]);
     if (paymentsRes.data) setPayments(paymentsRes.data);
-    if (cohortRes.data?.start_date) setCohortStart(cohortRes.data.start_date);
-    if (cohortRes.data?.formation_id) {
+    const cd = cohortRes.data;
+    if (cd?.start_date) setCohortStart(cd.start_date);
+
+    let prices: FormationPricing | null = null;
+    if (cd?.total_price != null) {
+      prices = {
+        registration_fee: cd.registration_fee ?? 10000,
+        total_price: cd.total_price,
+        tranche_1_amount: cd.tranche_1_amount ?? 0,
+        tranche_2_amount: cd.tranche_2_amount ?? 0,
+      };
+    } else if (cd?.formation_id) {
       const { data: f } = await supabase
         .from("formations")
         .select("registration_fee, total_price, tranche_1_amount, tranche_2_amount")
-        .eq("id", cohortRes.data.formation_id)
+        .eq("id", cd.formation_id)
         .single();
-      if (f) {
-        setFormation(f);
-        // Remise deja appliquee en base (figee, persiste apres rechargement)
-        const d = await fetchStudentDiscount(user.id, cohortId);
-        setPersistedDiscount(d);
-      }
+      if (f) prices = f;
+    }
+
+    if (prices) {
+      setFormation(prices);
+      const d = await fetchStudentDiscount(user.id, cohortId);
+      setPersistedDiscount(d);
     }
     setLoading(false);
   };

@@ -133,9 +133,9 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
               )}
             </div>
             <div className="flex shrink-0 items-center gap-3">
-              {cohort.formation?.total_price != null && (
+              {(cohort.total_price ?? cohort.formation?.total_price) != null && (
                 <span className="text-sm font-bold text-foreground">
-                  {cohort.formation.total_price.toLocaleString("fr-FR")}{" "}
+                  {(cohort.total_price ?? cohort.formation!.total_price).toLocaleString("fr-FR")}{" "}
                   <span className="text-[10px] font-normal uppercase tracking-widest text-muted-foreground">FCFA</span>
                 </span>
               )}

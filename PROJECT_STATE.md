@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 1er juillet 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: onboarding : etape photo de profil obligatoire avant le contrat
+**Prompt actuel**: prix : migration des tarifs de la formation vers la cohorte (avec pre-remplissage et fallback)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -22,7 +22,7 @@
 | Pages | 14 |
 | Hooks custom | 10 |
 | Tables Supabase | 34 |
-| Migrations SQL | 55 |
+| Migrations SQL | 56 |
 | Edge Functions | 8 (send-email durci) |
 | CI/CD | GitHub Actions (deploy-functions.yml) |
 | Utilitaires lib | email-suggestion.ts (Levenshtein, 20 domaines) |

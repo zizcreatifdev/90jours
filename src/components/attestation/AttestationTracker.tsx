@@ -103,10 +103,10 @@ const AttestationTracker = () => {
       const key = `${e.user_id}_${e.cohort_id}`;
       const portfolioStatus = portfolioMap.get(key) || null;
       const formation = cohort?.formation;
-      // Montant du total = total_price (grand total TTC, inscription incluse),
-      // diminue de la remise code promo (sur l'inscription) de cet etudiant.
+      // Montant du total = total_price de la cohorte (surcharge possible), sinon celui de la formation.
       const discount = discountMap.get(key) || 0;
-      const requiredTotal = (formation?.total_price || 50000) - discount;
+      const baseTotal = cohort?.total_price ?? formation?.total_price;
+      const requiredTotal = (baseTotal || 50000) - discount;
       const paymentsTotal = paymentMap.get(key) || 0;
       const paymentOk = paymentsTotal >= requiredTotal;
       const attestation = attestationMap.get(key);

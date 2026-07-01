@@ -191,13 +191,13 @@ const AttestationIssuer = () => {
       // Get cohort formation for pricing
       const { data: cohortData } = await supabase
         .from("cohorts")
-        .select("formation_id, formation:formations(total_price, deliverable_label)")
+        .select("formation_id, total_price, formation:formations(total_price, deliverable_label)")
         .eq("id", selectedCohort)
         .maybeSingle();
 
       const formation = cohortData?.formation as any;
-      // Montant du total = total_price (grand total TTC, inscription incluse).
-      const requiredTotal = formation?.total_price || 50000;
+      // Montant du total = total_price de la cohorte (surcharge possible), sinon celui de la formation.
+      const requiredTotal = (cohortData?.total_price ?? formation?.total_price) || 50000;
       setDeliverableLabel(formation?.deliverable_label || "Portfolio");
 
       // Get enrollments (students only)
