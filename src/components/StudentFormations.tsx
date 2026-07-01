@@ -27,6 +27,7 @@ const StudentFormations = () => {
   const [enrollmentsLoading, setEnrollmentsLoading] = useState(true);
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
   const [successId, setSuccessId] = useState<string | null>(null);
+  const [staffFormationIds, setStaffFormationIds] = useState<string[]>([]);
 
   const [waitlistCohort, setWaitlistCohort] = useState<CohortRow | null>(null);
   const [waitlistPhone, setWaitlistPhone] = useState("");
@@ -62,9 +63,24 @@ const StudentFormations = () => {
     fetchEnrollments();
   }, [user]);
 
-  // Non-archived cohorts the user is not already enrolled in
+  // Formations ou l'utilisateur est formateur : exclues de l'inscription
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("staff_formations")
+      .select("formation_id")
+      .eq("user_id", user.id)
+      .then(({ data }) => {
+        if (data) setStaffFormationIds((data as Array<{ formation_id: string }>).map(d => d.formation_id));
+      });
+  }, [user]);
+
+  // Non-archived cohorts the user is not already enrolled in and does not teach
   const availableCohorts = cohorts.filter(
-    c => c.status !== "archived" && !enrolledCohortIds.has(c.id)
+    c =>
+      c.status !== "archived" &&
+      !enrolledCohortIds.has(c.id) &&
+      !staffFormationIds.includes(c.formation_id ?? "")
   );
 
   const atLimit = activeEnrollmentCount >= 2;

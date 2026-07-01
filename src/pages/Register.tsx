@@ -161,6 +161,16 @@ const Register = () => {
       });
       if (enrollError) throw enrollError;
 
+      // Pour un utilisateur existant (staff qui s'inscrit comme etudiant) :
+      // le trigger DB n'ayant pas ete declenche, on insere le role student.
+      // Fire-and-forget : echec silencieux si role deja present (doublon).
+      if (user) {
+        void supabase
+          .from("user_roles")
+          .insert({ user_id: userId, role: "student" as const })
+          .then(() => {});
+      }
+
       // Email de bienvenue (NON BLOQUANT : un echec ou le mode log n'empeche pas
       // l'inscription, et n'affiche aucun toast d'erreur a l'etudiant).
       try {
