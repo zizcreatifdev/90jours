@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 1er juillet 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: admin : type cohorte fixe (60/30j), pagination utilisateurs, audit log elargi
+**Prompt actuel**: coherence : duree reelle, badge Perfectionnement/Initiation, labels corriges partout
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.

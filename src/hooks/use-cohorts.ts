@@ -12,6 +12,7 @@ export interface CohortRow {
   status: string;
   created_at: string;
   formation_id: string | null;
+  cohort_type: string;
   enrollment_count?: number;
   formation?: {
     id: string;

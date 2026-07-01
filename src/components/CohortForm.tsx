@@ -39,8 +39,8 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
     end_date: cohort?.end_date || "",
     capacity: cohort?.capacity || 25,
     status: cohort?.status || "upcoming",
-    cohort_type: (cohort as any)?.cohort_type || "standard",
-    formation_id: (cohort as any)?.formation_id || "",
+    cohort_type: cohort?.cohort_type || "standard",
+    formation_id: cohort?.formation_id || "",
   });
 
   const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
@@ -192,7 +192,7 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
             <Select value={form.cohort_type} onValueChange={v => { setForm({ ...form, cohort_type: v }); handleBlur("cohort_type"); }}>
               <SelectTrigger aria-invalid={!!showError("cohort_type")}><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="standard">Standard (60 jours)</SelectItem>
+                <SelectItem value="standard">Perfectionnement (60 jours)</SelectItem>
                 <SelectItem value="initiation">Initiation (30 jours)</SelectItem>
               </SelectContent>
             </Select>

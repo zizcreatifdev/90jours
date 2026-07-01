@@ -69,9 +69,9 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
     >
       {/* Navy header : duree a gauche, niveau a droite */}
       <div className="flex items-center justify-between bg-[#0E1B2E] px-5 py-3">
-        {cohort.formation?.duration_days != null ? (
+        {cohort.start_date && cohort.end_date ? (
           <p className="text-[11px] font-medium text-white/70">
-            {cohort.formation.duration_days} jours
+            {Math.round((new Date(cohort.end_date).getTime() - new Date(cohort.start_date).getTime()) / (1000 * 60 * 60 * 24))} jours
           </p>
         ) : (
           <span />
@@ -79,12 +79,12 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
         <span
           className={cn(
             "rounded-full px-2.5 py-0.5 text-[10px] font-semibold",
-            cohort.formation?.level === "avance"
+            cohort.cohort_type === "standard"
               ? "bg-[#C5A05A]/25 text-[#d4b06a]"
               : "bg-white/10 text-[#C5A05A]"
           )}
         >
-          {cohort.formation?.level === "avance" ? "Perfectionnement" : "Initiation"}
+          {cohort.cohort_type === "standard" ? "Perfectionnement" : "Initiation"}
         </span>
       </div>
 
@@ -244,8 +244,8 @@ const Index = () => {
   }, []);
 
   const activeCohorts = cohorts.filter((c) => c.status !== "archived");
-  const initiation = activeCohorts.filter((c) => c.formation?.level !== "avance");
-  const perfectionnement = activeCohorts.filter((c) => c.formation?.level === "avance");
+  const initiation = activeCohorts.filter((c) => c.cohort_type === "initiation");
+  const perfectionnement = activeCohorts.filter((c) => c.cohort_type === "standard");
   const aucuneCohorteOuverte = !loading && activeCohorts.length === 0;
 
   const handleDashboard = () => {
