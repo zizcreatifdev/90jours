@@ -88,15 +88,15 @@ Deno.serve(async (req) => {
     await supabaseAdmin.from("promo_code_usage").delete().eq("user_id", user_id);
     await supabaseAdmin.from("seen_announcements").delete().eq("user_id", user_id);
 
-    // Messages : supprimer d'abord les replies dont le parent appartient a cet utilisateur
-    // (parent_id FK), puis les messages dont il est expediteur ou destinataire.
-    const { data: sentMessages } = await supabaseAdmin
+    // Messages : supprimer d'abord toutes les replies qui referencent un message
+    // envoye OU recu par cet utilisateur, puis les messages eux-memes.
+    const { data: userMessages } = await supabaseAdmin
       .from("messages")
       .select("id")
-      .eq("sender_id", user_id);
-    if (sentMessages && sentMessages.length > 0) {
-      const sentIds = sentMessages.map((m: any) => m.id);
-      await supabaseAdmin.from("messages").delete().in("parent_id", sentIds);
+      .or(`sender_id.eq.${user_id},recipient_id.eq.${user_id}`);
+    if (userMessages && userMessages.length > 0) {
+      const msgIds = userMessages.map((m: any) => m.id);
+      await supabaseAdmin.from("messages").delete().in("parent_id", msgIds);
     }
     await supabaseAdmin.from("messages").delete().eq("sender_id", user_id);
     await supabaseAdmin.from("messages").delete().eq("recipient_id", user_id);

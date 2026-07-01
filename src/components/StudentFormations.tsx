@@ -333,9 +333,12 @@ const StudentFormations = () => {
                   {/* Action */}
                   <div className="shrink-0 flex items-center">
                     {isStaffCohort ? (
-                      <div className="flex items-center gap-1.5 text-sm font-medium text-accent">
-                        <UserCheck className="h-4 w-4" />
-                        Formateur
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-1.5 text-sm font-medium text-accent">
+                          <UserCheck className="h-4 w-4" />
+                          Formateur
+                        </div>
+                        <span className="text-[11px] text-muted-foreground">Vous enseignez cette formation</span>
                       </div>
                     ) : isEnrolledCohort ? (
                       <div className="flex items-center gap-1.5 text-sm font-medium text-green-600 dark:text-green-400">

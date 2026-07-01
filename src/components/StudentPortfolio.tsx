@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { isValidUrl } from "@/lib/validate-url";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,10 +35,17 @@ const StudentPortfolio = ({ cohortId, formationName, formationColor }: StudentPo
     {
       url: {
         required: "L'URL du portfolio est requise.",
-        validate: (v) =>
-          isValidUrl(String(v))
-            ? null
-            : "Veuillez entrer une URL valide commencant par http:// ou https://",
+        validate: (v) => {
+          const str = String(v);
+          if (!str.startsWith("https://")) return "L'URL doit commencer par https://";
+          try {
+            const parsed = new URL(str);
+            if (!parsed.hostname.includes(".")) return "L'URL doit contenir un domaine valide (ex: monportfolio.com)";
+            return null;
+          } catch {
+            return "Veuillez entrer une URL valide (ex: https://monportfolio.com)";
+          }
+        },
       },
     }
   );

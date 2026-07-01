@@ -183,6 +183,18 @@ const StudentMessages = ({ cohortId, formationId, isArchived }: StudentMessagesP
     if (!user || !newMsgRecipientId || !newMsgTitle.trim() || !newMsgContent.trim()) return;
     setSendingNew(true);
 
+    const { data: recipientProfile } = await supabase
+      .from("profiles")
+      .select("user_id")
+      .eq("user_id", newMsgRecipientId)
+      .maybeSingle();
+
+    if (!recipientProfile) {
+      toast({ title: "Destinataire indisponible", description: "Ce formateur n'est plus disponible.", variant: "destructive" });
+      setSendingNew(false);
+      return;
+    }
+
     const { error } = await supabase.from("messages").insert({
       sender_id: user.id,
       recipient_id: newMsgRecipientId,

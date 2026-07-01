@@ -187,6 +187,7 @@ const StudentBriefs = ({ cohortId, formationName, formationColor, isArchived }: 
     setDelivering(true);
 
     let fileUrl: string | null = null;
+    let uploadedFilePath: string | null = null;
     if (deliverFile) {
       if (deliverFile.size > 10 * 1024 * 1024) {
         toast({ title: "Fichier trop volumineux", description: "Maximum 10 Mo.", variant: "destructive" });
@@ -202,6 +203,7 @@ const StudentBriefs = ({ cohortId, formationName, formationColor, isArchived }: 
         setDelivering(false);
         return;
       }
+      uploadedFilePath = filePath;
       const { data: urlData } = supabase.storage.from("brief-submissions").getPublicUrl(filePath);
       fileUrl = urlData.publicUrl;
     }
@@ -210,32 +212,44 @@ const StudentBriefs = ({ cohortId, formationName, formationColor, isArchived }: 
     if (deliverUrl.trim()) updatePayload.submission_url = deliverUrl.trim();
     if (fileUrl) updatePayload.submission_file_url = fileUrl;
 
-    const { error } = await supabase.from("brief_submissions").update(updatePayload as any).eq("id", submission.id);
-    setDelivering(false);
-    if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: submission.is_late ? `Brief livré avec ${submission.delay_days} jour(s) de retard` : "Brief livré avec succès." });
-      setDeliverOpen(false);
-      setDeliverTarget(null);
-
-      if (submission.is_late) {
-        const { data: admins } = await supabase.from("user_roles").select("user_id").eq("role", "super_admin");
-        if (admins && admins.length > 0) {
-          const { data: profile } = await supabase.from("profiles").select("first_name, last_name").eq("user_id", user.id).single();
-          const studentName = profile ? `${profile.first_name} ${profile.last_name}` : user.email;
-          const notifications = admins.map((a: any) => ({
-            user_id: a.user_id,
-            title: "Brief livré en retard",
-            message: `${studentName} a livré le brief "${brief.title}" avec ${submission.delay_days} jour(s) de retard.`,
-            type: "urgent",
-            created_by: user.id,
-          }));
-          await supabase.from("notifications").insert(notifications);
+    try {
+      const { error } = await supabase.from("brief_submissions").update(updatePayload as any).eq("id", submission.id);
+      setDelivering(false);
+      if (error) {
+        if (uploadedFilePath) {
+          await supabase.storage.from("brief-submissions").remove([uploadedFilePath]);
         }
-      }
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: submission.is_late ? `Brief livré avec ${submission.delay_days} jour(s) de retard` : "Brief livré avec succès." });
+        setDeliverOpen(false);
+        setDeliverTarget(null);
 
-      await refreshSubmissions();
+        if (submission.is_late) {
+          const { data: admins } = await supabase.from("user_roles").select("user_id").eq("role", "super_admin");
+          if (admins && admins.length > 0) {
+            const { data: profile } = await supabase.from("profiles").select("first_name, last_name").eq("user_id", user.id).single();
+            const studentName = profile ? `${profile.first_name} ${profile.last_name}` : user.email;
+            const notifications = admins.map((a: any) => ({
+              user_id: a.user_id,
+              title: "Brief livré en retard",
+              message: `${studentName} a livré le brief "${brief.title}" avec ${submission.delay_days} jour(s) de retard.`,
+              type: "urgent",
+              created_by: user.id,
+            }));
+            await supabase.from("notifications").insert(notifications);
+          }
+        }
+
+        await refreshSubmissions();
+      }
+    } catch (err: unknown) {
+      setDelivering(false);
+      if (uploadedFilePath) {
+        await supabase.storage.from("brief-submissions").remove([uploadedFilePath]);
+      }
+      const msg = err instanceof Error ? err.message : "Une erreur est survenue.";
+      toast({ title: "Erreur", description: msg, variant: "destructive" });
     }
   };
 

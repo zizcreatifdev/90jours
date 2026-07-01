@@ -71,6 +71,14 @@ const PortfolioManager = ({ filterCohortIds }: PortfolioManagerProps = {}) => {
 
   const handleValidate = async (status: "validated" | "rejected") => {
     if (!currentPortfolio) return;
+    if (currentPortfolio.status === status) {
+      toast({
+        title: status === "validated" ? "Deja valide" : "Deja rejete",
+        description: "Ce portfolio a deja ce statut.",
+      });
+      setReviewOpen(false);
+      return;
+    }
     setSaving(true);
     const { error } = await supabase.from("portfolios").update({
       status,

@@ -300,15 +300,19 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
       });
       const applyRow = Array.isArray(applyData) ? applyData[0] : applyData;
       if (applyErr || !applyRow?.success) {
-        // Le paiement reste enregistre (au montant reduit) ; on signale juste
-        // que le code n'a pas pu etre comptabilise (epuise, deja utilise...).
+        // Le paiement reste enregistre (au montant reduit) ; on signale que
+        // le code n'a pas pu etre comptabilise (epuise, deja utilise...) et
+        // on remet les montants affiches au plein tarif.
         toast({
           title: "Code promo non appliqué",
           description: applyRow?.message || "La réduction n'a pas pu être enregistrée, mais votre paiement est bien déclaré.",
           variant: "destructive",
         });
+        setPromoApplied(null);
+        setPersistedDiscount(0);
+      } else {
+        setPromoApplied(null);
       }
-      setPromoApplied(null);
     }
 
     setSubmitting(false);
