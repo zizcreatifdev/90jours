@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 1er juillet 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: cohort form : refonte complete (sections claires, tranches conditionnelles, pre-remplissage)
+**Prompt actuel**: cohort form : tarification auto-calculee (tranche 2 = reste - tranche 1)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.

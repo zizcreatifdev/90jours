@@ -25,7 +25,6 @@ interface Formation {
   registration_fee: number | null;
   total_price: number | null;
   tranche_1_amount: number | null;
-  tranche_2_amount: number | null;
 }
 
 // "standard" = Perfectionnement (60 j), "initiation" = Initiation (30 j)
@@ -44,6 +43,7 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
   const [saving, setSaving] = useState(false);
   const [formations, setFormations] = useState<Formation[]>([]);
 
+  // tranche_2_amount is derived, not stored in form state
   const initialForm = () => ({
     formation_id: cohort?.formation_id || "",
     name: cohort?.name || "",
@@ -56,7 +56,6 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
     registration_fee: cohort?.registration_fee ?? null as number | null,
     total_price: cohort?.total_price ?? null as number | null,
     tranche_1_amount: cohort?.tranche_1_amount ?? null as number | null,
-    tranche_2_amount: cohort?.tranche_2_amount ?? null as number | null,
   });
 
   const [form, setForm] = useState(initialForm);
@@ -92,7 +91,7 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
     const fetchFormations = async () => {
       const { data } = await supabase
         .from("formations")
-        .select("id, name, registration_fee, total_price, tranche_1_amount, tranche_2_amount")
+        .select("id, name, registration_fee, total_price, tranche_1_amount")
         .eq("is_active", true)
         .order("name");
       if (data) setFormations(data as Formation[]);
@@ -118,7 +117,6 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
         total_price: sel.total_price,
         ...(prev.cohort_type !== "initiation" ? {
           tranche_1_amount: sel.tranche_1_amount,
-          tranche_2_amount: sel.tranche_2_amount,
         } : {}),
       } : {}),
     }));
@@ -128,30 +126,44 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
   const handleTypeChange = (newType: string) => {
     const sel = formations.find(f => f.id === form.formation_id) ?? null;
     if (newType === "initiation") {
-      setForm(prev => ({
-        ...prev,
-        cohort_type: newType,
-        tranche_1_amount: null,
-        tranche_2_amount: null,
-      }));
+      setForm(prev => ({ ...prev, cohort_type: newType, tranche_1_amount: null }));
     } else {
-      // Perfectionnement : pre-remplir tranches depuis la formation si disponibles
       setForm(prev => ({
         ...prev,
         cohort_type: newType,
         tranche_1_amount: sel?.tranche_1_amount ?? prev.tranche_1_amount,
-        tranche_2_amount: sel?.tranche_2_amount ?? prev.tranche_2_amount,
       }));
     }
     handleBlur("cohort_type");
   };
 
+  // --- Tarification derivee ---
+  const isPerfectionnement = form.cohort_type === "standard";
+  const totalPrice = form.total_price ?? 0;
+  const regFee = form.registration_fee ?? 0;
+  const tranche1 = form.tranche_1_amount ?? 0;
+  const resteApresInscription = totalPrice - regFee;
+  // Si tranche1 = 0 : le reste entier constitue la tranche 2 (solde unique)
+  const tranche2Computed = tranche1 === 0 ? resteApresInscription : resteApresInscription - tranche1;
+
+  const inscriptionError = totalPrice > 0 && regFee > totalPrice
+    ? "Les frais d'inscription depassent le total"
+    : null;
+  const tranche1Error = isPerfectionnement && tranche1 > 0 && tranche2Computed < 0
+    ? "La Tranche 1 depasse le reste a payer"
+    : null;
+  const hasPricingError = !!inscriptionError || !!tranche1Error;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateAll()) return;
+    if (!validateAll() || hasPricingError) return;
     setSaving(true);
     try {
-      const payload = { ...form, formation_id: form.formation_id || null };
+      const payload = {
+        ...form,
+        formation_id: form.formation_id || null,
+        tranche_2_amount: isPerfectionnement ? Math.max(0, tranche2Computed) : null,
+      };
       if (cohort) {
         const { error } = await supabase.from("cohorts").update(payload).eq("id", cohort.id);
         if (error) throw error;
@@ -176,8 +188,6 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
       setSaving(false);
     }
   };
-
-  const isPerfectionnement = form.cohort_type === "standard";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -325,17 +335,6 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="c-regfee">Frais d'inscription (FCFA)</Label>
-                <Input
-                  id="c-regfee"
-                  type="number"
-                  min={0}
-                  value={form.registration_fee ?? ""}
-                  onChange={e => setForm(prev => ({ ...prev, registration_fee: e.target.value !== "" ? parseInt(e.target.value) : null }))}
-                  placeholder="Ex : 10000"
-                />
-              </div>
-              <div>
                 <Label htmlFor="c-tprice">Total formation (FCFA)</Label>
                 <Input
                   id="c-tprice"
@@ -346,41 +345,67 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
                   placeholder="Ex : 50000"
                 />
               </div>
+              <div>
+                <Label htmlFor="c-regfee">Frais d'inscription (FCFA)</Label>
+                <Input
+                  id="c-regfee"
+                  type="number"
+                  min={0}
+                  value={form.registration_fee ?? ""}
+                  onChange={e => setForm(prev => ({ ...prev, registration_fee: e.target.value !== "" ? parseInt(e.target.value) : null }))}
+                  placeholder="Ex : 10000"
+                  aria-invalid={!!inscriptionError}
+                />
+                {inscriptionError && <p className="mt-1 text-xs text-destructive">{inscriptionError}</p>}
+              </div>
             </div>
             {isPerfectionnement && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="c-t1">Tranche 1 (FCFA)</Label>
-                  <Input
-                    id="c-t1"
-                    type="number"
-                    min={0}
-                    value={form.tranche_1_amount ?? ""}
-                    onChange={e => setForm(prev => ({ ...prev, tranche_1_amount: e.target.value !== "" ? parseInt(e.target.value) : null }))}
-                    placeholder="Ex : 20000"
-                  />
+              <>
+                {form.total_price != null && form.registration_fee != null && !inscriptionError && (
+                  <div className="rounded-lg bg-secondary px-3 py-2 text-xs text-muted-foreground font-medium">
+                    Reste apres inscription : {resteApresInscription.toLocaleString("fr-FR")} FCFA
+                  </div>
+                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="c-t1">Tranche 1 (FCFA)</Label>
+                    <Input
+                      id="c-t1"
+                      type="number"
+                      min={0}
+                      value={form.tranche_1_amount ?? ""}
+                      onChange={e => setForm(prev => ({ ...prev, tranche_1_amount: e.target.value !== "" ? parseInt(e.target.value) : null }))}
+                      placeholder="Ex : 25000"
+                      aria-invalid={!!tranche1Error}
+                    />
+                    {tranche1Error && <p className="mt-1 text-xs text-destructive">{tranche1Error}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="c-t2">Tranche 2 (FCFA)</Label>
+                    <Input
+                      id="c-t2"
+                      type="number"
+                      readOnly
+                      value={!inscriptionError && form.total_price != null && form.registration_fee != null ? Math.max(0, tranche2Computed) : ""}
+                      className="bg-muted cursor-default"
+                      placeholder="Calcule automatiquement"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">Calcule automatiquement (Reste - Tranche 1).</p>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="c-t2">Tranche 2 (FCFA)</Label>
-                  <Input
-                    id="c-t2"
-                    type="number"
-                    min={0}
-                    value={form.tranche_2_amount ?? ""}
-                    onChange={e => setForm(prev => ({ ...prev, tranche_2_amount: e.target.value !== "" ? parseInt(e.target.value) : null }))}
-                    placeholder="Ex : 20000"
-                  />
-                </div>
-              </div>
+                <p className="text-xs text-muted-foreground">
+                  Paiement en 2 tranches possible pour les formations Perfectionnement.
+                </p>
+              </>
             )}
-            <p className="text-xs text-muted-foreground">
-              {isPerfectionnement
-                ? "Paiement en 2 tranches possible pour les formations Perfectionnement."
-                : "Paiement en une fois pour les formations Initiation."}
-            </p>
+            {!isPerfectionnement && (
+              <p className="text-xs text-muted-foreground">
+                Paiement en une fois pour les formations Initiation.
+              </p>
+            )}
           </div>
 
-          <Button type="submit" disabled={saving || !isValid} className="w-full">
+          <Button type="submit" disabled={saving || !isValid || hasPricingError} className="w-full">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {cohort ? "Enregistrer" : "Creer"}
           </Button>
