@@ -321,8 +321,18 @@ const SidebarNav = ({
   );
 };
 
+const OWNER_ONLY_TABS = new Set(["accounting", "audit", "settings"]);
+
 const DashboardSidebar = ({ role, mobileOpen, onMobileOpenChange }: DashboardSidebarProps) => {
-  const links = role === "admin" ? adminLinks : role === "staff" ? staffLinks : studentLinks;
+  const { isOwner } = useAuth();
+  const baseLinks = role === "admin" ? adminLinks : role === "staff" ? staffLinks : studentLinks;
+  const links =
+    role === "admin" && !isOwner
+      ? baseLinks.filter((link) => {
+          const tab = new URLSearchParams(link.href.split("?")[1] || "").get("tab") ?? "";
+          return !OWNER_ONLY_TABS.has(tab);
+        })
+      : baseLinks;
   const [expanded, setExpanded] = useState(false);
   const [focusMode, setFocusMode] = useState(
     () => localStorage.getItem("60jours-focus-mode") === "true"
