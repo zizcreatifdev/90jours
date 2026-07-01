@@ -64,7 +64,6 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
       .is("deleted_at", null);
 
     if (paymentsData && cohortData) {
-      // Montant du total = total_price de la cohorte (surcharge possible), sinon celui de la formation.
       const discount = await fetchStudentDiscount(user.id, cohortId);
       const totalRequired = ((cohortData.total_price ?? (cohortData.formation as any)?.total_price) || 50000) - discount;
       const totalPaid = paymentsData
@@ -81,41 +80,54 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
   }, [fetchAll]);
 
   const handleDownload = async () => {
-    if (!previewRef.current) return;
     setDownloading(true);
     try {
-      const canvas = await html2canvas(previewRef.current, {
-        scale: 3,
-        useCORS: true,
-        backgroundColor: "#ffffff",
-      });
-      const imgData = canvas.toDataURL("image/png");
-
-      // A4 paysage (297 x 210 mm) - ratio 1.414 identique au preview attestation
-      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-      const pdfW = pdf.internal.pageSize.getWidth();
-      const pdfH = pdf.internal.pageSize.getHeight();
-
-      // Centrage avec conservation du ratio au cas ou le preview deborderait
-      const canvasRatio = canvas.width / canvas.height;
-      const pageRatio = pdfW / pdfH;
-      let imgX = 0, imgY = 0, imgW = pdfW, imgH = pdfH;
-      if (canvasRatio > pageRatio) {
-        imgH = pdfW / canvasRatio;
-        imgY = (pdfH - imgH) / 2;
+      // Si un PDF immutable est stocke en storage, le telecharger directement
+      if (attestation?.pdf_url) {
+        const firstName = (profile?.first_name || "").replace(/[^a-zA-Z0-9]/g, "_");
+        const lastName = (profile?.last_name || "").replace(/[^a-zA-Z0-9]/g, "_");
+        const formName = (formation?.name || "Formation").replace(/[^a-zA-Z0-9]/g, "_");
+        const response = await fetch(attestation.pdf_url);
+        if (!response.ok) throw new Error("Telechargement echoue");
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Attestation_${firstName}_${lastName}_${formName}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast({ title: "Attestation telechargee." });
       } else {
-        imgW = pdfH * canvasRatio;
-        imgX = (pdfW - imgW) / 2;
+        // Fallback : generation dynamique (anciens cas sans pdf_url)
+        if (!previewRef.current) return;
+        const canvas = await html2canvas(previewRef.current, {
+          scale: 3,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+        });
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+        const pdfW = pdf.internal.pageSize.getWidth();
+        const pdfH = pdf.internal.pageSize.getHeight();
+        const canvasRatio = canvas.width / canvas.height;
+        const pageRatio = pdfW / pdfH;
+        let imgX = 0, imgY = 0, imgW = pdfW, imgH = pdfH;
+        if (canvasRatio > pageRatio) {
+          imgH = pdfW / canvasRatio;
+          imgY = (pdfH - imgH) / 2;
+        } else {
+          imgW = pdfH * canvasRatio;
+          imgX = (pdfW - imgW) / 2;
+        }
+        pdf.addImage(imgData, "PNG", imgX, imgY, imgW, imgH);
+        const firstName = (profile?.first_name || "").replace(/[^a-zA-Z0-9]/g, "_");
+        const lastName = (profile?.last_name || "").replace(/[^a-zA-Z0-9]/g, "_");
+        const formName = (formation?.name || "Formation").replace(/[^a-zA-Z0-9]/g, "_");
+        pdf.save(`Attestation_${firstName}_${lastName}_${formName}.pdf`);
+        toast({ title: "Attestation telechargee." });
       }
-
-      pdf.addImage(imgData, "PNG", imgX, imgY, imgW, imgH);
-
-      const firstName = (profile?.first_name || "").replace(/[^a-zA-Z0-9]/g, "_");
-      const lastName = (profile?.last_name || "").replace(/[^a-zA-Z0-9]/g, "_");
-      const formName = (formation?.name || "Formation").replace(/[^a-zA-Z0-9]/g, "_");
-      pdf.save(`Attestation_${firstName}_${lastName}_${formName}.pdf`);
-
-      toast({ title: "Attestation telechargee." });
     } catch {
       toast({ title: "Erreur lors du telechargement", variant: "destructive" });
     }
@@ -144,11 +156,15 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
       {isEligible ? (
         <div className="space-y-4">
           <div className="rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 p-3">
-            <p className="text-sm text-green-700 dark:text-green-400 font-medium">Félicitations ! Votre attestation est disponible.</p>
-            <p className="text-xs text-green-600 dark:text-green-500 mt-1">N° {attestation.certificate_number}</p>
+            <p className="text-sm text-green-700 dark:text-green-400 font-medium">Votre attestation est disponible.</p>
+            <p className="text-xs text-green-600 dark:text-green-500 mt-1">
+              {attestation.issued_at
+                ? `Delivree le ${new Date(attestation.issued_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}`
+                : "Attestation delivree"}
+            </p>
           </div>
 
-          {/* Preview */}
+          {/* Preview : utilise issued_at pour que la date affichee soit celle d'emission */}
           <div ref={previewRef}>
             <AttestationPreview
               title={formation?.attestation_title || "Attestation de participation"}
@@ -162,18 +178,24 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
               startDate={cohort ? fmt(cohort.start_date) : ""}
               endDate={cohort ? fmt(cohort.end_date) : ""}
               certificateNumber={attestation.certificate_number}
+              issuedAt={attestation.issued_at}
             />
           </div>
 
           <Button onClick={handleDownload} disabled={downloading} className="w-full">
             {downloading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-            Télécharger l'attestation
+            Telecharger l'attestation
           </Button>
+
+          {/* Numero de certificat visible sans ouvrir le PDF */}
+          <p className="text-center text-xs text-muted-foreground font-mono">
+            Certificat N. {attestation.certificate_number}
+          </p>
         </div>
       ) : (
         <div className="rounded-lg bg-secondary p-4 space-y-3">
           <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-            <Lock className="h-4 w-4 shrink-0" /> Complétez les étapes pour débloquer votre attestation.
+            <Lock className="h-4 w-4 shrink-0" /> Completez les etapes pour debloquer votre attestation.
           </p>
           <div className="flex items-start gap-0">
             {/* Step 1: Portfolio */}
@@ -183,7 +205,7 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
               </div>
               <p className={`mt-1 text-center text-[10px] font-semibold ${portfolioValidated ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>Portfolio</p>
               {!portfolioValidated && (
-                <a href="/student?tab=portfolio" className="mt-0.5 text-[10px] text-accent hover:underline">Soumettre →</a>
+                <a href="/student?tab=portfolio" className="mt-0.5 text-[10px] text-accent hover:underline">Soumettre</a>
               )}
             </div>
             {/* Connector 1-2 */}
@@ -195,7 +217,7 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
               </div>
               <p className={`mt-1 text-center text-[10px] font-semibold ${paymentsComplete ? "text-green-600 dark:text-green-400" : portfolioValidated ? "text-muted-foreground" : "text-muted-foreground/40"}`}>Paiement</p>
               {!paymentsComplete && portfolioValidated && (
-                <a href="/student?tab=payments" className="mt-0.5 text-[10px] text-accent hover:underline">Payer →</a>
+                <a href="/student?tab=payments" className="mt-0.5 text-[10px] text-accent hover:underline">Payer</a>
               )}
             </div>
             {/* Connector 2-3 */}
@@ -207,7 +229,7 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
               </div>
               <p className={`mt-1 text-center text-[10px] font-semibold ${portfolioValidated && paymentsComplete ? "text-muted-foreground" : "text-muted-foreground/40"}`}>Admin</p>
               {portfolioValidated && paymentsComplete && (
-                <p className="mt-0.5 text-[10px] text-yellow-600 dark:text-yellow-400">En attente…</p>
+                <p className="mt-0.5 text-[10px] text-yellow-600 dark:text-yellow-400">En attente...</p>
               )}
             </div>
           </div>

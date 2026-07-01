@@ -247,7 +247,31 @@ const StaffDashboard = () => {
     }
   };
 
+  const [attStats, setAttStats] = useState<{ issued: number; portfoliosValidated: number } | null>(null);
   const [studentSearch, setStudentSearch] = useState("");
+
+  useEffect(() => {
+    if (!selectedCohortId) return;
+    const fetchAttStats = async () => {
+      const [attRes, portRes] = await Promise.all([
+        supabase
+          .from("attestations")
+          .select("id", { count: "exact", head: true })
+          .eq("cohort_id", selectedCohortId),
+        supabase
+          .from("portfolios")
+          .select("id", { count: "exact", head: true })
+          .eq("cohort_id", selectedCohortId)
+          .eq("status", "validated"),
+      ]);
+      setAttStats({
+        issued: attRes.count || 0,
+        portfoliosValidated: portRes.count || 0,
+      });
+    };
+    fetchAttStats();
+  }, [selectedCohortId]);
+
   const filteredStudents = students.filter((s: any) =>
     !studentSearch ||
     s.profiles?.first_name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
@@ -527,12 +551,36 @@ const StaffDashboard = () => {
               <StudentFormations />
             </div>
           ) : tab === "attestations" ? (
-            <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-10 text-center shadow-card">
-              <Award className="mx-auto h-10 w-10 text-muted-foreground" />
-              <h2 className="mt-4 font-display text-lg font-semibold text-foreground">Attestations</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Les attestations sont délivrées par l'administration. Vous n'avez pas d'action à effectuer ici.
-              </p>
+            <div className="mx-auto max-w-xl space-y-4">
+              <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+                <div className="flex items-center gap-2 mb-6">
+                  <Award className="h-5 w-5 text-accent" />
+                  <h2 className="font-display text-lg font-semibold text-foreground">Attestations</h2>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-900 p-4 text-center">
+                    <p className="text-2xl font-bold text-green-700 dark:text-green-400 font-display">
+                      {attStats?.issued ?? "-"}
+                    </p>
+                    <p className="mt-1 text-xs text-green-600 dark:text-green-500 font-medium">Emises</p>
+                  </div>
+                  <div className="rounded-xl bg-secondary p-4 text-center">
+                    <p className="text-2xl font-bold text-foreground font-display">
+                      {attStats !== null ? Math.max(0, students.length - attStats.issued) : "-"}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground font-medium">En attente</p>
+                  </div>
+                  <div className="rounded-xl bg-secondary p-4 text-center">
+                    <p className="text-2xl font-bold text-foreground font-display">
+                      {attStats?.portfoliosValidated ?? "-"}
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground font-medium">Portfolios valides</p>
+                  </div>
+                </div>
+                <p className="mt-5 text-xs text-muted-foreground text-center">
+                  Les attestations sont delivrees par l'administration depuis le tableau de bord admin.
+                </p>
+              </div>
             </div>
           ) : (
           <>

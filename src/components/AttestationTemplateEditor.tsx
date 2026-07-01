@@ -228,6 +228,7 @@ const AttestationTemplateEditor = () => {
 export const AttestationPreview = ({
   title, body, color, logoUrl, signatureUrl, stampUrl,
   studentName, formationName, startDate, endDate, certificateNumber,
+  issuedAt,
   className = "",
 }: {
   title: string;
@@ -241,6 +242,7 @@ export const AttestationPreview = ({
   startDate: string;
   endDate: string;
   certificateNumber: string;
+  issuedAt?: string;
   className?: string;
 }) => {
   const processedBody = body
@@ -343,9 +345,9 @@ export const AttestationPreview = ({
 
         {/* Bottom section: Signature + stamp */}
         <div className="w-full mt-auto pt-4">
-          {/* Date line */}
+          {/* Date line : utilise issued_at si fourni (date d'emission officielle), sinon la date courante */}
           <p className="text-[10px] text-gray-400 mb-4">
-            Fait le {new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
+            Fait le {(issuedAt ? new Date(issuedAt) : new Date()).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}
           </p>
 
           <div className="flex items-end justify-between w-full">
