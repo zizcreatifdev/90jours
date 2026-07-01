@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import ContractRichEditor from "@/components/ContractRichEditor";
-import { extractContractBody, renderContractDocument } from "@/lib/contract-style";
+import { extractContractBody, renderContractDocument, CONTRACT_CSS } from "@/lib/contract-style";
 import { sanitizeContractHtml } from "@/lib/sanitize-html";
 import { CONTRACT_VARIABLES } from "@/lib/contract-variable";
 import type { Editor } from "@tiptap/react";
@@ -317,10 +317,12 @@ const ContractTemplateEditor = () => {
           <DialogHeader>
             <DialogTitle className="font-display">Aperçu du contrat (données fictives)</DialogTitle>
           </DialogHeader>
-          <div
-            className="rounded-xl border border-border bg-white text-[13px]"
-            dangerouslySetInnerHTML={{ __html: sanitizeContractHtml(previewHtml || "") }}
-          />
+          <div className="rounded-xl border border-border bg-white text-[13px]">
+            <style dangerouslySetInnerHTML={{ __html: CONTRACT_CSS }} />
+            <div
+              dangerouslySetInnerHTML={{ __html: sanitizeContractHtml((previewHtml || "").replace(/<style[\s\S]*?<\/style>/gi, "")) }}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>

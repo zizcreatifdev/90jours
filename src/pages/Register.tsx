@@ -14,7 +14,7 @@ import { useCohorts } from "@/hooks/use-cohorts";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Users, CheckCircle, Loader2, Bell, AlertCircle, RefreshCw } from "lucide-react";
+import { Users, CheckCircle, Loader2, Bell, AlertCircle, RefreshCw, Shield } from "lucide-react";
 import PasswordStrengthIndicator, { getPasswordStrength } from "@/components/PasswordStrengthIndicator";
 import WaitlistForm from "@/components/WaitlistForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -33,6 +33,7 @@ const Register = () => {
   const [waitlistFormationId, setWaitlistFormationId] = useState<string | null>(null);
   const [waitlistOpen, setWaitlistOpen] = useState(false);
   const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   // Fetch formations where current user is staff
   useEffect(() => {
@@ -42,6 +43,17 @@ const Register = () => {
       if (data) setStaffFormationIds((data as any[]).map(d => d.formation_id));
     };
     fetchStaffFormations();
+  }, [user]);
+
+  // Bloquer l'inscription si l'utilisateur connecte est super_admin
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "super_admin")
+      .maybeSingle()
+      .then(({ data }) => { if (data) setIsSuperAdmin(true); });
   }, [user]);
 
   // Fix URL bypass: if cohort from URL is full, clear selection and open waitlist
@@ -198,6 +210,27 @@ const Register = () => {
   };
 
   const showWaitlistOnly = aucuneCohorteOuverte || toutesPleines;
+
+  if (isSuperAdmin) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-16">
+          <div className="mx-auto max-w-md text-center rounded-2xl border border-border bg-card p-10 shadow-card">
+            <Shield className="h-12 w-12 text-accent mx-auto mb-4" />
+            <h2 className="font-display text-xl font-bold text-foreground mb-2">Compte administrateur</h2>
+            <p className="text-muted-foreground mb-6">
+              Vous etes connecte en tant qu'administrateur. Deconnectez-vous pour creer un compte etudiant.
+            </p>
+            <Button onClick={() => navigate("/admin")}>
+              Aller au dashboard admin
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

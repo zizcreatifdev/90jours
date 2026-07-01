@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { exportToCsv } from "@/lib/export-csv";
 import { Eye, Download, FileSignature } from "lucide-react";
 import { sanitizeContractHtml } from "@/lib/sanitize-html";
+import { CONTRACT_CSS } from "@/lib/contract-style";
 import { useCohorts } from "@/hooks/use-cohorts";
 
 interface SignedContract {
@@ -103,6 +104,7 @@ const SignedContractsPanel = () => {
   };
 
   const viewSnap = contracts.find(c => c.id === viewContract)?.contract_snapshot;
+  const viewSnapBody = (viewSnap || "").replace(/<style[\s\S]*?<\/style>/gi, "");
 
   return (
     <div className="space-y-5">
@@ -204,10 +206,12 @@ const SignedContractsPanel = () => {
           <DialogHeader>
             <DialogTitle className="font-display">Contrat signé</DialogTitle>
           </DialogHeader>
-          <div
-            className="rounded-xl border border-border bg-white text-[13px]"
-            dangerouslySetInnerHTML={{ __html: sanitizeContractHtml(viewSnap || "<p>Snapshot non disponible.</p>") }}
-          />
+          <div className="rounded-xl border border-border bg-white text-[13px]">
+            <style dangerouslySetInnerHTML={{ __html: CONTRACT_CSS }} />
+            <div
+              dangerouslySetInnerHTML={{ __html: sanitizeContractHtml(viewSnapBody || '<div class="contract-doc"><div class="page"><p>Snapshot non disponible.</p></div></div>') }}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>

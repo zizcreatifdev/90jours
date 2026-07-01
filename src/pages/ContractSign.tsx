@@ -9,7 +9,7 @@ import RequiredLabel from "@/components/ui/required-label";
 import FieldError from "@/components/ui/field-error";
 import { Loader2, ArrowDown, CheckCircle2, FileSignature, AlertCircle, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { extractContractBody, renderContractDocument } from "@/lib/contract-style";
+import { extractContractBody, renderContractDocument, CONTRACT_CSS } from "@/lib/contract-style";
 import { sanitizeContractHtml } from "@/lib/sanitize-html";
 
 // ── Variable replacement ──────────────────────────────────────────────────────
@@ -416,9 +416,11 @@ const ContractSign = () => {
               onScroll={handleScroll}
               className="h-[65vh] overflow-y-auto rounded-2xl border border-border bg-white shadow-card"
             >
+              {/* Style injecte directement (source interne, non soumis a DOMPurify qui strip <style>) */}
+              <style dangerouslySetInnerHTML={{ __html: CONTRACT_CSS }} />
               <div
                 className="text-[13px]"
-                dangerouslySetInnerHTML={{ __html: sanitizeContractHtml(contractHtml) }}
+                dangerouslySetInnerHTML={{ __html: sanitizeContractHtml(contractHtml.replace(/<style[\s\S]*?<\/style>/gi, "")) }}
               />
             </div>
           </div>

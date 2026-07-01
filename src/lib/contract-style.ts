@@ -89,3 +89,10 @@ export function extractContractBody(content: string): string {
 export function renderContractDocument(body: string): string {
   return `${CONTRACT_STYLE}\n${ENVELOPE_OPEN}\n${body}\n${ENVELOPE_CLOSE}`;
 }
+
+/**
+ * CSS brut (sans balises <style>) pour injection via <style dangerouslySetInnerHTML>.
+ * A utiliser dans les composants React a la place de CONTRACT_STYLE afin d'eviter
+ * que DOMPurify ne strip la balise <style> lors de la sanitisation du HTML.
+ */
+export const CONTRACT_CSS = CONTRACT_STYLE.replace(/^<style[^>]*>\n?/, "").replace(/\n?<\/style>$/, "");
