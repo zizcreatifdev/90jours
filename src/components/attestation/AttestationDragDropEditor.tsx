@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Plus, Type, Image, Layers, Save, RotateCcw, Award } from "lucide-react";
+import { Loader2, Type, Image, Layers, Save, RotateCcw, Award, Square, Minus } from "lucide-react";
 import { TemplateElement, AttestationTemplate, DEFAULT_TEMPLATE } from "./types";
 import DraggableElement from "./DraggableElement";
 import ElementProperties from "./ElementProperties";
@@ -122,6 +122,29 @@ const AttestationDragDropEditor = () => {
     setSelectedElement(id);
   };
 
+  const addRect = () => {
+    const id = `rect_${Date.now()}`;
+    const newEl: TemplateElement = {
+      id, type: "rect",
+      x: 30, y: 40, width: 40, height: 20,
+      color: template.primaryColor,
+    };
+    setTemplate(prev => ({ ...prev, elements: [...prev.elements, newEl] }));
+    setSelectedElement(id);
+  };
+
+  const addLine = () => {
+    const id = `line_${Date.now()}`;
+    const newEl: TemplateElement = {
+      id, type: "line",
+      x: 10, y: 50, width: 80, height: 0.4,
+      color: template.primaryColor,
+      orientation: "horizontal",
+    };
+    setTemplate(prev => ({ ...prev, elements: [...prev.elements, newEl] }));
+    setSelectedElement(id);
+  };
+
   const addLogo60jours = () => {
     const id = `image_${Date.now()}`;
     const newEl: TemplateElement = {
@@ -225,8 +248,14 @@ const AttestationDragDropEditor = () => {
               <Button variant="outline" size="sm" onClick={addLogo60jours} className="gap-1.5 text-xs">
                 <Award className="h-3.5 w-3.5" /> Logo 60jours
               </Button>
+              <Button variant="outline" size="sm" onClick={addRect} className="gap-1.5 text-xs">
+                <Square className="h-3.5 w-3.5" /> Rectangle
+              </Button>
+              <Button variant="outline" size="sm" onClick={addLine} className="gap-1.5 text-xs">
+                <Minus className="h-3.5 w-3.5" /> Ligne
+              </Button>
               <Button variant="outline" size="sm" onClick={() => addElement("pattern")} className="gap-1.5 text-xs">
-                <Layers className="h-3.5 w-3.5" /> Bande déco
+                <Layers className="h-3.5 w-3.5" /> Bande degrade
               </Button>
               <div className="flex-1" />
               <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1 text-xs text-muted-foreground">
@@ -309,7 +338,7 @@ const AttestationDragDropEditor = () => {
                       onClick={() => setSelectedElement(el.id)}
                       className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-secondary transition-colors flex items-center gap-2"
                     >
-                      {el.type === "text" ? <Type className="h-3 w-3" /> : el.type === "image" ? <Image className="h-3 w-3" /> : <Layers className="h-3 w-3" />}
+                      {el.type === "text" ? <Type className="h-3 w-3" /> : el.type === "image" ? <Image className="h-3 w-3" /> : el.type === "rect" ? <Square className="h-3 w-3" /> : el.type === "line" ? <Minus className="h-3 w-3" /> : <Layers className="h-3 w-3" />}
                       <span className="truncate">{el.type === "text" ? (el.content || "Texte").slice(0, 30) : el.label || el.id}</span>
                     </button>
                   ))}

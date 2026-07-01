@@ -82,9 +82,13 @@ async function renderAttestationToDataUrl(
   const imagePromises: Promise<void>[] = [];
 
   const sorted = [...template.elements].sort((a: TemplateElement, b: TemplateElement) => {
-    const rankA = a.type === "image" && a.isBackground ? 0 : a.type === "pattern" ? 1 : 2;
-    const rankB = b.type === "image" && b.isBackground ? 0 : b.type === "pattern" ? 1 : 2;
-    return rankA - rankB;
+    const rank = (el: TemplateElement) => {
+      if (el.type === "rect") return 0;
+      if (el.type === "image" && el.isBackground) return 1;
+      if (el.type === "pattern" || el.type === "line") return 2;
+      return 3;
+    };
+    return rank(a) - rank(b);
   });
 
   for (const el of sorted) {
@@ -97,7 +101,12 @@ async function renderAttestationToDataUrl(
       `height:${el.height}%`,
     ].join(";");
 
-    if (el.type === "pattern") {
+    if (el.type === "rect") {
+      div.style.backgroundColor = el.color || primaryColor;
+      if (el.borderRadius) div.style.borderRadius = `${el.borderRadius}px`;
+    } else if (el.type === "line") {
+      div.style.backgroundColor = el.color || "#cccccc";
+    } else if (el.type === "pattern") {
       const color = el.patternColor || primaryColor;
       if (el.patternType === "topBand" || el.patternType === "bottomBand") {
         div.style.background = `linear-gradient(135deg,${color},${lightenColor(color, 60)})`;
@@ -297,6 +306,7 @@ const AttestationIssuer = () => {
 
       const studentIds = [...new Set(studentEnrollments.map(e => e.user_id).filter(Boolean))];
       let profileMap = new Map<string, { first_name: string; last_name: string }>();
+
       if (studentIds.length > 0) {
         const { data: profiles } = await supabase
           .from("profiles")
@@ -394,7 +404,6 @@ const AttestationIssuer = () => {
       return;
     }
 
-    // Lire la ligne creee pour obtenir issued_at et certificate_number (generes par DB)
     const { data: newAtt } = await supabase
       .from("attestations")
       .select("certificate_number, issued_at")
@@ -430,7 +439,6 @@ const AttestationIssuer = () => {
 
     toast({ title: "Attestation delivree. Generation du PDF..." });
 
-    // Generer et stocker le PDF immutable avec la date d'emission
     const student = students.find(s => s.user_id === studentId);
     if (student) {
       const cohortFull = await loadCohortFullData(selectedCohort);
@@ -502,7 +510,6 @@ const AttestationIssuer = () => {
       return;
     }
 
-    // Lire les attestations creees pour obtenir issued_at et certificate_number
     const { data: newAtts } = await supabase
       .from("attestations")
       .select("user_id, certificate_number, issued_at")
@@ -537,7 +544,6 @@ const AttestationIssuer = () => {
       details: { cohort_id: selectedCohort, count: eligible.length, student_ids: eligible.map(s => s.user_id) },
     });
 
-    // Generer et stocker les PDFs avec progression
     const cohortFull = await loadCohortFullData(selectedCohort);
     if (cohortFull) {
       const template = buildTemplate(cohortFull);
@@ -580,6 +586,22 @@ const AttestationIssuer = () => {
     setIssuing(null);
   };
 
+  const handleRevoke = async (userId: string) => {
+    if (!user || !selectedCohort) return;
+    const { error } = await supabase.from("attestations").delete()
+      .eq("user_id", userId).eq("cohort_id", selectedCohort);
+    if (error) { toast({ title: "Erreur", description: error.message, variant: "destructive" }); return; }
+    await supabase.storage.from("attestations").remove([`${selectedCohort}/${userId}.pdf`]);
+    await supabase.from("audit_logs").insert({
+      performed_by: user.id, action: "attestation_revoked",
+      target_user_id: userId, details: { cohort_id: selectedCohort },
+    });
+    setStudents(prev => prev.map(s =>
+      s.user_id === userId ? { ...s, has_attestation: false, attestation_number: null, issued_at: null } : s
+    ));
+    toast({ title: "Attestation revoquee." });
+  };
+
   const exportBatchPdf = async () => {
     const studentsToExport = students.filter(s => s.has_attestation);
     if (studentsToExport.length === 0) {
@@ -609,7 +631,6 @@ const AttestationIssuer = () => {
       setExportProgress({ current: i + 1, total: studentsToExport.length });
 
       try {
-        // Utiliser issued_at stocke en base (date d'emission officielle, pas la date du jour)
         const issuedDate = s.issued_at
           ? new Date(s.issued_at).toLocaleDateString("fr-FR", {
               day: "numeric",
@@ -654,34 +675,6 @@ const AttestationIssuer = () => {
 
     setExportProgress(null);
     toast({ title: `${studentsToExport.length} attestation(s) exportee(s) dans le ZIP !` });
-  };
-
-  const handleRevoke = async (userId: string) => {
-    if (!user || !selectedCohort) return;
-    const { error } = await supabase
-      .from("attestations")
-      .delete()
-      .eq("user_id", userId)
-      .eq("cohort_id", selectedCohort);
-    if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-      return;
-    }
-    await supabase.storage.from("attestations").remove([`${selectedCohort}/${userId}.pdf`]);
-    await supabase.from("audit_logs").insert({
-      performed_by: user.id,
-      action: "attestation_revoked",
-      target_user_id: userId,
-      details: { cohort_id: selectedCohort },
-    });
-    setStudents(prev =>
-      prev.map(s =>
-        s.user_id === userId
-          ? { ...s, has_attestation: false, attestation_number: null, issued_at: null }
-          : s
-      )
-    );
-    toast({ title: "Attestation revoquee." });
   };
 
   const eligibleCount = students.filter(s =>
@@ -817,35 +810,51 @@ const AttestationIssuer = () => {
                       </td>
                       <td className="px-4 py-3">
                         {s.has_attestation ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
-                            <CheckCircle2 className="h-3 w-3" /> {s.attestation_number || "Delivree"}
-                          </span>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
+                              <CheckCircle2 className="h-3 w-3" /> {s.attestation_number || "Delivree"}
+                            </span>
+                            {s.issued_at && (
+                              <span className="text-[10px] text-muted-foreground">
+                                le {new Date(s.issued_at).toLocaleDateString("fr-FR")}
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">-</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5">
-                          {/* Apercu : visible si eligible ou deja delivree */}
-                          {(s.has_attestation || canIssue) && (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {s.has_attestation && (
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                              title="Apercu"
                               onClick={() => setPreviewStudent(s)}
+                              className="gap-1 text-xs h-7 px-2"
                             >
-                              <Eye className="h-3.5 w-3.5" />
+                              <Eye className="h-3 w-3" /> Apercu
                             </Button>
                           )}
-                          {/* Delivrer ou statut */}
                           {s.has_attestation ? (
-                            <span className="text-xs text-muted-foreground">Delivree</span>
+                            isOwner && (
+                              <ConfirmDialog
+                                trigger={
+                                  <Button size="sm" variant="ghost" className="gap-1 text-xs h-7 px-2 text-destructive hover:text-destructive">
+                                    <XCircle className="h-3 w-3" /> Revoquer
+                                  </Button>
+                                }
+                                title="Revoquer l'attestation ?"
+                                description={`L'attestation de ${s.first_name} ${s.last_name} sera supprimee. Cette action est irreversible.`}
+                                confirmLabel="Revoquer"
+                                onConfirm={() => handleRevoke(s.user_id)}
+                              />
+                            )
                           ) : canIssue ? (
                             <Button
                               size="sm"
                               variant="outline"
-                              disabled={issuing === s.user_id || exportProgress !== null}
+                              disabled={issuing === s.user_id}
                               onClick={() => handleIssue(s.user_id)}
                               className="gap-1 text-xs"
                             >
@@ -861,26 +870,6 @@ const AttestationIssuer = () => {
                                 : "Paiement incomplet"}
                             </span>
                           )}
-                          {/* Revoquer : owner uniquement, attestation delivree */}
-                          {isOwner && s.has_attestation && (
-                            <ConfirmDialog
-                              trigger={
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
-                                  title="Revoquer"
-                                >
-                                  <XCircle className="h-3.5 w-3.5" />
-                                </Button>
-                              }
-                              title="Revoquer l'attestation ?"
-                              description={`Revoquer l'attestation de ${s.first_name} ${s.last_name} ? Cette action est irreversible.`}
-                              confirmLabel="Revoquer"
-                              variant="destructive"
-                              onConfirm={() => handleRevoke(s.user_id)}
-                            />
-                          )}
                         </div>
                       </td>
                     </tr>
@@ -895,13 +884,12 @@ const AttestationIssuer = () => {
         </>
       )}
 
-      {/* Dialog apercu attestation */}
       <Dialog open={previewStudent !== null} onOpenChange={(open) => { if (!open) setPreviewStudent(null); }}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="font-display">
               Apercu de l'attestation
-              {previewStudent && ` — ${previewStudent.first_name} ${previewStudent.last_name}`}
+              {previewStudent && ` - ${previewStudent.first_name} ${previewStudent.last_name}`}
             </DialogTitle>
           </DialogHeader>
           {previewStudent && cohortFullData ? (

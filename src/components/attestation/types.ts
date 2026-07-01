@@ -1,6 +1,6 @@
 export interface TemplateElement {
   id: string;
-  type: "text" | "image" | "pattern";
+  type: "text" | "image" | "pattern" | "rect" | "line";
   x: number; // percentage 0-100
   y: number; // percentage 0-100
   width: number; // percentage
@@ -20,6 +20,10 @@ export interface TemplateElement {
   // Pattern/decoration props
   patternType?: "border" | "topBand" | "bottomBand" | "cornerOrnaments";
   patternColor?: string;
+  // Rect props (solid color rectangle)
+  borderRadius?: number; // px
+  // Line props
+  orientation?: "horizontal" | "vertical";
 }
 
 export interface AttestationTemplate {
@@ -32,11 +36,11 @@ export interface AttestationTemplate {
 
 // Template Moderne : sidebar navy a gauche, contenu a droite.
 // A4 paysage 842x595px.
-// Renderer supporte "text", "image", et "pattern" (topBand/bottomBand = gradient).
-// La sidebar navy utilise patternType "topBand" avec patternColor #0E1B2E
-// (gradient #0E1B2E -> rgb(74,87,106) a 135deg, effet sobre sur fond etroit).
+// Utilise "rect" pour les aplats de couleur unie (sidebar, separateur),
+// "line" pour les filets fins, "image" pour le logo/signature/tampon,
+// "text" pour tous les blocs texte.
 export const DEFAULT_TEMPLATE: AttestationTemplate = {
-  backgroundColor: "#ffffff",
+  backgroundColor: "#FAFAF8",
   primaryColor: "#C5A05A",
   width: 842,
   height: 595,
@@ -44,22 +48,20 @@ export const DEFAULT_TEMPLATE: AttestationTemplate = {
 
     // ── SIDEBAR GAUCHE (x : 0-28.5%) ─────────────────────────────────────────
 
-    // Fond navy de la sidebar (gradient diagonal sobre)
+    // Fond navy de la sidebar (couleur unie)
     {
       id: "sidebarBg",
-      type: "pattern",
+      type: "rect",
       x: 0, y: 0, width: 28.5, height: 100,
-      patternType: "topBand",
-      patternColor: "#0E1B2E",
+      color: "#0E1B2E",
     },
 
     // Filet or vertical de separation
     {
       id: "sidebarDivider",
-      type: "pattern",
-      x: 28.2, y: 0, width: 0.6, height: 100,
-      patternType: "topBand",
-      patternColor: "#C5A05A",
+      type: "rect",
+      x: 28.5, y: 0, width: 0.5, height: 100,
+      color: "#C5A05A",
     },
 
     // Logo 60jours version blanche
@@ -71,14 +73,16 @@ export const DEFAULT_TEMPLATE: AttestationTemplate = {
       label: "Logo 60jours",
     },
 
-    // Filet or horizontal + nom de l'ecole
+    // Filet or horizontal sous le logo
     {
       id: "sidebarSep",
-      type: "pattern",
-      x: 2, y: 17, width: 24.5, height: 0.5,
-      patternType: "topBand",
-      patternColor: "#C5A05A",
+      type: "line",
+      x: 2, y: 17, width: 24.5, height: 0.4,
+      color: "#C5A05A",
+      orientation: "horizontal",
     },
+
+    // Nom de l'ecole
     {
       id: "labelDesCreatifs",
       type: "text",
@@ -242,10 +246,10 @@ export const DEFAULT_TEMPLATE: AttestationTemplate = {
     // Filet or sous le nom
     {
       id: "nameLine",
-      type: "pattern",
-      x: 34, y: 44, width: 58, height: 0.5,
-      patternType: "topBand",
-      patternColor: "#C5A05A",
+      type: "line",
+      x: 34, y: 44, width: 58, height: 0.4,
+      color: "#C5A05A",
+      orientation: "horizontal",
     },
 
     // Corps du certificat (3 lignes)
@@ -311,10 +315,10 @@ export const DEFAULT_TEMPLATE: AttestationTemplate = {
     },
     {
       id: "directorLine",
-      type: "pattern",
+      type: "line",
       x: 32, y: 90, width: 20, height: 0.3,
-      patternType: "bottomBand",
-      patternColor: "#cccccc",
+      color: "#cccccc",
+      orientation: "horizontal",
     },
     {
       id: "directorLabel",
