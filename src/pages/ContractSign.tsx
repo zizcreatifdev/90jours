@@ -199,10 +199,10 @@ const ContractSign = () => {
         formation: formation?.name || "60 Jours",
         cohorte: c.name,
         formateur: formateurName,
-        date_debut: new Date(c.start_date).toLocaleDateString("fr-FR", {
+        date_debut: new Date(c.start_date + "T00:00:00").toLocaleDateString("fr-FR", {
           day: "numeric", month: "long", year: "numeric",
         }),
-        date_fin: new Date(c.end_date).toLocaleDateString("fr-FR", {
+        date_fin: new Date(c.end_date + "T00:00:00").toLocaleDateString("fr-FR", {
           day: "numeric", month: "long", year: "numeric",
         }),
         montant: formation?.total_price != null

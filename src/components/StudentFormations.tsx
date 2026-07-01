@@ -54,7 +54,7 @@ const StudentFormations = () => {
             c !== null &&
             c.status !== "archived" &&
             c.status !== "completed" &&
-            new Date(c.end_date) >= today
+            new Date(c.end_date + "T00:00:00") >= today
           );
         }).length;
         setActiveEnrollmentCount(activeCount);
@@ -197,7 +197,7 @@ const StudentFormations = () => {
   const loading = cohortsLoading || enrollmentsLoading;
 
   const fmt = (d: string) =>
-    new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+    new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
   const fmtPrice = (p: number) =>
     new Intl.NumberFormat("fr-FR").format(p) + " FCFA";

@@ -255,8 +255,8 @@ const StaffDashboard = () => {
   const getStudentHealth = (progress: number) => {
     if (!selectedCohort?.start_date || !selectedCohort?.end_date) return null;
     const now = new Date();
-    const start = new Date(selectedCohort.start_date);
-    const end = new Date(selectedCohort.end_date);
+    const start = new Date(selectedCohort.start_date + "T00:00:00");
+    const end = new Date(selectedCohort.end_date + "T00:00:00");
     if (now < start) return null;
     const totalDays = Math.max(1, (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     const daysPassed = Math.min(totalDays, (now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));

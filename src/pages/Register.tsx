@@ -349,8 +349,8 @@ const Register = () => {
                             )}
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {new Date(cohort.start_date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })} au{" "}
-                            {new Date(cohort.end_date).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
+                            {new Date(cohort.start_date + "T00:00:00").toLocaleDateString("fr-FR", { month: "long", year: "numeric" })} au{" "}
+                            {new Date(cohort.end_date + "T00:00:00").toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}
                           </p>
                         </button>
                         <div className="flex items-center gap-2 flex-shrink-0">

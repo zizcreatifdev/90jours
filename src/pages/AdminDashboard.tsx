@@ -721,7 +721,7 @@ const AdminDashboard = () => {
                               )}
                             </td>
                             <td className="px-6 py-3.5 text-sm text-muted-foreground">
-                              {new Date(cohort.start_date).toLocaleDateString("fr-FR", { month: "short" })} au {new Date(cohort.end_date).toLocaleDateString("fr-FR", { month: "short", year: "numeric" })}
+                              {new Date(cohort.start_date + "T00:00:00").toLocaleDateString("fr-FR", { month: "short" })} au {new Date(cohort.end_date + "T00:00:00").toLocaleDateString("fr-FR", { month: "short", year: "numeric" })}
                             </td>
                             <td className="px-6 py-3.5 text-sm">{enrolled}/{cohort.capacity}</td>
                             <td className="px-6 py-3.5">

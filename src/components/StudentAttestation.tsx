@@ -129,7 +129,7 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
   const isEligible = attestation !== null;
   const studentName = `${profile?.first_name || ""} ${profile?.last_name || ""}`.trim();
 
-  const fmt = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  const fmt = (d: string) => new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4">

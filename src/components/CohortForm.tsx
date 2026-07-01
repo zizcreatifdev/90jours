@@ -78,7 +78,7 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
   useEffect(() => {
     if (!form.start_date) return;
     const days = COHORT_TYPE_DAYS[form.cohort_type] ?? 60;
-    const start = new Date(form.start_date);
+    const start = new Date(form.start_date + "T00:00:00");
     start.setDate(start.getDate() + days);
     setForm(prev => ({ ...prev, end_date: start.toISOString().split("T")[0] }));
   }, [form.start_date, form.cohort_type]);

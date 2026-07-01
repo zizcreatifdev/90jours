@@ -71,7 +71,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
       <div className="flex items-center justify-between bg-[#0E1B2E] px-5 py-3">
         {cohort.start_date && cohort.end_date ? (
           <p className="text-[11px] font-medium text-white/70">
-            {Math.round((new Date(cohort.end_date).getTime() - new Date(cohort.start_date).getTime()) / (1000 * 60 * 60 * 24))} jours
+            {Math.round((new Date(cohort.end_date + "T00:00:00").getTime() - new Date(cohort.start_date + "T00:00:00").getTime()) / (1000 * 60 * 60 * 24))} jours
           </p>
         ) : (
           <span />
@@ -114,9 +114,9 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
         <div className="mt-4 space-y-2 border-t border-border pt-4">
           {/* Dates */}
           <p className="text-xs text-muted-foreground">
-            {new Date(cohort.start_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+            {new Date(cohort.start_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
             <span className="mx-1.5">-</span>
-            {new Date(cohort.end_date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+            {new Date(cohort.end_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
           </p>
           {/* Places + CTA */}
           <div className="flex items-center justify-between gap-2">

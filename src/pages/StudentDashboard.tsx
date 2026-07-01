@@ -141,7 +141,7 @@ const StudentDashboard = () => {
   const enrollment = allEnrollments.find(e => e.id === selectedEnrollmentId);
   const cohort = enrollment?.cohorts;
   const isArchiveMode = cohort
-    ? cohort.status === "archived" || cohort.status === "completed" || new Date(cohort.end_date) < new Date()
+    ? cohort.status === "archived" || cohort.status === "completed" || new Date(cohort.end_date + "T00:00:00") < new Date()
     : false;
 
   // Persist selection
@@ -156,7 +156,7 @@ const StudentDashboard = () => {
       try {
         // Onboarding gate: redirect if an active contract template exists and is not yet signed.
         // Skip for terminated/archived cohorts (contract was already signed at enrollment time).
-        const isTerminated = cohort.status === "archived" || cohort.status === "completed" || new Date(cohort.end_date) < new Date();
+        const isTerminated = cohort.status === "archived" || cohort.status === "completed" || new Date(cohort.end_date + "T00:00:00") < new Date();
         if (!isTerminated) {
           const formationId = cohort.formation_id;
           let templateFound = false;
@@ -394,8 +394,8 @@ const StudentDashboard = () => {
 
   const deliveredCount = briefSubmissions.length;
   const progress = publishedBriefCount > 0 ? Math.round((deliveredCount / publishedBriefCount) * 100) : 0;
-  const startDate = new Date(cohort.start_date);
-  const endDate = new Date(cohort.end_date);
+  const startDate = new Date(cohort.start_date + "T00:00:00");
+  const endDate = new Date(cohort.end_date + "T00:00:00");
   const daysTotal = enrollment.formation_duration_days || Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
   const now = new Date();
   const daysPassed = Math.max(0, Math.min(daysTotal, Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))));
