@@ -15,7 +15,7 @@ export default defineConfig(() => ({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "pwa-icon.svg"],
+      includeAssets: ["favicon.ico", "pwa-icon.svg", "logos/Logo60jours_noir.png", "logos/Logo60jours_blanc.png"],
       workbox: {
         navigateFallbackDenylist: [/^\/~oauth/],
         importScripts: ["/custom-sw.js"],
@@ -31,13 +31,13 @@ export default defineConfig(() => ({
         icons: [
           {
             src: "/logos/Logo60jours_noir.png",
-            sizes: "any",
+            sizes: "192x192",
             type: "image/png",
             purpose: "any",
           },
           {
             src: "/logos/Logo60jours_noir.png",
-            sizes: "any",
+            sizes: "512x512",
             type: "image/png",
             purpose: "maskable",
           },

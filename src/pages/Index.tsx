@@ -361,7 +361,19 @@ const Index = () => {
             {settings.logo_url ? (
               <img src={settings.logo_url} alt="Logo" className="h-14 w-auto md:h-20" />
             ) : (
-              <span className="font-display text-3xl font-semibold tracking-tight text-accent md:text-4xl">60</span>
+              <>
+                <img
+                  src="/logos/Logo60jours_blanc.svg"
+                  alt="60jours"
+                  className="h-14 w-auto object-contain md:h-20"
+                  onError={(e) => {
+                    e.currentTarget.classList.add("hidden");
+                    const next = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (next) next.classList.remove("hidden");
+                  }}
+                />
+                <span className="hidden font-display text-3xl font-semibold tracking-tight text-accent md:text-4xl">60</span>
+              </>
             )}
           </Link>
 

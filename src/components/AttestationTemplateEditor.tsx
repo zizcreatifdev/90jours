@@ -291,9 +291,20 @@ export const AttestationPreview = ({
           {logoUrl ? (
             <img src={logoUrl} alt="Logo" className="h-16 w-auto object-contain" crossOrigin="anonymous" />
           ) : (
-            <div className="flex items-center justify-center">
-              <span className="text-3xl font-bold tracking-tight" style={{ color }}>60 JOURS</span>
-            </div>
+            <>
+              <img
+                src="/logos/Logo60jours_noir.svg"
+                alt="60jours"
+                className="h-16 w-auto object-contain"
+                crossOrigin="anonymous"
+                onError={(e) => {
+                  e.currentTarget.classList.add("hidden");
+                  const next = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (next) next.classList.remove("hidden");
+                }}
+              />
+              <span className="hidden text-3xl font-bold tracking-tight" style={{ color }}>60 JOURS</span>
+            </>
           )}
         </div>
 
