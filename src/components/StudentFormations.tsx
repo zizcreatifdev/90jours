@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { GraduationCap, Users, Calendar, Loader2, CheckCircle, AlertCircle, Bell } from "lucide-react";
+import { GraduationCap, Users, Calendar, Loader2, CheckCircle, AlertCircle, Bell, UserCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface UserEnrollment {
   cohort_id: string;
@@ -75,13 +76,16 @@ const StudentFormations = () => {
       });
   }, [user]);
 
-  // Non-archived cohorts the user is not already enrolled in and does not teach
-  const availableCohorts = cohorts.filter(
-    c =>
-      c.status !== "archived" &&
-      !enrolledCohortIds.has(c.id) &&
-      !staffFormationIds.includes(c.formation_id ?? "")
-  );
+  // Toutes les cohortes non-archivees, triees : disponibles d'abord, puis inscrites, puis formateur
+  const visibleCohorts = cohorts
+    .filter(c => c.status !== "archived")
+    .sort((a, b) => {
+      const rank = (c: CohortRow) =>
+        enrolledCohortIds.has(c.id) ? 2
+        : staffFormationIds.includes(c.formation_id ?? "") ? 3
+        : 1;
+      return rank(a) - rank(b);
+    });
 
   const atLimit = activeEnrollmentCount >= 2;
 
@@ -236,29 +240,35 @@ const StudentFormations = () => {
         </div>
       )}
 
-      {/* Empty state */}
-      {availableCohorts.length === 0 ? (
+      {/* Empty state : aucune cohorte du tout (ni dispo, ni inscrit, ni formateur) */}
+      {visibleCohorts.length === 0 ? (
         <div className="rounded-2xl border border-border bg-card p-12 text-center">
           <GraduationCap className="mx-auto h-10 w-10 text-muted-foreground mb-4" />
           <p className="font-display text-base font-semibold text-foreground">Aucune formation disponible</p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Vous etes inscrit a toutes les formations ouvertes, ou aucune nouvelle session n'est programmee pour le moment.
+            Aucune session n'est programmee pour le moment.
           </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {availableCohorts.map(cohort => {
+          {visibleCohorts.map(cohort => {
             const enrolled = cohort.enrollment_count ?? 0;
             const spotsLeft = cohort.capacity - enrolled;
             const isFull = spotsLeft <= 0;
             const isEnrolling = enrollingId === cohort.id;
             const isSuccess = successId === cohort.id;
             const isWaitlisted = waitlistSuccessIds.has(cohort.id);
+            const isStaffCohort = staffFormationIds.includes(cohort.formation_id ?? "");
+            const isEnrolledCohort = enrolledCohortIds.has(cohort.id);
+            const isGrayed = isStaffCohort || isEnrolledCohort;
 
             return (
               <div
                 key={cohort.id}
-                className="rounded-2xl border border-border bg-card p-5 shadow-card transition-colors hover:border-accent/30"
+                className={cn(
+                  "rounded-2xl border border-border bg-card p-5 shadow-card transition-colors",
+                  isGrayed ? "opacity-60" : "hover:border-accent/30"
+                )}
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -322,7 +332,17 @@ const StudentFormations = () => {
 
                   {/* Action */}
                   <div className="shrink-0 flex items-center">
-                    {isSuccess ? (
+                    {isStaffCohort ? (
+                      <div className="flex items-center gap-1.5 text-sm font-medium text-accent">
+                        <UserCheck className="h-4 w-4" />
+                        Formateur
+                      </div>
+                    ) : isEnrolledCohort ? (
+                      <div className="flex items-center gap-1.5 text-sm font-medium text-green-600 dark:text-green-400">
+                        <CheckCircle className="h-4 w-4" />
+                        Inscrit
+                      </div>
+                    ) : isSuccess ? (
                       <div className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400 font-medium">
                         <CheckCircle className="h-4 w-4" />
                         Inscrit !
