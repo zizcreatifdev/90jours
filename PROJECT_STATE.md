@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 1er juillet 2026
 **Branche active**: `main`
-**Prompt actuel**: multi-enrollment : selecteur cohorte etudiant + mode archive formations terminees
+**Prompt actuel**: etudiant : onglet formations internes (inscription, liste attente, limite 2 actives)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.

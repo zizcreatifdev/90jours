@@ -99,6 +99,7 @@ const studentLinks: SidebarLink[] = [
   { href: "/student?tab=briefs", label: "Mes briefs", icon: ClipboardList },
   { href: "/student?tab=portfolio", label: "Portfolio", icon: Briefcase },
   { href: "/student?tab=payments", label: "Paiements", icon: Wallet },
+  { href: "/student?tab=formations", label: "Formations", icon: GraduationCap, sectionLabel: "Inscription" },
 ];
 
 interface DashboardSidebarProps {

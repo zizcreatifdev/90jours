@@ -11,6 +11,7 @@ import StudentPortfolio from "@/components/StudentPortfolio";
 import NotificationPanel from "@/components/NotificationPanel";
 import StudentAttestation from "@/components/StudentAttestation";
 import StudentMessages from "@/components/StudentMessages";
+import StudentFormations from "@/components/StudentFormations";
 import DashboardCalendar from "@/components/DashboardCalendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -336,13 +337,55 @@ const StudentDashboard = () => {
   }
 
   if (allEnrollments.length === 0 || !enrollment || !cohort) {
+    // Formations tab is accessible even without a current enrollment
+    if (activeTab === "formations") {
+      return (
+        <div className="flex min-h-screen bg-background">
+          <DashboardSidebar role="student" mobileOpen={sidebarOpen} onMobileOpenChange={setSidebarOpen} />
+          <main className="flex-1 overflow-auto">
+            <header className="flex items-center justify-between bg-card px-4 py-4 md:px-8 md:py-5 border-b border-border">
+              <div className="flex items-center gap-3">
+                <button onClick={() => setSidebarOpen(true)} aria-label="Ouvrir le menu" className="flex h-10 w-10 items-center justify-center rounded-xl border border-border text-foreground md:hidden">
+                  <Menu className="h-5 w-5" />
+                </button>
+                <div>
+                  <h1 className="font-display text-lg md:text-xl font-bold text-foreground">
+                    {greeting()}, {profile?.first_name || "Etudiant"} !
+                  </h1>
+                  <p className="text-xs md:text-sm text-muted-foreground">Espace etudiant</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 md:gap-3">
+                <StudentProfile />
+                <Link to="/profile">
+                  <Avatar className="h-9 w-9 md:h-10 md:w-10 cursor-pointer hover:ring-2 hover:ring-accent/50 transition-all">
+                    <AvatarImage src={profile?.avatar_url || undefined} alt="Profil" className="object-cover" />
+                    <AvatarFallback className="bg-accent text-accent-foreground font-display font-bold text-xs md:text-sm">
+                      {(profile?.first_name?.[0] || "E").toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Link>
+                <NotificationPanel />
+              </div>
+            </header>
+            <div className="p-4 md:p-8">
+              <StudentFormations />
+            </div>
+          </main>
+        </div>
+      );
+    }
+
     return (
       <div className="flex min-h-screen bg-background">
-        <DashboardSidebar role="student" />
+        <DashboardSidebar role="student" mobileOpen={sidebarOpen} onMobileOpenChange={setSidebarOpen} />
         <main className="flex flex-1 items-center justify-center">
           <div className="text-center">
             <h2 className="font-display text-xl font-bold text-foreground mb-2">Pas encore inscrit</h2>
-            <p className="text-muted-foreground">Vous n'êtes inscrit à aucune cohorte pour le moment.</p>
+            <p className="text-muted-foreground mb-6">Vous n'etes inscrit a aucune cohorte pour le moment.</p>
+            <Button onClick={() => navigate("/student?tab=formations")}>
+              Voir les formations disponibles
+            </Button>
           </div>
         </main>
       </div>
@@ -692,6 +735,10 @@ const StudentDashboard = () => {
 
           {activeTab === "payments" && (
             <StudentPaymentStatus cohortId={cohort.id} formationName={enrollment.formation_name} formationColor={enrollment.formation_color || undefined} />
+          )}
+
+          {activeTab === "formations" && (
+            <StudentFormations />
           )}
         </div>
       </main>
