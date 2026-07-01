@@ -40,6 +40,15 @@ function lightenColor(hex: string, amount: number): string {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
+function calcDuration(startDate: string | null, endDate: string | null): string {
+  if (!startDate || !endDate) return "";
+  const days = Math.round(
+    (new Date(endDate + "T00:00:00").getTime() - new Date(startDate + "T00:00:00").getTime())
+    / (1000 * 60 * 60 * 24)
+  );
+  return `${days} jours`;
+}
+
 function replaceVars(
   text: string,
   vars: Record<string, string>
@@ -440,6 +449,7 @@ const AttestationIssuer = () => {
             student_name: `${student.first_name} ${student.last_name}`,
             formation_name: (cohortFull.formation as any)?.name || "",
             cohort_type_label: cohortTypeLabel,
+            duration: calcDuration(cohortFull.start_date, cohortFull.end_date),
             start_date: fmtDate(cohortFull.start_date),
             end_date: fmtDate(cohortFull.end_date),
             current_date: issuedDate,
@@ -533,6 +543,7 @@ const AttestationIssuer = () => {
       const template = buildTemplate(cohortFull);
       const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString("fr-FR") : "");
       const cohortTypeLabel = (cohortFull as any)?.cohort_type === "initiation" ? "Initiation" : "Perfectionnement";
+      const durationAll = calcDuration(cohortFull.start_date, cohortFull.end_date);
       setExportProgress({ current: 0, total: eligible.length });
 
       for (let i = 0; i < eligible.length; i++) {
@@ -551,6 +562,7 @@ const AttestationIssuer = () => {
               student_name: `${s.first_name} ${s.last_name}`,
               formation_name: (cohortFull.formation as any)?.name || "",
               cohort_type_label: cohortTypeLabel,
+              duration: durationAll,
               start_date: fmtDate(cohortFull.start_date),
               end_date: fmtDate(cohortFull.end_date),
               current_date: issuedDate,
@@ -586,6 +598,7 @@ const AttestationIssuer = () => {
     const formationName = formation?.name || "";
     const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString("fr-FR") : "");
     const cohortTypeLabel = (cohortFull as any)?.cohort_type === "initiation" ? "Initiation" : "Perfectionnement";
+    const durationExport = calcDuration(cohortFull.start_date, cohortFull.end_date);
 
     setExportProgress({ current: 0, total: studentsToExport.length });
 
@@ -609,6 +622,7 @@ const AttestationIssuer = () => {
           student_name: `${s.first_name} ${s.last_name}`,
           formation_name: formationName,
           cohort_type_label: cohortTypeLabel,
+          duration: durationExport,
           start_date: fmtDate(cohortFull.start_date),
           end_date: fmtDate(cohortFull.end_date),
           current_date: issuedDate,
