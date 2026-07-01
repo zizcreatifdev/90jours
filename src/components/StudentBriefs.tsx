@@ -108,7 +108,12 @@ const StudentBriefs = ({ cohortId, formationName, formationColor, isArchived }: 
   const refreshSubmissions = async () => {
     if (!user) return;
     const { data } = await supabase.from("brief_submissions").select("*").eq("user_id", user.id);
-    if (data) setSubmissions(data as Submission[]);
+    if (data) {
+      // Filtrer par les briefs de la cohorte courante pour eviter les melanges
+      // entre cohortes lorsqu'un etudiant a plusieurs inscriptions.
+      const briefIds = new Set(briefs.map(b => b.id));
+      setSubmissions(data.filter(s => briefIds.has(s.brief_id)) as Submission[]);
+    }
   };
 
   useEffect(() => {
@@ -118,8 +123,18 @@ const StudentBriefs = ({ cohortId, formationName, formationColor, isArchived }: 
         supabase.from("briefs").select("*, brief_categories(name)").eq("cohort_id", cohortId).lte("publish_at", new Date().toISOString()).order("deadline", { ascending: true }),
         supabase.from("brief_submissions").select("*").eq("user_id", user.id),
       ]);
-      if (briefsRes.data) setBriefs(briefsRes.data.map((b: any) => ({ ...b, category_name: b.brief_categories?.name, brief_frequency: b.brief_frequency })) as Brief[]);
-      if (subsRes.data) setSubmissions(subsRes.data as Submission[]);
+      if (briefsRes.data) {
+        const briefObjs = briefsRes.data.map((b: any) => ({ ...b, category_name: b.brief_categories?.name, brief_frequency: b.brief_frequency })) as Brief[];
+        setBriefs(briefObjs);
+        // M11 : filtrer les soumissions par les briefs de cette cohorte uniquement
+        // pour eviter qu'un statut d'une autre cohorte s'affiche ici.
+        if (subsRes.data) {
+          const briefIds = new Set(briefObjs.map(b => b.id));
+          setSubmissions(subsRes.data.filter(s => briefIds.has(s.brief_id)) as Submission[]);
+        }
+      } else if (subsRes.data) {
+        setSubmissions(subsRes.data as Submission[]);
+      }
       setLoading(false);
     };
     fetch();
@@ -163,6 +178,11 @@ const StudentBriefs = ({ cohortId, formationName, formationColor, isArchived }: 
 
   const handleDeliverSubmit = async () => {
     if (!user || !deliverTarget) return;
+    // M1 : au moins un des deux (URL ou fichier) est obligatoire
+    if (!deliverUrl.trim() && !deliverFile) {
+      toast({ title: "Livrable requis", description: "Veuillez fournir un lien ou joindre un fichier.", variant: "destructive" });
+      return;
+    }
     const { brief, submission } = deliverTarget;
     setDelivering(true);
 
@@ -400,14 +420,19 @@ const StudentBriefs = ({ cohortId, formationName, formationColor, isArchived }: 
                   {/* Boutons d'action */}
                   <div className="flex flex-shrink-0 gap-2">
                     {!sub && (
-                      <Button
-                        size="sm"
-                        variant={isPastDeadline ? "outline" : "secondary"}
-                        onClick={() => handleMarkCompleted(brief)}
-                        disabled={submitting === brief.id || !!isArchived}
-                      >
-                        {submitting === brief.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Réalisé</>}
-                      </Button>
+                      <div className="flex flex-col items-end gap-1">
+                        <Button
+                          size="sm"
+                          variant={isPastDeadline ? "outline" : "secondary"}
+                          onClick={() => handleMarkCompleted(brief)}
+                          disabled={submitting === brief.id || !!isArchived || isPastDeadline}
+                        >
+                          {submitting === brief.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Réalisé</>}
+                        </Button>
+                        {isPastDeadline && (
+                          <span className="text-[10px] text-orange-500 font-medium">Deadline dépassée</span>
+                        )}
+                      </div>
                     )}
                     {isCompleted && sub && (
                       <Button

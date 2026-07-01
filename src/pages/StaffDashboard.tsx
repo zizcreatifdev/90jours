@@ -1,4 +1,4 @@
-import { Users, FileText, Megaphone, BookOpen, Loader2, Search, Plus, Upload, Trash2, Mail, Download, ListTodo, ClipboardList, Briefcase, Menu, Award } from "lucide-react";
+import { Users, FileText, Megaphone, BookOpen, Loader2, Search, Plus, Upload, Trash2, Mail, Download, ListTodo, ClipboardList, Briefcase, Menu, Award, AlertCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import NotificationPanel from "@/components/NotificationPanel";
@@ -293,6 +293,24 @@ const StaffDashboard = () => {
         <DashboardSidebar role="staff" />
         <main className="flex-1 overflow-auto">
           <StaffDashboardSkeleton />
+        </main>
+      </div>
+    );
+  }
+
+  // M7 : formateur non assigne a aucune formation
+  if (!loadingAssignments && cohorts.length === 0) {
+    return (
+      <div className="flex min-h-screen bg-background">
+        <DashboardSidebar role="staff" mobileOpen={sidebarOpen} onMobileOpenChange={setSidebarOpen} />
+        <main className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center max-w-sm">
+            <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h2 className="font-display text-lg font-semibold text-foreground mb-2">Aucune formation assignee</h2>
+            <p className="text-sm text-muted-foreground">
+              Vous n'etes pas encore assigne a une formation. Contactez l'administration pour obtenir acces a votre espace.
+            </p>
+          </div>
         </main>
       </div>
     );

@@ -145,6 +145,18 @@ const Register = () => {
         });
         if (authError) throw authError;
         userId = authData.user?.id;
+
+        // Si Supabase retourne un utilisateur sans session, la confirmation par email
+        // est activee : l'inscription ne peut pas se poursuivre tant que l'email
+        // n'est pas confirme. On informe l'etudiant au lieu de le rediriger en silence.
+        if (authData.user && !authData.session) {
+          toast({
+            title: "Verifiez votre email",
+            description: "Un lien de confirmation a ete envoye a " + formData.email + ". Cliquez dessus pour activer votre compte, puis revenez vous inscrire.",
+          });
+          setSubmitting(false);
+          return;
+        }
       }
 
       if (!userId) throw new Error("Impossible de créer le compte");

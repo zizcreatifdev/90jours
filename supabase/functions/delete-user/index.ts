@@ -87,7 +87,20 @@ Deno.serve(async (req) => {
     await supabaseAdmin.from("push_subscriptions").delete().eq("user_id", user_id);
     await supabaseAdmin.from("promo_code_usage").delete().eq("user_id", user_id);
     await supabaseAdmin.from("seen_announcements").delete().eq("user_id", user_id);
+
+    // Messages : supprimer d'abord les replies dont le parent appartient a cet utilisateur
+    // (parent_id FK), puis les messages dont il est expediteur ou destinataire.
+    const { data: sentMessages } = await supabaseAdmin
+      .from("messages")
+      .select("id")
+      .eq("sender_id", user_id);
+    if (sentMessages && sentMessages.length > 0) {
+      const sentIds = sentMessages.map((m: any) => m.id);
+      await supabaseAdmin.from("messages").delete().in("parent_id", sentIds);
+    }
     await supabaseAdmin.from("messages").delete().eq("sender_id", user_id);
+    await supabaseAdmin.from("messages").delete().eq("recipient_id", user_id);
+
     await supabaseAdmin.from("staff_payments").delete().eq("staff_user_id", user_id);
 
     // Step 3 : nullify FK references that are not CASCADE (resources.uploaded_by, announcements.author_id)

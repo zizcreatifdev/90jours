@@ -65,75 +65,84 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
         }
       }
 
-      // Fetch briefs
-      let briefsQuery = supabase.from("briefs").select("id, title, description, deadline, cohort_id, publish_at");
-      if (targetCohortIds && targetCohortIds.length > 0) {
-        briefsQuery = briefsQuery.in("cohort_id", targetCohortIds);
-      }
-      const { data: briefs } = await briefsQuery;
+      // Un etudiant sans cohorte assignee ne doit voir aucun evenement officiel
+      // (briefs, masterclasses, recherches) d'autres cohortes.
+      const studentWithNoCohort = role === "student" && (!targetCohortIds || targetCohortIds.length === 0);
 
-      (briefs || []).forEach((b: any) => {
-        const info = cohortMap.get(b.cohort_id);
-        // Only show published briefs
-        if (new Date(b.publish_at) <= new Date()) {
+      // Fetch briefs (ignore si etudiant sans cohorte)
+      if (!studentWithNoCohort) {
+        let briefsQuery = supabase.from("briefs").select("id, title, description, deadline, cohort_id, publish_at");
+        if (targetCohortIds && targetCohortIds.length > 0) {
+          briefsQuery = briefsQuery.in("cohort_id", targetCohortIds);
+        }
+        const { data: briefs } = await briefsQuery;
+
+        (briefs || []).forEach((b: any) => {
+          const info = cohortMap.get(b.cohort_id);
+          if (new Date(b.publish_at) <= new Date()) {
+            allEvents.push({
+              id: b.id,
+              type: "brief",
+              title: b.title,
+              description: b.description,
+              date: new Date(b.deadline),
+              cohort_id: b.cohort_id,
+              cohort_name: info?.name,
+              formation_id: info?.formation_id,
+              formation_name: info?.formation_name,
+            });
+          }
+        });
+      }
+
+      // Fetch masterclass sessions (ignore si etudiant sans cohorte)
+      if (!studentWithNoCohort) {
+        let mcQuery = supabase.from("masterclass_sessions").select("id, title, description, scheduled_at, duration_minutes, cohort_id");
+        if (targetCohortIds && targetCohortIds.length > 0) {
+          mcQuery = mcQuery.in("cohort_id", targetCohortIds);
+        }
+        const { data: masterclasses } = await mcQuery;
+
+        (masterclasses || []).forEach((m: any) => {
+          const info = cohortMap.get(m.cohort_id);
           allEvents.push({
-            id: b.id,
-            type: "brief",
-            title: b.title,
-            description: b.description,
-            date: new Date(b.deadline),
-            cohort_id: b.cohort_id,
+            id: m.id,
+            type: "masterclass",
+            title: m.title,
+            description: m.description,
+            date: new Date(m.scheduled_at),
+            cohort_id: m.cohort_id,
+            cohort_name: info?.name,
+            formation_id: info?.formation_id,
+            formation_name: info?.formation_name,
+            duration_minutes: m.duration_minutes,
+          });
+        });
+      }
+
+      // Fetch research sessions (ignore si etudiant sans cohorte)
+      if (!studentWithNoCohort) {
+        let rsQuery = supabase.from("research_sessions").select("id, title, description, scheduled_at, cohort_id");
+        if (targetCohortIds && targetCohortIds.length > 0) {
+          rsQuery = rsQuery.in("cohort_id", targetCohortIds);
+        }
+        const { data: researchSessions } = await rsQuery;
+
+        (researchSessions || []).forEach((r: any) => {
+          const info = cohortMap.get(r.cohort_id);
+          allEvents.push({
+            id: r.id,
+            type: "research",
+            title: r.title,
+            description: r.description,
+            date: new Date(r.scheduled_at),
+            cohort_id: r.cohort_id,
             cohort_name: info?.name,
             formation_id: info?.formation_id,
             formation_name: info?.formation_name,
           });
-        }
-      });
-
-      // Fetch masterclass sessions
-      let mcQuery = supabase.from("masterclass_sessions").select("id, title, description, scheduled_at, duration_minutes, cohort_id");
-      if (targetCohortIds && targetCohortIds.length > 0) {
-        mcQuery = mcQuery.in("cohort_id", targetCohortIds);
-      }
-      const { data: masterclasses } = await mcQuery;
-
-      (masterclasses || []).forEach((m: any) => {
-        const info = cohortMap.get(m.cohort_id);
-        allEvents.push({
-          id: m.id,
-          type: "masterclass",
-          title: m.title,
-          description: m.description,
-          date: new Date(m.scheduled_at),
-          cohort_id: m.cohort_id,
-          cohort_name: info?.name,
-          formation_id: info?.formation_id,
-          formation_name: info?.formation_name,
-          duration_minutes: m.duration_minutes,
         });
-      });
-
-      // Fetch research sessions
-      let rsQuery = supabase.from("research_sessions").select("id, title, description, scheduled_at, cohort_id");
-      if (targetCohortIds && targetCohortIds.length > 0) {
-        rsQuery = rsQuery.in("cohort_id", targetCohortIds);
       }
-      const { data: researchSessions } = await rsQuery;
-
-      (researchSessions || []).forEach((r: any) => {
-        const info = cohortMap.get(r.cohort_id);
-        allEvents.push({
-          id: r.id,
-          type: "research",
-          title: r.title,
-          description: r.description,
-          date: new Date(r.scheduled_at),
-          cohort_id: r.cohort_id,
-          cohort_name: info?.name,
-          formation_id: info?.formation_id,
-          formation_name: info?.formation_name,
-        });
-      });
 
       // Fetch personal events (student only, RLS garantit que seul le proprietaire les voit)
       if (role === "student" && user) {

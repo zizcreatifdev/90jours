@@ -414,8 +414,14 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
                 </div>
                 {declareType && (
                   <div>
-                    <Label>Montant (FCFA) *</Label>
-                    <Input type="number" value={declareAmount} onChange={e => setDeclareAmount(e.target.value)} placeholder="Ex: 25000" min={1} />
+                    <Label>Montant (FCFA)</Label>
+                    <Input
+                      type="number"
+                      value={declareAmount}
+                      readOnly
+                      className="cursor-not-allowed bg-muted text-muted-foreground"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">Montant fixé selon le type de paiement sélectionné.</p>
                   </div>
                 )}
                 <div>
