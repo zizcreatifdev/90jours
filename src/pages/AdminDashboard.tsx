@@ -59,7 +59,7 @@ const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { cohorts, loading: cohortsLoading, isError: cohortsError, refetch } = useCohorts();
-  const { profile } = useAuth();
+  const { profile, isOwner } = useAuth();
   const { settings: siteSettings, refetch: refetchSettings } = useSiteSettings();
   const { toast } = useToast();
   const [students, setStudents] = useState<any[]>([]);
@@ -463,11 +463,13 @@ const AdminDashboard = () => {
             <StatsCard icon={Users} label="Total inscrits" value={totalEnrolled} subtitle={`sur ${totalCapacity} places`} />
             <StatsCard icon={GraduationCap} label="Cohortes actives" value={cohorts.filter(c => c.status === "active").length} subtitle="en cours" />
             <StatsCard icon={TrendingUp} label="Taux de remplissage" value={`${fillRate}%`} variant="accent" />
-            <div className="rounded-xl bg-primary p-4 text-primary-foreground">
-              <h3 className="font-display text-xs font-semibold opacity-80">Revenus encaissés</h3>
-              <p className="mt-0.5 font-display text-2xl font-bold">{(paidRevenue / 1000000).toFixed(1)}M</p>
-              <p className="mt-0.5 text-[11px] opacity-60">FCFA (paiements confirmés)</p>
-            </div>
+            {isOwner && (
+              <div className="rounded-xl bg-primary p-4 text-primary-foreground">
+                <h3 className="font-display text-xs font-semibold opacity-80">Revenus encaissés</h3>
+                <p className="mt-0.5 font-display text-2xl font-bold">{(paidRevenue / 1000000).toFixed(1)}M</p>
+                <p className="mt-0.5 text-[11px] opacity-60">FCFA (paiements confirmés)</p>
+              </div>
+            )}
           </div>
 
           <Tabs value={searchParams.get("tab") || "overview"} onValueChange={(v) => setSearchParams({ tab: v })} className="space-y-6">
@@ -729,21 +731,23 @@ const AdminDashboard = () => {
                                     onConfirm={() => handleArchive(cohort.id)}
                                   />
                                 )}
-                                <ConfirmDialog
-                                  trigger={
-                                    <button
-                                      disabled={deleting === cohort.id}
-                                      className="flex h-8 w-8 items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
-                                      title="Supprimer définitivement"
-                                    >
-                                      {deleting === cohort.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                                    </button>
-                                  }
-                                  title="Supprimer définitivement cette cohorte ?"
-                                  description={`La cohorte "${cohort.name}" et toutes ses données (inscriptions, paiements, briefs, portfolios, attestations) seront supprimées définitivement. Cette action est irréversible.`}
-                                  confirmLabel="Supprimer"
-                                  onConfirm={() => handleDeleteCohort(cohort.id)}
-                                />
+                                {isOwner && (
+                                  <ConfirmDialog
+                                    trigger={
+                                      <button
+                                        disabled={deleting === cohort.id}
+                                        className="flex h-8 w-8 items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+                                        title="Supprimer définitivement"
+                                      >
+                                        {deleting === cohort.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                      </button>
+                                    }
+                                    title="Supprimer définitivement cette cohorte ?"
+                                    description={`La cohorte "${cohort.name}" et toutes ses données (inscriptions, paiements, briefs, portfolios, attestations) seront supprimées définitivement. Cette action est irréversible.`}
+                                    confirmLabel="Supprimer"
+                                    onConfirm={() => handleDeleteCohort(cohort.id)}
+                                  />
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -856,7 +860,7 @@ const AdminDashboard = () => {
                             </div>
                           </td>
                           <td className="px-6 py-3.5">
-                            {!u.roles.includes("super_admin") && (
+                            {isOwner && !u.roles.includes("super_admin") && (
                               <ConfirmDialog
                                 trigger={
                                   <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10">
@@ -890,26 +894,32 @@ const AdminDashboard = () => {
               </div>
             </TabsContent>
 
-            {/* Accounting Tab */}
-            <TabsContent value="accounting">
-              <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
-                <AccountingPanel />
-              </div>
-            </TabsContent>
+            {/* Accounting Tab - proprietaire uniquement */}
+            {isOwner && (
+              <TabsContent value="accounting">
+                <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+                  <AccountingPanel />
+                </div>
+              </TabsContent>
+            )}
 
-            {/* Audit Tab */}
-            <TabsContent value="audit">
-              <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
-                <AuditLogPanel />
-              </div>
-            </TabsContent>
+            {/* Audit Tab - proprietaire uniquement */}
+            {isOwner && (
+              <TabsContent value="audit">
+                <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+                  <AuditLogPanel />
+                </div>
+              </TabsContent>
+            )}
 
-            {/* Settings Tab */}
-            <TabsContent value="settings">
-              <div className="space-y-6">
-                <SiteSettingsPanel settings={siteSettings} onUpdated={refetchSettings} />
-              </div>
-            </TabsContent>
+            {/* Settings Tab - proprietaire uniquement */}
+            {isOwner && (
+              <TabsContent value="settings">
+                <div className="space-y-6">
+                  <SiteSettingsPanel settings={siteSettings} onUpdated={refetchSettings} />
+                </div>
+              </TabsContent>
+            )}
 
             {/* Contracts Tab */}
             <TabsContent value="contracts">
