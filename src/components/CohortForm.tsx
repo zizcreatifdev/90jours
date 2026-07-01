@@ -23,6 +23,8 @@ interface Formation {
   duration_days: number;
 }
 
+const COHORT_TYPE_DAYS: Record<string, number> = { standard: 60, initiation: 30 };
+
 const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -70,16 +72,14 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
     if (open) fetchFormations();
   }, [open]);
 
-  // Auto-calculate end_date when start_date or formation changes
+  // Auto-calculate end_date from cohort type (standard=60j, initiation=30j)
   useEffect(() => {
-    if (!form.start_date || !form.formation_id) return;
-    const selected = formations.find(f => f.id === form.formation_id);
-    if (!selected) return;
+    if (!form.start_date) return;
+    const days = COHORT_TYPE_DAYS[form.cohort_type] ?? 60;
     const start = new Date(form.start_date);
-    start.setDate(start.getDate() + selected.duration_days);
-    const endStr = start.toISOString().split("T")[0];
-    setForm(prev => ({ ...prev, end_date: endStr }));
-  }, [form.start_date, form.formation_id, formations]);
+    start.setDate(start.getDate() + days);
+    setForm(prev => ({ ...prev, end_date: start.toISOString().split("T")[0] }));
+  }, [form.start_date, form.cohort_type]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,12 +183,8 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
             <Select value={form.cohort_type} onValueChange={v => { setForm({ ...form, cohort_type: v }); handleBlur("cohort_type"); }}>
               <SelectTrigger aria-invalid={!!showError("cohort_type")}><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="standard">
-                  {form.formation_id && formations.find(f => f.id === form.formation_id)
-                    ? `Standard (${formations.find(f => f.id === form.formation_id)!.duration_days} jours)`
-                    : "Standard"}
-                </SelectItem>
-                <SelectItem value="initiation">Initiation</SelectItem>
+                <SelectItem value="standard">Standard (60 jours)</SelectItem>
+                <SelectItem value="initiation">Initiation (30 jours)</SelectItem>
               </SelectContent>
             </Select>
             <FieldError message={showError("cohort_type")} />
