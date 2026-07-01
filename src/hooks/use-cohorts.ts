@@ -35,54 +35,30 @@ const STALE_TIME = 5 * 60 * 1000;
 /**
  * Récupère les cohortes avec leur nombre d'inscrits (étudiants uniquement).
  *
- * Optimisation PERF-02 : deux requêtes parallèles au lieu de charger
- * 100 % des enrollments côté client.
- *   1. Cohortes + formation (inchangée)
- *   2. Staff/admin IDs (petit ensemble, ~quelques dizaines)
- *   3. COUNT groupé par cohort_id côté serveur (PostgREST 12 aggregate)
- *      → O(nb_cohortes) lignes transférées, pas O(nb_étudiants)
+ * Le count passe par la fonction SQL get_all_cohort_enrollment_counts()
+ * (SECURITY DEFINER) qui contourne le RLS sur enrollments. Sans cela,
+ * les visiteurs non-authentifiés (page publique) obtiendraient 0 inscrits
+ * pour toutes les cohortes, affichant la capacité brute au lieu des places
+ * restantes.
  */
 async function fetchCohortsData(): Promise<CohortRow[]> {
-  // ── Étape 1 : requêtes parallèles ────────────────────────────────────────
-  const [cohortsResult, staffResult] = await Promise.all([
+  const [cohortsResult, countsResult] = await Promise.all([
     supabase
       .from("cohorts")
       .select(
         "*, formation:formations(id, name, description, level, registration_fee, total_price, tranche_1_amount, tranche_2_amount, attestation_color, duration_days)"
       )
       .order("start_date"),
-    supabase
-      .from("user_roles")
-      .select("user_id")
-      .in("role", ["super_admin", "staff"]),
+    supabase.rpc("get_all_cohort_enrollment_counts"),
   ]);
 
   if (cohortsResult.error) throw cohortsResult.error;
 
-  const staffIds = (staffResult.data ?? []).map((r) => r.user_id);
-
-  // ── Étape 2 : COUNT groupé côté serveur ─────────────────────────────────
-  // PostgREST 12 aggregate syntax : "alias:colonne.count()"
-  // Retourne une ligne par cohort_id avec le count, O(cohortes) pas O(inscrits)
-  const baseCountQuery = supabase
-    .from("enrollments")
-    .select("cohort_id, count:cohort_id.count()");
-
-  const { data: rawCount } = await (staffIds.length > 0
-    ? baseCountQuery.not("user_id", "in", `(${staffIds.join(",")})`)
-    : baseCountQuery);
-
-  // PostgREST renvoie les agrégats en string, on normalise en number
-  const countData = (rawCount ?? []) as Array<{
-    cohort_id: string;
-    count: string;
-  }>;
-
   const countMap = new Map<string, number>(
-    countData.map((row) => [row.cohort_id, Number(row.count)])
+    ((countsResult.data ?? []) as Array<{ cohort_id: string; enrollment_count: number }>)
+      .map((row) => [row.cohort_id, row.enrollment_count])
   );
 
-  // ── Étape 3 : merge ──────────────────────────────────────────────────────
   return (cohortsResult.data as CohortRow[]).map((cohort) => ({
     ...cohort,
     enrollment_count: countMap.get(cohort.id) ?? 0,
