@@ -1,6 +1,6 @@
 export interface TemplateElement {
   id: string;
-  type: "text" | "image" | "pattern";
+  type: "text" | "image" | "pattern" | "rect" | "line";
   x: number; // percentage 0-100
   y: number; // percentage 0-100
   width: number; // percentage
@@ -20,6 +20,10 @@ export interface TemplateElement {
   // Pattern/decoration props
   patternType?: "border" | "topBand" | "bottomBand" | "cornerOrnaments";
   patternColor?: string;
+  // Rect props (solid color rectangle)
+  borderRadius?: number; // px
+  // Line props
+  orientation?: "horizontal" | "vertical";
 }
 
 export interface AttestationTemplate {
@@ -30,135 +34,313 @@ export interface AttestationTemplate {
   height: number; // px for canvas
 }
 
+// Template Moderne : sidebar navy a gauche, contenu a droite.
+// A4 paysage 842x595px.
+// Utilise "rect" pour les aplats de couleur unie (sidebar, separateur),
+// "line" pour les filets fins, "image" pour le logo/signature/tampon,
+// "text" pour tous les blocs texte.
 export const DEFAULT_TEMPLATE: AttestationTemplate = {
+  backgroundColor: "#FAFAF8",
+  primaryColor: "#C5A05A",
+  width: 842,
+  height: 595,
   elements: [
+
+    // ── SIDEBAR GAUCHE (x : 0-28.5%) ─────────────────────────────────────────
+
+    // Fond navy de la sidebar (couleur unie)
     {
-      id: "topBand",
-      type: "pattern",
-      x: 0, y: 0, width: 100, height: 3,
-      patternType: "topBand",
-      patternColor: "#1a1a2e",
+      id: "sidebarBg",
+      type: "rect",
+      x: 0, y: 0, width: 28.5, height: 100,
+      color: "#0E1B2E",
     },
+
+    // Filet or vertical de separation
     {
-      id: "bottomBand",
-      type: "pattern",
-      x: 0, y: 97, width: 100, height: 3,
-      patternType: "bottomBand",
-      patternColor: "#1a1a2e",
+      id: "sidebarDivider",
+      type: "rect",
+      x: 28.5, y: 0, width: 0.5, height: 100,
+      color: "#C5A05A",
     },
+
+    // Logo 60jours version blanche
     {
       id: "logo",
       type: "image",
-      x: 35, y: 5, width: 30, height: 12,
-      src: "",
-      label: "Logo",
+      x: 3, y: 4, width: 22.5, height: 10,
+      src: "/logos/Logo60jours_blanc.svg",
+      label: "Logo 60jours",
     },
+
+    // Filet or horizontal sous le logo
     {
-      id: "title",
+      id: "sidebarSep",
+      type: "line",
+      x: 2, y: 17, width: 24.5, height: 0.4,
+      color: "#C5A05A",
+      orientation: "horizontal",
+    },
+
+    // Nom de l'ecole
+    {
+      id: "labelDesCreatifs",
       type: "text",
-      x: 10, y: 20, width: 80, height: 8,
-      content: "ATTESTATION DE PARTICIPATION",
-      fontSize: 22,
+      x: 2, y: 19, width: 24.5, height: 3.5,
+      content: "LABEL DES CREATIFS",
+      fontSize: 7,
       fontWeight: "bold",
       textAlign: "center",
-      color: "#1a1a2e",
+      color: "#C5A05A",
+    },
+
+    // Bloc FORMATION
+    {
+      id: "lblFormation",
+      type: "text",
+      x: 2, y: 25, width: 24.5, height: 2.5,
+      content: "FORMATION",
+      fontSize: 6,
+      fontWeight: "bold",
+      textAlign: "left",
+      color: "#8899aa",
     },
     {
-      id: "subtitle",
+      id: "valFormation",
       type: "text",
-      x: 20, y: 28, width: 60, height: 5,
-      content: "Formation professionnelle",
+      x: 2, y: 27.5, width: 24.5, height: 5.5,
+      content: "{formation_name}",
       fontSize: 10,
       fontWeight: "normal",
-      fontStyle: "italic",
-      textAlign: "center",
-      color: "#999999",
+      textAlign: "left",
+      color: "#ffffff",
+    },
+
+    // Bloc TYPE
+    {
+      id: "lblType",
+      type: "text",
+      x: 2, y: 35, width: 24.5, height: 2.5,
+      content: "TYPE",
+      fontSize: 6,
+      fontWeight: "bold",
+      textAlign: "left",
+      color: "#8899aa",
     },
     {
-      id: "decerne",
+      id: "valType",
       type: "text",
-      x: 30, y: 35, width: 40, height: 5,
-      content: "Décerné(e) à",
+      x: 2, y: 37.5, width: 24.5, height: 4.5,
+      content: "{cohort_type_label}",
+      fontSize: 12,
+      fontWeight: "bold",
+      textAlign: "left",
+      color: "#C5A05A",
+    },
+
+    // Bloc DUREE
+    {
+      id: "lblDuree",
+      type: "text",
+      x: 2, y: 44, width: 24.5, height: 2.5,
+      content: "DUREE",
+      fontSize: 6,
+      fontWeight: "bold",
+      textAlign: "left",
+      color: "#8899aa",
+    },
+    {
+      id: "valDuree",
+      type: "text",
+      x: 2, y: 46.5, width: 24.5, height: 4.5,
+      content: "{duration}",
+      fontSize: 12,
+      fontWeight: "normal",
+      textAlign: "left",
+      color: "#ffffff",
+    },
+
+    // Bloc PERIODE
+    {
+      id: "lblPeriode",
+      type: "text",
+      x: 2, y: 53, width: 24.5, height: 2.5,
+      content: "PERIODE",
+      fontSize: 6,
+      fontWeight: "bold",
+      textAlign: "left",
+      color: "#8899aa",
+    },
+    {
+      id: "valPeriode",
+      type: "text",
+      x: 2, y: 55.5, width: 24.5, height: 4.5,
+      content: "{start_date} au {end_date}",
+      fontSize: 9,
+      fontWeight: "normal",
+      textAlign: "left",
+      color: "#cccccc",
+    },
+
+    // Bloc CERTIFICAT
+    {
+      id: "lblCertificat",
+      type: "text",
+      x: 2, y: 63, width: 24.5, height: 2.5,
+      content: "CERTIFICAT",
+      fontSize: 6,
+      fontWeight: "bold",
+      textAlign: "left",
+      color: "#8899aa",
+    },
+    {
+      id: "valCertificat",
+      type: "text",
+      x: 2, y: 65.5, width: 24.5, height: 4,
+      content: "{certificate_number}",
+      fontSize: 8,
+      fontWeight: "normal",
+      textAlign: "left",
+      color: "#C5A05A",
+    },
+
+    // ── CONTENU DROIT (x : 31-97%) ───────────────────────────────────────────
+
+    // Tag d'en-tete
+    {
+      id: "headerTag",
+      type: "text",
+      x: 31, y: 7, width: 66, height: 5,
+      content: "ATTESTATION DE FORMATION",
+      fontSize: 8,
+      fontWeight: "bold",
+      textAlign: "center",
+      color: "#8899aa",
+    },
+
+    // Intro
+    {
+      id: "certifieQue",
+      type: "text",
+      x: 31, y: 26, width: 66, height: 4.5,
+      content: "Nous certifions que",
       fontSize: 12,
       fontWeight: "normal",
       fontStyle: "italic",
       textAlign: "center",
-      color: "#666666",
+      color: "#667788",
     },
+
+    // Nom de l'etudiant (element principal)
     {
       id: "studentName",
       type: "text",
-      x: 15, y: 40, width: 70, height: 8,
+      x: 31, y: 31, width: 66, height: 12,
       content: "{student_name}",
-      fontSize: 26,
+      fontSize: 32,
       fontWeight: "bold",
       textAlign: "center",
-      color: "#1a1a2e",
+      color: "#0E1B2E",
     },
+
+    // Filet or sous le nom
     {
-      id: "body",
+      id: "nameLine",
+      type: "line",
+      x: 34, y: 44, width: 58, height: 0.4,
+      color: "#C5A05A",
+      orientation: "horizontal",
+    },
+
+    // Corps du certificat (3 lignes)
+    {
+      id: "bodyLine1",
       type: "text",
-      x: 10, y: 50, width: 80, height: 15,
-      content: "Pour avoir participé avec succès à la formation « {formation_name} » du {start_date} au {end_date}.",
+      x: 31, y: 47, width: 66, height: 4.5,
+      content: "a complete avec succes la formation",
       fontSize: 11,
       fontWeight: "normal",
       textAlign: "center",
-      color: "#444444",
+      color: "#667788",
     },
     {
-      id: "formationBadge",
+      id: "bodyLine2",
       type: "text",
-      x: 30, y: 67, width: 40, height: 6,
-      content: "{formation_name}",
-      fontSize: 10,
-      fontWeight: "bold",
+      x: 31, y: 52, width: 66, height: 4.5,
+      content: "{formation_name} - Formation {cohort_type_label}",
+      fontSize: 11,
+      fontWeight: "normal",
+      fontStyle: "italic",
       textAlign: "center",
-      color: "#ffffff",
+      color: "#667788",
     },
     {
-      id: "dateText",
+      id: "bodyLine3",
       type: "text",
-      x: 25, y: 75, width: 50, height: 5,
-      content: "Fait le {current_date}",
-      fontSize: 10,
+      x: 31, y: 57, width: 66, height: 4.5,
+      content: "organisee par le Label des Creatifs",
+      fontSize: 11,
+      fontWeight: "normal",
       textAlign: "center",
-      color: "#999999",
+      color: "#667788",
     },
+
+    // Zone signature + tampon
     {
       id: "signature",
       type: "image",
-      x: 5, y: 80, width: 20, height: 12,
+      x: 32, y: 70, width: 18, height: 14,
       src: "",
       label: "Signature",
     },
     {
-      id: "directorLabel",
-      type: "text",
-      x: 5, y: 92, width: 20, height: 4,
-      content: "Le Directeur",
-      fontSize: 9,
-      textAlign: "left",
-      color: "#666666",
-    },
-    {
-      id: "certificateNumber",
-      type: "text",
-      x: 35, y: 90, width: 30, height: 4,
-      content: "N° {certificate_number}",
-      fontSize: 8,
-      textAlign: "center",
-      color: "#999999",
-    },
-    {
       id: "stamp",
       type: "image",
-      x: 75, y: 78, width: 18, height: 16,
+      x: 77, y: 70, width: 15, height: 14,
       src: "",
       label: "Tampon",
     },
+
+    // Signataire
+    {
+      id: "directorName",
+      type: "text",
+      x: 32, y: 85, width: 24, height: 4.5,
+      content: "Abdoul Aziz Fall",
+      fontSize: 11,
+      fontWeight: "normal",
+      fontStyle: "italic",
+      textAlign: "left",
+      color: "#0E1B2E",
+    },
+    {
+      id: "directorLine",
+      type: "line",
+      x: 32, y: 90, width: 20, height: 0.3,
+      color: "#cccccc",
+      orientation: "horizontal",
+    },
+    {
+      id: "directorLabel",
+      type: "text",
+      x: 32, y: 91, width: 24, height: 3.5,
+      content: "Directeur",
+      fontSize: 9,
+      fontWeight: "normal",
+      textAlign: "left",
+      color: "#8899aa",
+    },
+
+    // Date en bas a droite
+    {
+      id: "dateText",
+      type: "text",
+      x: 66, y: 88, width: 30, height: 4,
+      content: "Dakar, {current_date}",
+      fontSize: 9,
+      fontWeight: "normal",
+      textAlign: "right",
+      color: "#8899aa",
+    },
   ],
-  backgroundColor: "#ffffff",
-  primaryColor: "#1a1a2e",
-  width: 842,
-  height: 595,
 };

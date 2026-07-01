@@ -105,6 +105,52 @@ const DraggableElement = ({
     opacity,
   };
 
+  if (element.type === "rect") {
+    return (
+      <div
+        ref={elRef}
+        style={{
+          ...style,
+          backgroundColor: element.color || primaryColor,
+          borderRadius: element.borderRadius ? `${element.borderRadius}px` : undefined,
+          cursor: selected ? "grab" : "default",
+        }}
+        onClick={(e) => { e.stopPropagation(); onSelect(); }}
+        onMouseDown={selected ? handleMouseDown : undefined}
+      >
+        {selected && (
+          <>
+            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="absolute -top-2 -right-2 bg-destructive text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] z-30">
+              <X className="h-3 w-3" />
+            </button>
+            <div onMouseDown={handleResizeDown} className="absolute bottom-0 right-0 w-3 h-3 bg-accent cursor-se-resize rounded-sm z-30" />
+          </>
+        )}
+      </div>
+    );
+  }
+
+  if (element.type === "line") {
+    return (
+      <div
+        ref={elRef}
+        style={{
+          ...style,
+          backgroundColor: element.color || "#cccccc",
+          cursor: selected ? "grab" : "default",
+        }}
+        onClick={(e) => { e.stopPropagation(); onSelect(); }}
+        onMouseDown={selected ? handleMouseDown : undefined}
+      >
+        {selected && (
+          <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="absolute -top-2 -right-2 bg-destructive text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] z-30">
+            <X className="h-3 w-3" />
+          </button>
+        )}
+      </div>
+    );
+  }
+
   if (element.type === "pattern") {
     const color = element.patternColor || primaryColor;
     if (element.patternType === "topBand" || element.patternType === "bottomBand") {

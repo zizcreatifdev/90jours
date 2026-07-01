@@ -9,10 +9,12 @@ import { useCohorts } from "@/hooks/use-cohorts";
 import { fetchPromoUsage, buildDiscountMap } from "@/lib/student-discount";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Award, CheckCircle2, XCircle, Loader2, Send, Archive } from "lucide-react";
+import { Award, CheckCircle2, XCircle, Loader2, Send, Archive, Eye } from "lucide-react";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DEFAULT_TEMPLATE } from "@/components/attestation/types";
 import type { AttestationTemplate, TemplateElement } from "@/components/attestation/types";
+import { AttestationPreview } from "@/components/AttestationTemplateEditor";
 
 interface StudentRow {
   user_id: string;
@@ -23,6 +25,7 @@ interface StudentRow {
   required_total: number;
   has_attestation: boolean;
   attestation_number: string | null;
+  issued_at: string | null;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -35,6 +38,15 @@ function lightenColor(hex: string, amount: number): string {
   const g = Math.min(255, ((num >> 8) & 0x00ff) + amount);
   const b = Math.min(255, (num & 0x0000ff) + amount);
   return `rgb(${r}, ${g}, ${b})`;
+}
+
+function calcDuration(startDate: string | null, endDate: string | null): string {
+  if (!startDate || !endDate) return "";
+  const days = Math.round(
+    (new Date(endDate + "T00:00:00").getTime() - new Date(startDate + "T00:00:00").getTime())
+    / (1000 * 60 * 60 * 24)
+  );
+  return `${days} jours`;
 }
 
 function replaceVars(
@@ -55,7 +67,6 @@ async function renderAttestationToDataUrl(
   const H = template.height || 595;
   const primaryColor = template.primaryColor || "#1a1a2e";
 
-  // Off-screen container
   const container = document.createElement("div");
   container.style.cssText = [
     `position:absolute`,
@@ -70,11 +81,14 @@ async function renderAttestationToDataUrl(
 
   const imagePromises: Promise<void>[] = [];
 
-  // Sort: background images first, then patterns, then text
   const sorted = [...template.elements].sort((a: TemplateElement, b: TemplateElement) => {
-    const rankA = a.type === "image" && a.isBackground ? 0 : a.type === "pattern" ? 1 : 2;
-    const rankB = b.type === "image" && b.isBackground ? 0 : b.type === "pattern" ? 1 : 2;
-    return rankA - rankB;
+    const rank = (el: TemplateElement) => {
+      if (el.type === "rect") return 0;
+      if (el.type === "image" && el.isBackground) return 1;
+      if (el.type === "pattern" || el.type === "line") return 2;
+      return 3;
+    };
+    return rank(a) - rank(b);
   });
 
   for (const el of sorted) {
@@ -87,7 +101,12 @@ async function renderAttestationToDataUrl(
       `height:${el.height}%`,
     ].join(";");
 
-    if (el.type === "pattern") {
+    if (el.type === "rect") {
+      div.style.backgroundColor = el.color || primaryColor;
+      if (el.borderRadius) div.style.borderRadius = `${el.borderRadius}px`;
+    } else if (el.type === "line") {
+      div.style.backgroundColor = el.color || "#cccccc";
+    } else if (el.type === "pattern") {
       const color = el.patternColor || primaryColor;
       if (el.patternType === "topBand" || el.patternType === "bottomBand") {
         div.style.background = `linear-gradient(135deg,${color},${lightenColor(color, 60)})`;
@@ -155,7 +174,7 @@ async function renderAttestationToDataUrl(
     const canvas = await html2canvas(container, {
       width: W,
       height: H,
-      scale: 1,
+      scale: 3,
       useCORS: true,
       allowTaint: true,
       backgroundColor: template.backgroundColor || "#ffffff",
@@ -168,10 +187,80 @@ async function renderAttestationToDataUrl(
   }
 }
 
+async function loadCohortFullData(cohortId: string) {
+  const { data } = await supabase
+    .from("cohorts")
+    .select("name, start_date, end_date, cohort_type, formation:formations(name, attestation_template, attestation_logo_url, attestation_signature_url, attestation_stamp_url, attestation_color, attestation_title, attestation_body)")
+    .eq("id", cohortId)
+    .maybeSingle();
+  return data;
+}
+
+function buildTemplate(cohortFull: NonNullable<Awaited<ReturnType<typeof loadCohortFullData>>>): AttestationTemplate {
+  const formation = cohortFull.formation as any;
+  const rawTemplate = formation?.attestation_template as AttestationTemplate | null;
+  if (rawTemplate) {
+    const elements = rawTemplate.elements.map((el: TemplateElement) => {
+      if (el.type === "image" && !el.src) {
+        if (el.id === "logo" && formation.attestation_logo_url) return { ...el, src: formation.attestation_logo_url };
+        if (el.id === "signature" && formation.attestation_signature_url) return { ...el, src: formation.attestation_signature_url };
+        if (el.id === "stamp" && formation.attestation_stamp_url) return { ...el, src: formation.attestation_stamp_url };
+      }
+      return el;
+    });
+    return { ...rawTemplate, elements };
+  }
+  const template = JSON.parse(JSON.stringify(DEFAULT_TEMPLATE)) as AttestationTemplate;
+  if (formation?.attestation_color) template.primaryColor = formation.attestation_color;
+  template.elements = template.elements.map((el: TemplateElement) => {
+    if (el.id === "logo" && formation?.attestation_logo_url) return { ...el, src: formation.attestation_logo_url };
+    if (el.id === "signature" && formation?.attestation_signature_url) return { ...el, src: formation.attestation_signature_url };
+    if (el.id === "stamp" && formation?.attestation_stamp_url) return { ...el, src: formation.attestation_stamp_url };
+    return el;
+  });
+  return template;
+}
+
+async function storePdf(
+  template: AttestationTemplate,
+  vars: Record<string, string>,
+  userId: string,
+  cohortId: string
+): Promise<string | null> {
+  try {
+    const dataUrl = await renderAttestationToDataUrl(template, vars);
+    const pdfDoc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    pdfDoc.addImage(dataUrl, "PNG", 0, 0, 297, 210);
+    const pdfBlob = pdfDoc.output("blob");
+
+    const path = `${cohortId}/${userId}.pdf`;
+    const { error: uploadError } = await supabase.storage
+      .from("attestations")
+      .upload(path, pdfBlob, { upsert: true, contentType: "application/pdf" });
+
+    if (uploadError) {
+      console.error("PDF upload:", uploadError.message);
+      return null;
+    }
+
+    const { data: urlData } = supabase.storage.from("attestations").getPublicUrl(path);
+    await supabase
+      .from("attestations")
+      .update({ pdf_url: urlData.publicUrl } as any)
+      .eq("user_id", userId)
+      .eq("cohort_id", cohortId);
+
+    return urlData.publicUrl;
+  } catch (err) {
+    console.error("PDF generation:", err instanceof Error ? err.message : String(err));
+    return null;
+  }
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 
 const AttestationIssuer = () => {
-  const { user } = useAuth();
+  const { user, isOwner } = useAuth();
   const { toast } = useToast();
   const { cohorts } = useCohorts();
   const [selectedCohort, setSelectedCohort] = useState<string>("");
@@ -180,15 +269,17 @@ const AttestationIssuer = () => {
   const [issuing, setIssuing] = useState<string | null>(null);
   const [exportProgress, setExportProgress] = useState<{ current: number; total: number } | null>(null);
   const [deliverableLabel, setDeliverableLabel] = useState("Portfolio");
+  const [previewStudent, setPreviewStudent] = useState<StudentRow | null>(null);
+  const [cohortFullData, setCohortFullData] = useState<Awaited<ReturnType<typeof loadCohortFullData>> | null>(null);
 
   const availableCohorts = cohorts;
 
   useEffect(() => {
-    if (!selectedCohort) { setStudents([]); return; }
+    if (!selectedCohort) { setStudents([]); setCohortFullData(null); return; }
     const fetch = async () => {
       setLoading(true);
+      setCohortFullData(null);
 
-      // Get cohort formation for pricing
       const { data: cohortData } = await supabase
         .from("cohorts")
         .select("formation_id, total_price, formation:formations(total_price, deliverable_label)")
@@ -196,11 +287,9 @@ const AttestationIssuer = () => {
         .maybeSingle();
 
       const formation = cohortData?.formation as any;
-      // Montant du total = total_price de la cohorte (surcharge possible), sinon celui de la formation.
       const requiredTotal = (cohortData?.total_price ?? formation?.total_price) || 50000;
       setDeliverableLabel(formation?.deliverable_label || "Portfolio");
 
-      // Get enrollments (students only)
       const { data: enrollments } = await supabase
         .from("enrollments")
         .select("user_id")
@@ -208,7 +297,6 @@ const AttestationIssuer = () => {
 
       if (!enrollments) { setLoading(false); return; }
 
-      // Filter out staff/admin
       const { data: staffRoles } = await supabase
         .from("user_roles")
         .select("user_id, role")
@@ -216,9 +304,9 @@ const AttestationIssuer = () => {
       const staffIds = new Set((staffRoles || []).map(r => r.user_id));
       const studentEnrollments = enrollments.filter(e => !staffIds.has(e.user_id));
 
-      // Pas de FK enrollments -> profiles : jointure cote client via Map sur user_id
       const studentIds = [...new Set(studentEnrollments.map(e => e.user_id).filter(Boolean))];
       let profileMap = new Map<string, { first_name: string; last_name: string }>();
+
       if (studentIds.length > 0) {
         const { data: profiles } = await supabase
           .from("profiles")
@@ -227,27 +315,29 @@ const AttestationIssuer = () => {
         profileMap = new Map((profiles || []).map((p: any) => [p.user_id, { first_name: p.first_name, last_name: p.last_name }]));
       }
 
-      // Get portfolios
       const { data: portfolios } = await supabase
         .from("portfolios")
         .select("user_id, status")
         .eq("cohort_id", selectedCohort);
 
-      // Get payments
       const { data: payments } = await supabase
         .from("payments")
         .select("user_id, amount, status")
         .eq("cohort_id", selectedCohort)
         .is("deleted_at", null);
 
-      // Get existing attestations
       const { data: attestations } = await supabase
         .from("attestations")
-        .select("user_id, certificate_number")
+        .select("user_id, certificate_number, issued_at")
         .eq("cohort_id", selectedCohort);
 
       const portfolioMap = new Map((portfolios || []).map(p => [p.user_id, p.status]));
-      const attestationMap = new Map((attestations || []).map(a => [a.user_id, a.certificate_number]));
+      const attestationMap = new Map(
+        (attestations || []).map(a => [
+          a.user_id,
+          { certificate_number: a.certificate_number, issued_at: a.issued_at },
+        ])
+      );
 
       const paymentMap = new Map<string, number>();
       (payments || []).forEach(p => {
@@ -256,14 +346,13 @@ const AttestationIssuer = () => {
         }
       });
 
-      // Remise code promo figee par etudiant (sur l'inscription) : le seuil de
-      // paiement complet est diminue d'autant, sinon un remise n'atteint jamais 100%.
       const usageRows = (await fetchPromoUsage(studentIds)).filter(r => r.cohort_id === selectedCohort);
       const discountMap = buildDiscountMap(usageRows);
 
       const rows: StudentRow[] = studentEnrollments.map(e => {
         const p = profileMap.get(e.user_id);
         const discount = discountMap.get(`${e.user_id}_${selectedCohort}`) || 0;
+        const attInfo = attestationMap.get(e.user_id);
         return {
           user_id: e.user_id,
           first_name: p?.first_name || "",
@@ -272,11 +361,16 @@ const AttestationIssuer = () => {
           payments_total: paymentMap.get(e.user_id) || 0,
           required_total: requiredTotal - discount,
           has_attestation: attestationMap.has(e.user_id),
-          attestation_number: attestationMap.get(e.user_id) || null,
+          attestation_number: attInfo?.certificate_number || null,
+          issued_at: attInfo?.issued_at || null,
         };
       });
 
       setStudents(rows);
+
+      const fullData = await loadCohortFullData(selectedCohort);
+      setCohortFullData(fullData);
+
       setLoading(false);
     };
     fetch();
@@ -285,7 +379,6 @@ const AttestationIssuer = () => {
   const handleIssue = async (studentId: string) => {
     if (!user || !selectedCohort) return;
 
-    // Get formation_id from cohort
     const { data: cohortData } = await supabase
       .from("cohorts")
       .select("formation_id")
@@ -293,7 +386,7 @@ const AttestationIssuer = () => {
       .maybeSingle();
 
     if (!cohortData?.formation_id) {
-      toast({ title: "Erreur", description: "Cette cohorte n'a pas de formation associée.", variant: "destructive" });
+      toast({ title: "Erreur", description: "Cette cohorte n'a pas de formation associee.", variant: "destructive" });
       return;
     }
 
@@ -307,24 +400,75 @@ const AttestationIssuer = () => {
 
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Attestation délivrée." });
-      setStudents(prev => prev.map(s => s.user_id === studentId ? { ...s, has_attestation: true } : s));
-      await supabase.from("notifications").insert({
-        user_id: studentId,
-        cohort_id: selectedCohort,
-        type: "attestation",
-        title: "Votre attestation est disponible",
-        message: "Votre attestation de formation est prête. Vous pouvez la télécharger depuis votre espace.",
-        created_by: user.id,
-      });
-      await supabase.from("audit_logs").insert({
-        performed_by: user.id,
-        action: "attestation_issued",
-        target_user_id: studentId,
-        details: { cohort_id: selectedCohort },
-      });
+      setIssuing(null);
+      return;
     }
+
+    const { data: newAtt } = await supabase
+      .from("attestations")
+      .select("certificate_number, issued_at")
+      .eq("user_id", studentId)
+      .eq("cohort_id", selectedCohort)
+      .maybeSingle();
+
+    const certNumber = newAtt?.certificate_number || null;
+    const issuedAt = newAtt?.issued_at || new Date().toISOString();
+
+    setStudents(prev =>
+      prev.map(s =>
+        s.user_id === studentId
+          ? { ...s, has_attestation: true, attestation_number: certNumber, issued_at: issuedAt }
+          : s
+      )
+    );
+
+    await supabase.from("notifications").insert({
+      user_id: studentId,
+      cohort_id: selectedCohort,
+      type: "attestation",
+      title: "Votre attestation est disponible",
+      message: "Votre attestation de formation est prete. Vous pouvez la telecharger depuis votre espace.",
+      created_by: user.id,
+    });
+    await supabase.from("audit_logs").insert({
+      performed_by: user.id,
+      action: "attestation_issued",
+      target_user_id: studentId,
+      details: { cohort_id: selectedCohort },
+    });
+
+    toast({ title: "Attestation delivree. Generation du PDF..." });
+
+    const student = students.find(s => s.user_id === studentId);
+    if (student) {
+      const cohortFull = await loadCohortFullData(selectedCohort);
+      if (cohortFull) {
+        const template = buildTemplate(cohortFull);
+        const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString("fr-FR") : "");
+        const issuedDate = new Date(issuedAt).toLocaleDateString("fr-FR", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+        const cohortTypeLabel = (cohortFull as any)?.cohort_type === "initiation" ? "Initiation" : "Perfectionnement";
+        await storePdf(
+          template,
+          {
+            student_name: `${student.first_name} ${student.last_name}`,
+            formation_name: (cohortFull.formation as any)?.name || "",
+            cohort_type_label: cohortTypeLabel,
+            duration: calcDuration(cohortFull.start_date, cohortFull.end_date),
+            start_date: fmtDate(cohortFull.start_date),
+            end_date: fmtDate(cohortFull.end_date),
+            current_date: issuedDate,
+            certificate_number: certNumber || "",
+          },
+          studentId,
+          selectedCohort
+        );
+      }
+    }
+
     setIssuing(null);
   };
 
@@ -336,7 +480,7 @@ const AttestationIssuer = () => {
     );
 
     if (eligible.length === 0) {
-      toast({ title: "Aucun étudiant éligible" });
+      toast({ title: "Aucun etudiant eligible" });
       return;
     }
 
@@ -347,7 +491,7 @@ const AttestationIssuer = () => {
       .maybeSingle();
 
     if (!cohortData?.formation_id) {
-      toast({ title: "Erreur", description: "Pas de formation associée.", variant: "destructive" });
+      toast({ title: "Erreur", description: "Pas de formation associee.", variant: "destructive" });
       return;
     }
 
@@ -362,78 +506,121 @@ const AttestationIssuer = () => {
     const { error } = await supabase.from("attestations").insert(inserts);
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: `${eligible.length} attestation(s) délivrée(s).` });
-      setStudents(prev => prev.map(s =>
-        eligible.find(e => e.user_id === s.user_id) ? { ...s, has_attestation: true } : s
-      ));
-      const notifRows = eligible.map(s => ({
-        user_id: s.user_id,
-        cohort_id: selectedCohort,
-        type: "attestation",
-        title: "Votre attestation est disponible",
-        message: "Votre attestation de formation est prête. Vous pouvez la télécharger depuis votre espace.",
-        created_by: user!.id,
-      }));
-      await supabase.from("notifications").insert(notifRows);
-      await supabase.from("audit_logs").insert({
-        performed_by: user!.id,
-        action: "attestation_issued",
-        details: { cohort_id: selectedCohort, count: eligible.length, student_ids: eligible.map(s => s.user_id) },
-      });
+      setIssuing(null);
+      return;
     }
+
+    const { data: newAtts } = await supabase
+      .from("attestations")
+      .select("user_id, certificate_number, issued_at")
+      .eq("cohort_id", selectedCohort)
+      .in("user_id", eligible.map(s => s.user_id));
+
+    const attMap = new Map((newAtts || []).map(a => [a.user_id, a]));
+
+    setStudents(prev =>
+      prev.map(s => {
+        const att = attMap.get(s.user_id);
+        return att
+          ? { ...s, has_attestation: true, attestation_number: att.certificate_number, issued_at: att.issued_at }
+          : s;
+      })
+    );
+
+    toast({ title: `${eligible.length} attestation(s) delivree(s). Generation des PDFs...` });
+
+    const notifRows = eligible.map(s => ({
+      user_id: s.user_id,
+      cohort_id: selectedCohort,
+      type: "attestation",
+      title: "Votre attestation est disponible",
+      message: "Votre attestation de formation est prete. Vous pouvez la telecharger depuis votre espace.",
+      created_by: user!.id,
+    }));
+    await supabase.from("notifications").insert(notifRows);
+    await supabase.from("audit_logs").insert({
+      performed_by: user!.id,
+      action: "attestation_issued",
+      details: { cohort_id: selectedCohort, count: eligible.length, student_ids: eligible.map(s => s.user_id) },
+    });
+
+    const cohortFull = await loadCohortFullData(selectedCohort);
+    if (cohortFull) {
+      const template = buildTemplate(cohortFull);
+      const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString("fr-FR") : "");
+      const cohortTypeLabel = (cohortFull as any)?.cohort_type === "initiation" ? "Initiation" : "Perfectionnement";
+      const durationAll = calcDuration(cohortFull.start_date, cohortFull.end_date);
+      setExportProgress({ current: 0, total: eligible.length });
+
+      for (let i = 0; i < eligible.length; i++) {
+        const s = eligible[i];
+        setExportProgress({ current: i + 1, total: eligible.length });
+        const att = attMap.get(s.user_id);
+        if (att) {
+          const issuedDate = new Date(att.issued_at).toLocaleDateString("fr-FR", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          });
+          await storePdf(
+            template,
+            {
+              student_name: `${s.first_name} ${s.last_name}`,
+              formation_name: (cohortFull.formation as any)?.name || "",
+              cohort_type_label: cohortTypeLabel,
+              duration: durationAll,
+              start_date: fmtDate(cohortFull.start_date),
+              end_date: fmtDate(cohortFull.end_date),
+              current_date: issuedDate,
+              certificate_number: att.certificate_number || "",
+            },
+            s.user_id,
+            selectedCohort
+          );
+        }
+      }
+
+      setExportProgress(null);
+    }
+
     setIssuing(null);
+  };
+
+  const handleRevoke = async (userId: string) => {
+    if (!user || !selectedCohort) return;
+    const { error } = await supabase.from("attestations").delete()
+      .eq("user_id", userId).eq("cohort_id", selectedCohort);
+    if (error) { toast({ title: "Erreur", description: error.message, variant: "destructive" }); return; }
+    await supabase.storage.from("attestations").remove([`${selectedCohort}/${userId}.pdf`]);
+    await supabase.from("audit_logs").insert({
+      performed_by: user.id, action: "attestation_revoked",
+      target_user_id: userId, details: { cohort_id: selectedCohort },
+    });
+    setStudents(prev => prev.map(s =>
+      s.user_id === userId ? { ...s, has_attestation: false, attestation_number: null, issued_at: null } : s
+    ));
+    toast({ title: "Attestation revoquee." });
   };
 
   const exportBatchPdf = async () => {
     const studentsToExport = students.filter(s => s.has_attestation);
     if (studentsToExport.length === 0) {
-      toast({ title: "Aucune attestation à exporter" });
+      toast({ title: "Aucune attestation a exporter" });
       return;
     }
 
-    // Fetch full cohort + formation template data
-    const { data: cohortFull } = await supabase
-      .from("cohorts")
-      .select("name, start_date, end_date, formation:formations(name, attestation_template, attestation_logo_url, attestation_signature_url, attestation_stamp_url, attestation_color)")
-      .eq("id", selectedCohort)
-      .maybeSingle();
-
+    const cohortFull = await loadCohortFullData(selectedCohort);
     if (!cohortFull) {
-      toast({ title: "Erreur", description: "Impossible de charger les données de la cohorte.", variant: "destructive" });
+      toast({ title: "Erreur", description: "Impossible de charger les donnees de la cohorte.", variant: "destructive" });
       return;
     }
 
+    const template = buildTemplate(cohortFull);
     const formation = cohortFull.formation as any;
-
-    // Build resolved template (mirrors AttestationDragDropEditor.loadTemplate)
-    let template: AttestationTemplate;
-    const rawTemplate = formation?.attestation_template as AttestationTemplate | null;
-    if (rawTemplate) {
-      const elements = rawTemplate.elements.map(el => {
-        if (el.type === "image" && !el.src) {
-          if (el.id === "logo" && formation.attestation_logo_url) return { ...el, src: formation.attestation_logo_url };
-          if (el.id === "signature" && formation.attestation_signature_url) return { ...el, src: formation.attestation_signature_url };
-          if (el.id === "stamp" && formation.attestation_stamp_url) return { ...el, src: formation.attestation_stamp_url };
-        }
-        return el;
-      });
-      template = { ...rawTemplate, elements };
-    } else {
-      template = JSON.parse(JSON.stringify(DEFAULT_TEMPLATE)) as AttestationTemplate;
-      if (formation?.attestation_color) template.primaryColor = formation.attestation_color;
-      template.elements = template.elements.map(el => {
-        if (el.id === "logo" && formation?.attestation_logo_url) return { ...el, src: formation.attestation_logo_url };
-        if (el.id === "signature" && formation?.attestation_signature_url) return { ...el, src: formation.attestation_signature_url };
-        if (el.id === "stamp" && formation?.attestation_stamp_url) return { ...el, src: formation.attestation_stamp_url };
-        return el;
-      });
-    }
-
     const formationName = formation?.name || "";
-    const fmtDate = (d: string | null) =>
-      d ? new Date(d).toLocaleDateString("fr-FR") : "";
-    const today = new Date().toLocaleDateString("fr-FR");
+    const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString("fr-FR") : "");
+    const cohortTypeLabel = (cohortFull as any)?.cohort_type === "initiation" ? "Initiation" : "Perfectionnement";
+    const durationExport = calcDuration(cohortFull.start_date, cohortFull.end_date);
 
     setExportProgress({ current: 0, total: studentsToExport.length });
 
@@ -444,17 +631,26 @@ const AttestationIssuer = () => {
       setExportProgress({ current: i + 1, total: studentsToExport.length });
 
       try {
+        const issuedDate = s.issued_at
+          ? new Date(s.issued_at).toLocaleDateString("fr-FR", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })
+          : fmtDate(null);
+
         const vars: Record<string, string> = {
           student_name: `${s.first_name} ${s.last_name}`,
           formation_name: formationName,
+          cohort_type_label: cohortTypeLabel,
+          duration: durationExport,
           start_date: fmtDate(cohortFull.start_date),
           end_date: fmtDate(cohortFull.end_date),
-          current_date: today,
+          current_date: issuedDate,
           certificate_number: s.attestation_number || "",
         };
 
         const dataUrl = await renderAttestationToDataUrl(template, vars);
-        // Template 842x595px = A4 paysage exact (297x210mm)
         const pdfDoc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
         pdfDoc.addImage(dataUrl, "PNG", 0, 0, 297, 210);
         const safeName = `${s.first_name}_${s.last_name}`.replace(/[^a-zA-Z0-9]/g, "_");
@@ -478,7 +674,7 @@ const AttestationIssuer = () => {
     URL.revokeObjectURL(url);
 
     setExportProgress(null);
-    toast({ title: `${studentsToExport.length} attestation(s) exportée(s) dans le ZIP !` });
+    toast({ title: `${studentsToExport.length} attestation(s) exportee(s) dans le ZIP !` });
   };
 
   const eligibleCount = students.filter(s =>
@@ -493,7 +689,7 @@ const AttestationIssuer = () => {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
-          <Send className="h-5 w-5" /> Délivrer les attestations
+          <Send className="h-5 w-5" /> Delivrer les attestations
         </h2>
         <Select value={selectedCohort} onValueChange={setSelectedCohort}>
           <SelectTrigger className="w-72"><SelectValue placeholder="Choisir une cohorte" /></SelectTrigger>
@@ -508,7 +704,7 @@ const AttestationIssuer = () => {
       </div>
 
       {!selectedCohort ? (
-        <p className="text-muted-foreground text-center py-8">Sélectionnez une cohorte pour gérer les attestations.</p>
+        <p className="text-muted-foreground text-center py-8">Selectionnez une cohorte pour gerer les attestations.</p>
       ) : loading ? (
         <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
       ) : (
@@ -519,12 +715,12 @@ const AttestationIssuer = () => {
                 trigger={
                   <Button disabled={issuing === "all" || exportProgress !== null} className="gap-2">
                     {issuing === "all" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Award className="h-4 w-4" />}
-                    Délivrer toutes les attestations éligibles ({eligibleCount})
+                    Delivrer toutes les attestations eligibles ({eligibleCount})
                   </Button>
                 }
-                title="Délivrer les attestations ?"
-                description={`${eligibleCount} étudiant(s) éligible(s) recevront leur attestation. Cette action est irréversible.`}
-                confirmLabel="Délivrer"
+                title="Delivrer les attestations ?"
+                description={`${eligibleCount} etudiant(s) eligible(s) recevront leur attestation. Cette action est irreversible.`}
+                confirmLabel="Delivrer"
                 onConfirm={handleIssueAll}
               />
             )}
@@ -539,7 +735,7 @@ const AttestationIssuer = () => {
                 {exportProgress !== null ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Génération {exportProgress.current}/{exportProgress.total} attestations…
+                    Generation {exportProgress.current}/{exportProgress.total} attestations...
                   </>
                 ) : (
                   <>
@@ -554,7 +750,7 @@ const AttestationIssuer = () => {
           {exportProgress !== null && (
             <div className="mb-4 rounded-xl border border-border bg-card p-4">
               <p className="text-sm text-muted-foreground mb-2">
-                Génération {exportProgress.current}/{exportProgress.total} attestations…
+                Generation {exportProgress.current}/{exportProgress.total} attestations...
               </p>
               <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
                 <div
@@ -569,7 +765,7 @@ const AttestationIssuer = () => {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border text-left text-xs text-muted-foreground bg-secondary/50">
-                  <th className="px-4 py-3 font-medium">Étudiant</th>
+                  <th className="px-4 py-3 font-medium">Etudiant</th>
                   <th className="px-4 py-3 font-medium">{deliverableLabel}</th>
                   <th className="px-4 py-3 font-medium">Paiement</th>
                   <th className="px-4 py-3 font-medium">Attestation</th>
@@ -588,7 +784,7 @@ const AttestationIssuer = () => {
                       <td className="px-4 py-3">
                         {portfolioOk ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 px-2 py-0.5 text-xs font-medium">
-                            <CheckCircle2 className="h-3 w-3" /> Validé
+                            <CheckCircle2 className="h-3 w-3" /> Valide
                           </span>
                         ) : s.portfolio_status === "pending" ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 text-yellow-700 px-2 py-0.5 text-xs font-medium">
@@ -596,7 +792,7 @@ const AttestationIssuer = () => {
                           </span>
                         ) : s.portfolio_status === "rejected" ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-red-100 text-red-700 px-2 py-0.5 text-xs font-medium">
-                            <XCircle className="h-3 w-3" /> Rejeté
+                            <XCircle className="h-3 w-3" /> Rejete
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 rounded-full bg-secondary text-muted-foreground px-2 py-0.5 text-xs font-medium">
@@ -614,48 +810,111 @@ const AttestationIssuer = () => {
                       </td>
                       <td className="px-4 py-3">
                         {s.has_attestation ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
-                            <CheckCircle2 className="h-3 w-3" /> {s.attestation_number || "Délivrée"}
-                          </span>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
+                              <CheckCircle2 className="h-3 w-3" /> {s.attestation_number || "Delivree"}
+                            </span>
+                            {s.issued_at && (
+                              <span className="text-[10px] text-muted-foreground">
+                                le {new Date(s.issued_at).toLocaleDateString("fr-FR")}
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">-</span>
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        {s.has_attestation ? (
-                          <span className="text-xs text-muted-foreground">Déjà délivrée</span>
-                        ) : canIssue ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={issuing === s.user_id}
-                            onClick={() => handleIssue(s.user_id)}
-                            className="gap-1 text-xs"
-                          >
-                            {issuing === s.user_id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Award className="h-3 w-3" />}
-                            Délivrer
-                          </Button>
-                        ) : (
-                          <span className="text-xs text-red-500">
-                            {!portfolioOk && !paymentOk
-                              ? `${deliverableLabel} non validé, paiement incomplet`
-                              : !portfolioOk
-                              ? `${deliverableLabel} non validé`
-                              : "Paiement incomplet"}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {s.has_attestation && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setPreviewStudent(s)}
+                              className="gap-1 text-xs h-7 px-2"
+                            >
+                              <Eye className="h-3 w-3" /> Apercu
+                            </Button>
+                          )}
+                          {s.has_attestation ? (
+                            isOwner && (
+                              <ConfirmDialog
+                                trigger={
+                                  <Button size="sm" variant="ghost" className="gap-1 text-xs h-7 px-2 text-destructive hover:text-destructive">
+                                    <XCircle className="h-3 w-3" /> Revoquer
+                                  </Button>
+                                }
+                                title="Revoquer l'attestation ?"
+                                description={`L'attestation de ${s.first_name} ${s.last_name} sera supprimee. Cette action est irreversible.`}
+                                confirmLabel="Revoquer"
+                                onConfirm={() => handleRevoke(s.user_id)}
+                              />
+                            )
+                          ) : canIssue ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={issuing === s.user_id}
+                              onClick={() => handleIssue(s.user_id)}
+                              className="gap-1 text-xs"
+                            >
+                              {issuing === s.user_id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Award className="h-3 w-3" />}
+                              Delivrer
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-red-500">
+                              {!portfolioOk && !paymentOk
+                                ? `${deliverableLabel} non valide, paiement incomplet`
+                                : !portfolioOk
+                                ? `${deliverableLabel} non valide`
+                                : "Paiement incomplet"}
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
                 })}
                 {students.length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">Aucun étudiant inscrit</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">Aucun etudiant inscrit</td></tr>
                 )}
               </tbody>
             </table>
           </div>
         </>
       )}
+
+      <Dialog open={previewStudent !== null} onOpenChange={(open) => { if (!open) setPreviewStudent(null); }}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              Apercu de l'attestation
+              {previewStudent && ` - ${previewStudent.first_name} ${previewStudent.last_name}`}
+            </DialogTitle>
+          </DialogHeader>
+          {previewStudent && cohortFullData ? (
+            <AttestationPreview
+              title={(cohortFullData.formation as any)?.attestation_title || "Attestation de Formation"}
+              body={(cohortFullData.formation as any)?.attestation_body || ""}
+              color={(cohortFullData.formation as any)?.attestation_color || "#C5A05A"}
+              logoUrl={(cohortFullData.formation as any)?.attestation_logo_url || ""}
+              signatureUrl={(cohortFullData.formation as any)?.attestation_signature_url || ""}
+              stampUrl={(cohortFullData.formation as any)?.attestation_stamp_url || ""}
+              studentName={`${previewStudent.first_name} ${previewStudent.last_name}`}
+              formationName={(cohortFullData.formation as any)?.name || ""}
+              startDate={cohortFullData.start_date ? new Date(cohortFullData.start_date).toLocaleDateString("fr-FR") : ""}
+              endDate={cohortFullData.end_date ? new Date(cohortFullData.end_date).toLocaleDateString("fr-FR") : ""}
+              certificateNumber={previewStudent.attestation_number || "ATT-XXXXXXXX"}
+              issuedAt={previewStudent.issued_at || undefined}
+            />
+          ) : (
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
+          )}
+          <div className="flex justify-end mt-2">
+            <Button variant="outline" onClick={() => setPreviewStudent(null)}>Fermer</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

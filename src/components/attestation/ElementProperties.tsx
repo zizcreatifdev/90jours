@@ -28,7 +28,7 @@ const ElementProperties = ({ element, onUpdate, onDelete }: ElementPropertiesPro
     <div className="space-y-3 text-sm">
       <div className="flex items-center justify-between">
         <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">
-          {element.type === "text" ? "Texte" : element.type === "image" ? "Image" : "Décoration"}
+          {element.type === "text" ? "Texte" : element.type === "image" ? "Image" : element.type === "rect" ? "Rectangle" : element.type === "line" ? "Ligne" : "Decoration"}
         </h4>
         <Button variant="ghost" size="sm" onClick={onDelete} className="h-7 w-7 p-0 text-destructive hover:text-destructive">
           <Trash2 className="h-3.5 w-3.5" />
@@ -157,6 +157,44 @@ const ElementProperties = ({ element, onUpdate, onDelete }: ElementPropertiesPro
           <div className="flex gap-1 mt-1">
             <input type="color" value={element.patternColor || "#1a1a2e"} onChange={e => onUpdate({ patternColor: e.target.value })} className="h-7 w-8 rounded cursor-pointer border border-border" />
             <Input value={element.patternColor || "#1a1a2e"} onChange={e => onUpdate({ patternColor: e.target.value })} className="h-7 text-xs flex-1" />
+          </div>
+        </div>
+      )}
+
+      {element.type === "rect" && (
+        <div className="space-y-2">
+          <div>
+            <Label className="text-[10px]">Couleur</Label>
+            <div className="flex gap-1 mt-1">
+              <input type="color" value={element.color || "#000000"} onChange={e => onUpdate({ color: e.target.value })} className="h-7 w-8 rounded cursor-pointer border border-border" />
+              <Input value={element.color || "#000000"} onChange={e => onUpdate({ color: e.target.value })} className="h-7 text-xs flex-1" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-[10px]">Arrondi (px)</Label>
+            <Input type="number" value={element.borderRadius || 0} onChange={e => onUpdate({ borderRadius: Number(e.target.value) })} className="h-7 text-xs" min={0} max={50} />
+          </div>
+        </div>
+      )}
+
+      {element.type === "line" && (
+        <div className="space-y-2">
+          <div>
+            <Label className="text-[10px]">Couleur</Label>
+            <div className="flex gap-1 mt-1">
+              <input type="color" value={element.color || "#cccccc"} onChange={e => onUpdate({ color: e.target.value })} className="h-7 w-8 rounded cursor-pointer border border-border" />
+              <Input value={element.color || "#cccccc"} onChange={e => onUpdate({ color: e.target.value })} className="h-7 text-xs flex-1" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-[10px]">Orientation</Label>
+            <Select value={element.orientation || "horizontal"} onValueChange={v => onUpdate({ orientation: v as "horizontal" | "vertical" })}>
+              <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="horizontal">Horizontale</SelectItem>
+                <SelectItem value="vertical">Verticale</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       )}
