@@ -9,10 +9,12 @@ import { useCohorts } from "@/hooks/use-cohorts";
 import { fetchPromoUsage, buildDiscountMap } from "@/lib/student-discount";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Award, CheckCircle2, XCircle, Loader2, Send, Archive } from "lucide-react";
+import { Award, CheckCircle2, XCircle, Loader2, Send, Archive, Eye } from "lucide-react";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DEFAULT_TEMPLATE } from "@/components/attestation/types";
 import type { AttestationTemplate, TemplateElement } from "@/components/attestation/types";
+import { AttestationPreview } from "@/components/AttestationTemplateEditor";
 
 interface StudentRow {
   user_id: string;
@@ -170,7 +172,7 @@ async function renderAttestationToDataUrl(
 async function loadCohortFullData(cohortId: string) {
   const { data } = await supabase
     .from("cohorts")
-    .select("name, start_date, end_date, formation:formations(name, attestation_template, attestation_logo_url, attestation_signature_url, attestation_stamp_url, attestation_color)")
+    .select("name, start_date, end_date, cohort_type, formation:formations(name, attestation_template, attestation_logo_url, attestation_signature_url, attestation_stamp_url, attestation_color, attestation_title, attestation_body)")
     .eq("id", cohortId)
     .maybeSingle();
   return data;
@@ -240,7 +242,7 @@ async function storePdf(
 // ── Component ──────────────────────────────────────────────────────────────────
 
 const AttestationIssuer = () => {
-  const { user } = useAuth();
+  const { user, isOwner } = useAuth();
   const { toast } = useToast();
   const { cohorts } = useCohorts();
   const [selectedCohort, setSelectedCohort] = useState<string>("");
@@ -249,13 +251,16 @@ const AttestationIssuer = () => {
   const [issuing, setIssuing] = useState<string | null>(null);
   const [exportProgress, setExportProgress] = useState<{ current: number; total: number } | null>(null);
   const [deliverableLabel, setDeliverableLabel] = useState("Portfolio");
+  const [previewStudent, setPreviewStudent] = useState<StudentRow | null>(null);
+  const [cohortFullData, setCohortFullData] = useState<Awaited<ReturnType<typeof loadCohortFullData>> | null>(null);
 
   const availableCohorts = cohorts;
 
   useEffect(() => {
-    if (!selectedCohort) { setStudents([]); return; }
+    if (!selectedCohort) { setStudents([]); setCohortFullData(null); return; }
     const fetch = async () => {
       setLoading(true);
+      setCohortFullData(null);
 
       const { data: cohortData } = await supabase
         .from("cohorts")
@@ -343,6 +348,10 @@ const AttestationIssuer = () => {
       });
 
       setStudents(rows);
+
+      const fullData = await loadCohortFullData(selectedCohort);
+      setCohortFullData(fullData);
+
       setLoading(false);
     };
     fetch();
@@ -424,11 +433,13 @@ const AttestationIssuer = () => {
           month: "long",
           year: "numeric",
         });
+        const cohortTypeLabel = (cohortFull as any)?.cohort_type === "initiation" ? "Initiation" : "Perfectionnement";
         await storePdf(
           template,
           {
             student_name: `${student.first_name} ${student.last_name}`,
             formation_name: (cohortFull.formation as any)?.name || "",
+            cohort_type_label: cohortTypeLabel,
             start_date: fmtDate(cohortFull.start_date),
             end_date: fmtDate(cohortFull.end_date),
             current_date: issuedDate,
@@ -521,6 +532,7 @@ const AttestationIssuer = () => {
     if (cohortFull) {
       const template = buildTemplate(cohortFull);
       const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString("fr-FR") : "");
+      const cohortTypeLabel = (cohortFull as any)?.cohort_type === "initiation" ? "Initiation" : "Perfectionnement";
       setExportProgress({ current: 0, total: eligible.length });
 
       for (let i = 0; i < eligible.length; i++) {
@@ -538,6 +550,7 @@ const AttestationIssuer = () => {
             {
               student_name: `${s.first_name} ${s.last_name}`,
               formation_name: (cohortFull.formation as any)?.name || "",
+              cohort_type_label: cohortTypeLabel,
               start_date: fmtDate(cohortFull.start_date),
               end_date: fmtDate(cohortFull.end_date),
               current_date: issuedDate,
@@ -572,6 +585,7 @@ const AttestationIssuer = () => {
     const formation = cohortFull.formation as any;
     const formationName = formation?.name || "";
     const fmtDate = (d: string | null) => (d ? new Date(d).toLocaleDateString("fr-FR") : "");
+    const cohortTypeLabel = (cohortFull as any)?.cohort_type === "initiation" ? "Initiation" : "Perfectionnement";
 
     setExportProgress({ current: 0, total: studentsToExport.length });
 
@@ -594,6 +608,7 @@ const AttestationIssuer = () => {
         const vars: Record<string, string> = {
           student_name: `${s.first_name} ${s.last_name}`,
           formation_name: formationName,
+          cohort_type_label: cohortTypeLabel,
           start_date: fmtDate(cohortFull.start_date),
           end_date: fmtDate(cohortFull.end_date),
           current_date: issuedDate,
@@ -625,6 +640,34 @@ const AttestationIssuer = () => {
 
     setExportProgress(null);
     toast({ title: `${studentsToExport.length} attestation(s) exportee(s) dans le ZIP !` });
+  };
+
+  const handleRevoke = async (userId: string) => {
+    if (!user || !selectedCohort) return;
+    const { error } = await supabase
+      .from("attestations")
+      .delete()
+      .eq("user_id", userId)
+      .eq("cohort_id", selectedCohort);
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      return;
+    }
+    await supabase.storage.from("attestations").remove([`${selectedCohort}/${userId}.pdf`]);
+    await supabase.from("audit_logs").insert({
+      performed_by: user.id,
+      action: "attestation_revoked",
+      target_user_id: userId,
+      details: { cohort_id: selectedCohort },
+    });
+    setStudents(prev =>
+      prev.map(s =>
+        s.user_id === userId
+          ? { ...s, has_attestation: false, attestation_number: null, issued_at: null }
+          : s
+      )
+    );
+    toast({ title: "Attestation revoquee." });
   };
 
   const eligibleCount = students.filter(s =>
@@ -768,28 +811,63 @@ const AttestationIssuer = () => {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        {s.has_attestation ? (
-                          <span className="text-xs text-muted-foreground">Deja delivree</span>
-                        ) : canIssue ? (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={issuing === s.user_id || exportProgress !== null}
-                            onClick={() => handleIssue(s.user_id)}
-                            className="gap-1 text-xs"
-                          >
-                            {issuing === s.user_id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Award className="h-3 w-3" />}
-                            Delivrer
-                          </Button>
-                        ) : (
-                          <span className="text-xs text-red-500">
-                            {!portfolioOk && !paymentOk
-                              ? `${deliverableLabel} non valide, paiement incomplet`
-                              : !portfolioOk
-                              ? `${deliverableLabel} non valide`
-                              : "Paiement incomplet"}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1.5">
+                          {/* Apercu : visible si eligible ou deja delivree */}
+                          {(s.has_attestation || canIssue) && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                              title="Apercu"
+                              onClick={() => setPreviewStudent(s)}
+                            >
+                              <Eye className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          {/* Delivrer ou statut */}
+                          {s.has_attestation ? (
+                            <span className="text-xs text-muted-foreground">Delivree</span>
+                          ) : canIssue ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={issuing === s.user_id || exportProgress !== null}
+                              onClick={() => handleIssue(s.user_id)}
+                              className="gap-1 text-xs"
+                            >
+                              {issuing === s.user_id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Award className="h-3 w-3" />}
+                              Delivrer
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-red-500">
+                              {!portfolioOk && !paymentOk
+                                ? `${deliverableLabel} non valide, paiement incomplet`
+                                : !portfolioOk
+                                ? `${deliverableLabel} non valide`
+                                : "Paiement incomplet"}
+                            </span>
+                          )}
+                          {/* Revoquer : owner uniquement, attestation delivree */}
+                          {isOwner && s.has_attestation && (
+                            <ConfirmDialog
+                              trigger={
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
+                                  title="Revoquer"
+                                >
+                                  <XCircle className="h-3.5 w-3.5" />
+                                </Button>
+                              }
+                              title="Revoquer l'attestation ?"
+                              description={`Revoquer l'attestation de ${s.first_name} ${s.last_name} ? Cette action est irreversible.`}
+                              confirmLabel="Revoquer"
+                              variant="destructive"
+                              onConfirm={() => handleRevoke(s.user_id)}
+                            />
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -802,6 +880,39 @@ const AttestationIssuer = () => {
           </div>
         </>
       )}
+
+      {/* Dialog apercu attestation */}
+      <Dialog open={previewStudent !== null} onOpenChange={(open) => { if (!open) setPreviewStudent(null); }}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-display">
+              Apercu de l'attestation
+              {previewStudent && ` — ${previewStudent.first_name} ${previewStudent.last_name}`}
+            </DialogTitle>
+          </DialogHeader>
+          {previewStudent && cohortFullData ? (
+            <AttestationPreview
+              title={(cohortFullData.formation as any)?.attestation_title || "Attestation de Formation"}
+              body={(cohortFullData.formation as any)?.attestation_body || ""}
+              color={(cohortFullData.formation as any)?.attestation_color || "#C5A05A"}
+              logoUrl={(cohortFullData.formation as any)?.attestation_logo_url || ""}
+              signatureUrl={(cohortFullData.formation as any)?.attestation_signature_url || ""}
+              stampUrl={(cohortFullData.formation as any)?.attestation_stamp_url || ""}
+              studentName={`${previewStudent.first_name} ${previewStudent.last_name}`}
+              formationName={(cohortFullData.formation as any)?.name || ""}
+              startDate={cohortFullData.start_date ? new Date(cohortFullData.start_date).toLocaleDateString("fr-FR") : ""}
+              endDate={cohortFullData.end_date ? new Date(cohortFullData.end_date).toLocaleDateString("fr-FR") : ""}
+              certificateNumber={previewStudent.attestation_number || "ATT-XXXXXXXX"}
+              issuedAt={previewStudent.issued_at || undefined}
+            />
+          ) : (
+            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-accent" /></div>
+          )}
+          <div className="flex justify-end mt-2">
+            <Button variant="outline" onClick={() => setPreviewStudent(null)}>Fermer</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

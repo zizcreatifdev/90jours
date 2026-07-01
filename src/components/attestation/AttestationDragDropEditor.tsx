@@ -122,6 +122,18 @@ const AttestationDragDropEditor = () => {
     setSelectedElement(id);
   };
 
+  const addLogo60jours = () => {
+    const id = `image_${Date.now()}`;
+    const newEl: TemplateElement = {
+      id, type: "image",
+      x: 4, y: 2.5, width: 22, height: 9,
+      src: "/logos/Logo60jours_noir.svg",
+      label: "Logo 60jours",
+    };
+    setTemplate(prev => ({ ...prev, elements: [...prev.elements, newEl] }));
+    setSelectedElement(id);
+  };
+
   const handleSave = async () => {
     if (!selectedId) return;
     setSaving(true);
@@ -209,6 +221,9 @@ const AttestationDragDropEditor = () => {
               </Button>
               <Button variant="outline" size="sm" onClick={() => addElement("image")} className="gap-1.5 text-xs">
                 <Image className="h-3.5 w-3.5" /> Image
+              </Button>
+              <Button variant="outline" size="sm" onClick={addLogo60jours} className="gap-1.5 text-xs">
+                <Award className="h-3.5 w-3.5" /> Logo 60jours
               </Button>
               <Button variant="outline" size="sm" onClick={() => addElement("pattern")} className="gap-1.5 text-xs">
                 <Layers className="h-3.5 w-3.5" /> Bande déco

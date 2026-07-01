@@ -31,134 +31,153 @@ export interface AttestationTemplate {
 }
 
 export const DEFAULT_TEMPLATE: AttestationTemplate = {
+  backgroundColor: "#FAFAF8",
+  primaryColor: "#C5A05A",
+  width: 842,
+  height: 595,
   elements: [
-    {
-      id: "topBand",
-      type: "pattern",
-      x: 0, y: 0, width: 100, height: 3,
-      patternType: "topBand",
-      patternColor: "#1a1a2e",
-    },
-    {
-      id: "bottomBand",
-      type: "pattern",
-      x: 0, y: 97, width: 100, height: 3,
-      patternType: "bottomBand",
-      patternColor: "#1a1a2e",
-    },
+    // Cadre or : 4 bandes fines sur les bords
+    { id: "borderTop",    type: "pattern", x: 0,    y: 0,    width: 100,  height: 1.5,  patternType: "topBand",    patternColor: "#C5A05A" },
+    { id: "borderBottom", type: "pattern", x: 0,    y: 98.5, width: 100,  height: 1.5,  patternType: "bottomBand", patternColor: "#C5A05A" },
+    { id: "borderLeft",   type: "pattern", x: 0,    y: 0,    width: 0.9,  height: 100,  patternType: "topBand",    patternColor: "#C5A05A" },
+    { id: "borderRight",  type: "pattern", x: 99.1, y: 0,    width: 0.9,  height: 100,  patternType: "topBand",    patternColor: "#C5A05A" },
+
+    // En-tete : logo 60jours a gauche, logo partenaire a droite
     {
       id: "logo",
       type: "image",
-      x: 35, y: 5, width: 30, height: 12,
-      src: "",
-      label: "Logo",
+      x: 4, y: 2.5, width: 22, height: 9,
+      src: "/logos/Logo60jours_noir.svg",
+      label: "Logo 60jours",
     },
+    {
+      id: "logoPartner",
+      type: "image",
+      x: 74, y: 2.5, width: 22, height: 9,
+      src: "",
+      label: "Logo partenaire",
+    },
+
+    // Filet or sous l'en-tete
+    { id: "headerLine", type: "pattern", x: 3, y: 14, width: 94, height: 0.4, patternType: "topBand", patternColor: "#C5A05A" },
+
+    // Titre principal
     {
       id: "title",
       type: "text",
-      x: 10, y: 20, width: 80, height: 8,
-      content: "ATTESTATION DE PARTICIPATION",
-      fontSize: 22,
+      x: 5, y: 17, width: 90, height: 10,
+      content: "ATTESTATION DE FORMATION",
+      fontSize: 26,
       fontWeight: "bold",
       textAlign: "center",
-      color: "#1a1a2e",
+      color: "#0E1B2E",
     },
+
+    // Sous-titre (formation + type de cohorte)
     {
       id: "subtitle",
       type: "text",
-      x: 20, y: 28, width: 60, height: 5,
-      content: "Formation professionnelle",
-      fontSize: 10,
+      x: 10, y: 28, width: 80, height: 6,
+      content: "Formation {cohort_type_label} : {formation_name}",
+      fontSize: 13,
       fontWeight: "normal",
       fontStyle: "italic",
       textAlign: "center",
-      color: "#999999",
+      color: "#C5A05A",
     },
+
+    // Intro
     {
       id: "decerne",
       type: "text",
-      x: 30, y: 35, width: 40, height: 5,
-      content: "Décerné(e) à",
-      fontSize: 12,
+      x: 20, y: 37, width: 60, height: 5,
+      content: "La presente attestation est delivree a",
+      fontSize: 11,
       fontWeight: "normal",
       fontStyle: "italic",
       textAlign: "center",
       color: "#666666",
     },
+
+    // Nom de l'etudiant
     {
       id: "studentName",
       type: "text",
-      x: 15, y: 40, width: 70, height: 8,
+      x: 10, y: 43, width: 80, height: 9,
       content: "{student_name}",
-      fontSize: 26,
+      fontSize: 28,
       fontWeight: "bold",
       textAlign: "center",
-      color: "#1a1a2e",
+      color: "#0E1B2E",
     },
+
+    // Corps du certificat
     {
       id: "body",
       type: "text",
-      x: 10, y: 50, width: 80, height: 15,
-      content: "Pour avoir participé avec succès à la formation « {formation_name} » du {start_date} au {end_date}.",
-      fontSize: 11,
+      x: 10, y: 54, width: 80, height: 12,
+      content: "pour avoir suivi avec succes la formation {formation_name} du {start_date} au {end_date}.",
+      fontSize: 12,
       fontWeight: "normal",
       textAlign: "center",
       color: "#444444",
     },
-    {
-      id: "formationBadge",
-      type: "text",
-      x: 30, y: 67, width: 40, height: 6,
-      content: "{formation_name}",
-      fontSize: 10,
-      fontWeight: "bold",
-      textAlign: "center",
-      color: "#ffffff",
-    },
-    {
-      id: "dateText",
-      type: "text",
-      x: 25, y: 75, width: 50, height: 5,
-      content: "Fait le {current_date}",
-      fontSize: 10,
-      textAlign: "center",
-      color: "#999999",
-    },
+
+    // Filet or avant le pied de page
+    { id: "footerLine", type: "pattern", x: 3, y: 77, width: 94, height: 0.4, patternType: "bottomBand", patternColor: "#C5A05A" },
+
+    // Signature (image)
     {
       id: "signature",
       type: "image",
-      x: 5, y: 80, width: 20, height: 12,
+      x: 5, y: 64, width: 22, height: 12,
       src: "",
       label: "Signature",
     },
+
+    // Nom du signataire
     {
       id: "directorLabel",
       type: "text",
-      x: 5, y: 92, width: 20, height: 4,
-      content: "Le Directeur",
+      x: 5, y: 78.5, width: 25, height: 4,
+      content: "La Direction",
       fontSize: 9,
+      fontWeight: "normal",
       textAlign: "left",
       color: "#666666",
     },
+
+    // Date d'emission
+    {
+      id: "dateText",
+      type: "text",
+      x: 32, y: 79, width: 36, height: 4,
+      content: "Fait le {current_date}",
+      fontSize: 9,
+      fontWeight: "normal",
+      textAlign: "center",
+      color: "#888888",
+    },
+
+    // Numero de certificat
     {
       id: "certificateNumber",
       type: "text",
-      x: 35, y: 90, width: 30, height: 4,
+      x: 70, y: 79, width: 26, height: 4,
       content: "N° {certificate_number}",
-      fontSize: 8,
-      textAlign: "center",
-      color: "#999999",
+      fontSize: 9,
+      fontWeight: "normal",
+      textAlign: "right",
+      color: "#888888",
     },
+
+    // Tampon
     {
       id: "stamp",
       type: "image",
-      x: 75, y: 78, width: 18, height: 16,
+      x: 73, y: 63, width: 15, height: 13,
       src: "",
       label: "Tampon",
     },
   ],
-  backgroundColor: "#ffffff",
-  primaryColor: "#1a1a2e",
-  width: 842,
-  height: 595,
 };

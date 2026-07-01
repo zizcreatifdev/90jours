@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 1er juillet 2026
 **Branche active**: `main`
-**Prompt actuel**: partage social : boutons WhatsApp/Facebook/LinkedIn/Copier + balises Open Graph
+**Prompt actuel**: module attestations finalise (template pro, preview, revocation, logo shortcut, {cohort_type_label})
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -135,6 +135,11 @@
 | Génération PDF (html2canvas) | ✅ Complet | 100% |
 | Numéros de certificat uniques | ✅ Complet | 100% |
 | **Export ZIP batch cohorte (JSZip)** | ✅ Complet | 100% |
+| **Template pro (A4 paysage, fond creme, cadre or, logo 60jours)** | ✅ Complet | 100% |
+| **Preview avant emission (dialog, vraies donnees)** | ✅ Complet | 100% |
+| **Revocation (isOwner, ConfirmDialog, audit log, storage remove)** | ✅ Complet | 100% |
+| **Raccourci "Logo 60jours" dans l'editeur drag-drop** | ✅ Complet | 100% |
+| **Variable {cohort_type_label} (Initiation / Perfectionnement)** | ✅ Complet | 100% |
 
 **Complétion globale**: 100%
 **Bugs connus**: Aucun identifié
