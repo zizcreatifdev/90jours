@@ -159,6 +159,15 @@ const StudentDashboard = () => {
         // Skip for terminated/archived cohorts (contract was already signed at enrollment time).
         const isTerminated = cohort.status === "archived" || cohort.status === "completed" || new Date(cohort.end_date + "T00:00:00") < new Date();
         if (!isTerminated) {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("avatar_url")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          if (!profileData?.avatar_url) {
+            navigate(`/onboarding?cohort_id=${cohort.id}`);
+            return;
+          }
           const formationId = cohort.formation_id;
           let templateFound = false;
           if (formationId) {

@@ -6,6 +6,8 @@ export interface OnboardingState {
   loading: boolean;
   hasActiveTemplate: boolean;
   contractSigned: boolean;
+  hasAvatar: boolean;
+  avatarUrl: string | null;
   cohortStartDate: string | null;
   registrationFee: number;
   formationName: string | null;
@@ -16,6 +18,8 @@ export const useOnboardingState = (cohortId: string): OnboardingState => {
   const [loading, setLoading] = useState(true);
   const [hasActiveTemplate, setHasActiveTemplate] = useState(false);
   const [contractSigned, setContractSigned] = useState(false);
+  const [hasAvatar, setHasAvatar] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [cohortStartDate, setCohortStartDate] = useState<string | null>(null);
   const [registrationFee, setRegistrationFee] = useState(0);
   const [formationName, setFormationName] = useState<string | null>(null);
@@ -28,6 +32,16 @@ export const useOnboardingState = (cohortId: string): OnboardingState => {
 
     const check = async () => {
       setLoading(true);
+
+      // 0. Profile avatar
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const fetchedAvatarUrl = profileData?.avatar_url ?? null;
+      setHasAvatar(!!fetchedAvatarUrl);
+      setAvatarUrl(fetchedAvatarUrl);
 
       // 1. Cohort start_date + formation_id
       const { data: cohortData } = await supabase
@@ -95,5 +109,5 @@ export const useOnboardingState = (cohortId: string): OnboardingState => {
     check();
   }, [user?.id, cohortId]);
 
-  return { loading, hasActiveTemplate, contractSigned, cohortStartDate, registrationFee, formationName };
+  return { loading, hasActiveTemplate, contractSigned, hasAvatar, avatarUrl, cohortStartDate, registrationFee, formationName };
 };

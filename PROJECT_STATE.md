@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 1er juillet 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: fix 12 bugs bas (securite profil, toast ordre, fantome, race condition, sante ratio, audit portfolio, localStorage cleanup)
+**Prompt actuel**: onboarding : etape photo de profil obligatoire avant le contrat
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
