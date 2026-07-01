@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Award, Download, Lock, CheckCircle2, Loader2 } from "lucide-react";
+import { Award, Download, Lock, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AttestationPreview } from "@/components/AttestationTemplateEditor";
 import { fetchStudentDiscount } from "@/lib/student-discount";
@@ -25,62 +25,61 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
   const [downloading, setDownloading] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const fetchAll = useCallback(async () => {
     if (!user || !cohortId) return;
-    const fetchAll = async () => {
-      // Fetch cohort with formation
-      const { data: cohortData } = await supabase
-        .from("cohorts")
-        .select("*, formation:formations(*)")
-        .eq("id", cohortId)
-        .maybeSingle();
-      
-      if (cohortData) {
-        setCohort(cohortData);
-        setFormation(cohortData.formation);
-      }
+    setLoading(true);
 
-      // Fetch attestation
-      const { data: attData } = await supabase
-        .from("attestations")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("cohort_id", cohortId)
-        .maybeSingle();
-      if (attData) setAttestation(attData);
+    const { data: cohortData } = await supabase
+      .from("cohorts")
+      .select("*, formation:formations(*)")
+      .eq("id", cohortId)
+      .maybeSingle();
 
-      // Check portfolio
-      const { data: portfolioData } = await supabase
-        .from("portfolios")
-        .select("status")
-        .eq("user_id", user.id)
-        .eq("cohort_id", cohortId)
-        .maybeSingle();
-      setPortfolioValidated(portfolioData?.status === "validated");
+    if (cohortData) {
+      setCohort(cohortData);
+      setFormation(cohortData.formation);
+    }
 
-      // Check payments
-      const { data: paymentsData } = await supabase
-        .from("payments")
-        .select("amount, status")
-        .eq("user_id", user.id)
-        .eq("cohort_id", cohortId)
-        .is("deleted_at", null);
+    const { data: attData } = await supabase
+      .from("attestations")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("cohort_id", cohortId)
+      .maybeSingle();
+    if (attData) setAttestation(attData);
 
-      if (paymentsData && cohortData?.formation) {
-        // Montant du total = total_price (grand total TTC, inscription incluse),
-        // diminue de la remise code promo figee (eventuellement appliquee a l'inscription).
-        const discount = await fetchStudentDiscount(user.id, cohortId);
-        const totalRequired = (cohortData.formation.total_price || 50000) - discount;
-        const totalPaid = paymentsData
-          .filter((p: any) => p.status === "paid")
-          .reduce((sum: number, p: any) => sum + p.amount, 0);
-        setPaymentsComplete(totalPaid >= totalRequired);
-      }
+    const { data: portfolioData } = await supabase
+      .from("portfolios")
+      .select("status")
+      .eq("user_id", user.id)
+      .eq("cohort_id", cohortId)
+      .maybeSingle();
+    setPortfolioValidated(portfolioData?.status === "validated");
 
-      setLoading(false);
-    };
-    fetchAll();
+    const { data: paymentsData } = await supabase
+      .from("payments")
+      .select("amount, status")
+      .eq("user_id", user.id)
+      .eq("cohort_id", cohortId)
+      .is("deleted_at", null);
+
+    if (paymentsData && cohortData?.formation) {
+      // Montant du total = total_price (grand total TTC, inscription incluse),
+      // diminue de la remise code promo figee (eventuellement appliquee a l'inscription).
+      const discount = await fetchStudentDiscount(user.id, cohortId);
+      const totalRequired = (cohortData.formation.total_price || 50000) - discount;
+      const totalPaid = paymentsData
+        .filter((p: any) => p.status === "paid")
+        .reduce((sum: number, p: any) => sum + p.amount, 0);
+      setPaymentsComplete(totalPaid >= totalRequired);
+    }
+
+    setLoading(false);
   }, [user, cohortId]);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
 
   const handleDownload = async () => {
     if (!previewRef.current) return;
@@ -133,9 +132,14 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6 shadow-card space-y-4">
-      <div className="flex items-center gap-2">
-        <Award className="h-5 w-5 text-accent" />
-        <h3 className="font-display font-semibold text-foreground">Attestation de formation</h3>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Award className="h-5 w-5 text-accent" />
+          <h3 className="font-display font-semibold text-foreground">Attestation de formation</h3>
+        </div>
+        <Button size="sm" variant="ghost" onClick={fetchAll} disabled={loading} className="gap-1 text-xs text-muted-foreground">
+          <RefreshCw className="h-3.5 w-3.5" /> Actualiser
+        </Button>
       </div>
 
       {isEligible ? (

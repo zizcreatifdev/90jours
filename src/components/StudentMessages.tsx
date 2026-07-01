@@ -117,7 +117,8 @@ const StudentMessages = ({ cohortId, formationId, isArchived }: StudentMessagesP
 
       (staffRows || []).forEach((row: any) => {
         const p = row.profiles;
-        const label = p ? `${p.first_name || ""} ${p.last_name || ""}`.trim() || "Formateur" : "Formateur";
+        if (!p) return;
+        const label = `${p.first_name || ""} ${p.last_name || ""}`.trim() || "Formateur";
         list.push({ id: row.user_id, label });
       });
     }

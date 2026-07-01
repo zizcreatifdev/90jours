@@ -101,6 +101,16 @@ const PortfolioManager = ({ filterCohortIds }: PortfolioManagerProps = {}) => {
             : "Votre portfolio a été rejeté.",
         created_by: user?.id ?? null,
       });
+      await supabase.from("audit_logs").insert({
+        performed_by: user?.id,
+        action: status === "validated" ? "portfolio_validated" : "portfolio_rejected",
+        target_user_id: currentPortfolio.user_id,
+        details: {
+          portfolio_id: currentPortfolio.id,
+          cohort_id: currentPortfolio.cohort_id,
+          admin_notes: adminNotes || null,
+        },
+      });
       toast({ title: status === "validated" ? "Portfolio validé" : "Portfolio rejeté" });
       setReviewOpen(false);
       setPortfolios(prev => prev.map(p => p.id === currentPortfolio.id ? { ...p, status, admin_notes: adminNotes, validated_at: status === "validated" ? new Date().toISOString() : null } : p));

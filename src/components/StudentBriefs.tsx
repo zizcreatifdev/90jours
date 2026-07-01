@@ -221,7 +221,6 @@ const StudentBriefs = ({ cohortId, formationName, formationColor, isArchived }: 
         }
         toast({ title: "Erreur", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: submission.is_late ? `Brief livré avec ${submission.delay_days} jour(s) de retard` : "Brief livré avec succès." });
         setDeliverOpen(false);
         setDeliverTarget(null);
 
@@ -241,6 +240,7 @@ const StudentBriefs = ({ cohortId, formationName, formationColor, isArchived }: 
           }
         }
 
+        toast({ title: submission.is_late ? `Brief livré avec ${submission.delay_days} jour(s) de retard` : "Brief livré avec succès." });
         await refreshSubmissions();
       }
     } catch (err: unknown) {

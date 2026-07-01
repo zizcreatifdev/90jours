@@ -127,6 +127,7 @@ const StudentDashboard = () => {
         // Auto-select: restore from storage or pick the first active
         const stored = localStorage.getItem("60jours-active-enrollment");
         const valid = enriched.find(e => e.id === stored);
+        if (!valid && stored) localStorage.removeItem("60jours-active-enrollment");
         setSelectedEnrollmentId(valid ? valid.id : enriched[0].id);
       } catch (err) {
         console.error("Erreur de chargement des inscriptions", err);

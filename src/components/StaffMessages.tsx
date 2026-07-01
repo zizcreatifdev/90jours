@@ -171,7 +171,9 @@ const StaffMessages = () => {
       })
       .subscribe();
 
-    // Channel 2: any new message (catches student replies to formateur's sent messages)
+    // Canal 2 : sans filtre car Supabase Realtime ne supporte pas de filtre multi-colonnes
+    // (sender_id + parent_id). Toute insertion dans messages declenche un re-fetch ;
+    // fetchStudentConversations ne charge que les messages envoyes par ce formateur.
     const ch2 = supabase
       .channel("staff-msg-sent-" + user.id)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => {

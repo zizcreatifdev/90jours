@@ -41,7 +41,7 @@ const NotificationPanel = () => {
       brief:       `${rolePrefix}?tab=briefs`,
       feedback:    activeRole === "student" ? "/student?tab=briefs" : `${rolePrefix}?tab=briefs`,
       portfolio:   activeRole === "student" ? "/student?tab=portfolio" : `${rolePrefix}?tab=portfolios`,
-      attestation: activeRole === "student" ? "/student?tab=dashboard" : `${rolePrefix}?tab=attestations`,
+      attestation: activeRole === "student" ? "/student?tab=attestation" : `${rolePrefix}?tab=attestations`,
       payment:     activeRole === "super_admin" ? "/admin?tab=payments" : "/student?tab=payments",
       // Messages navigation
       message:      activeRole === "student" ? "/student?tab=messages" : `${rolePrefix}?tab=messages`,

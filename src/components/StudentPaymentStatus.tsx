@@ -487,7 +487,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
         {!inscriptionFullyPaid && persistedDiscount > 0 ? (
           <div className="flex items-center gap-1.5 bg-secondary/30 px-6 py-3 text-xs">
             <Tag className="h-3.5 w-3.5 shrink-0 text-accent" />
-            <span className="font-medium text-foreground">Remise déjà appliquée</span>
+            <span className="font-medium text-green-700 dark:text-green-400">Remise appliquee</span>
             <span className="text-muted-foreground line-through">{fmt(inscriptionAmount)}</span>
             <span className="font-semibold text-accent">{fmt(effectiveInscriptionAmount)}</span>
           </div>
@@ -497,7 +497,8 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2 text-xs">
                   <Tag className="h-3.5 w-3.5 shrink-0 text-accent" />
-                  <span className="font-medium text-foreground">Code {promoApplied.code} appliqué</span>
+                  <span className="font-medium text-foreground">Apercu de la remise</span>
+                  <span className="text-muted-foreground">{promoApplied.code}</span>
                   <span className="text-muted-foreground line-through">{fmt(inscriptionAmount)}</span>
                   <span className="font-semibold text-accent">{fmt(promoApplied.newAmount)}</span>
                 </div>

@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 1er juillet 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: coherence : duree reelle, badge Perfectionnement/Initiation, labels corriges partout
+**Prompt actuel**: fix 12 bugs bas (securite profil, toast ordre, fantome, race condition, sante ratio, audit portfolio, localStorage cleanup)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -76,7 +76,7 @@
 | Liste d'attente (WaitlistManager) | ✅ Complet | 100% |
 
 **Complétion globale**: 100%
-**Bugs connus**: Aucun (15 bugs corrigés : purge cohorte, notifications, realtime, revenus, carousel + 6 corrections audit : isOwner formateur, useEffect calendar, wave dynamique, categories rename, depenses edit/delete, attestation tracker error)
+**Bugs connus**: Aucun (15 bugs corrigés : purge cohorte, notifications, realtime, revenus, carousel + 6 corrections audit : isOwner formateur, useEffect calendar, wave dynamique, categories rename, depenses edit/delete, attestation tracker error). B11 : audit_logs insere sur validation/rejet portfolio.
 **Prochaines étapes**: Tests d'intégration des flux critiques
 
 ---
@@ -97,7 +97,7 @@
 | Messages officiels formateur | ✅ Complet | 100% |
 
 **Complétion globale**: 100%
-**Bugs connus**: 7 bugs corriges le 30/06/2026 (fix-formateur-batch) + 2 corriges le 01/07/2026 (M7 : ecran "Aucune formation assignee" ; R1 : routing onglets deja correct)
+**Bugs connus**: 7 bugs corriges le 30/06/2026 (fix-formateur-batch) + 2 corriges le 01/07/2026 (M7 : ecran "Aucune formation assignee" ; R1 : routing onglets deja correct). B8 : garde division par zero dans getStudentHealth. B9 : commentaire limitation localStorage. B10 : commentaire limitation ch2 realtime.
 **Prochaines étapes**: Tester le flux validation portfolio end-to-end
 
 ---
@@ -118,7 +118,7 @@
 | **Validation email + suggestion fautes de frappe** | ✅ Complet | 100% |
 
 **Complétion globale**: 100%
-**Bugs connus**: 5 bugs corriges le 01/07/2026 (H1 : bouton Realise desactive apres deadline ; M1 : validation livrable requis ; M6 : montant paiement en lecture seule ; M11 : filtrage soumissions par cohorte ; H2 : calendrier vide si etudiant sans cohorte)
+**Bugs connus**: 5 bugs corriges le 01/07/2026 (H1/M1/M6/M11/H2). B1 : /student/:id restreint super_admin+staff. B2 : lien attestation corrige (?tab=attestation). B3 : toast apres notifications. B4 : filtre destinataires fantomes. B5 : garde race condition portfolio. B6 : labels session vs persistee. B7 : bouton Actualiser. B12 : nettoyage cle localStorage orpheline.
 **Prochaines étapes**: Améliorer UX mobile
 
 ---

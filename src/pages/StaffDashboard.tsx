@@ -41,6 +41,8 @@ const StaffDashboard = () => {
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [assignedFormationIds, setAssignedFormationIds] = useState<string[]>([]);
   const [loadingAssignments, setLoadingAssignments] = useState(true);
+  // Lu localement uniquement : chaque navigateur/appareil maintient sa propre liste.
+  // Un message marque comme lu sur un appareil reste non lu sur un autre.
   const [seenAnnouncements, setSeenAnnouncements] = useState<Set<string>>(() => {
     try {
       const stored = localStorage.getItem("seen_announcements_staff");
@@ -261,6 +263,7 @@ const StaffDashboard = () => {
     const totalDays = Math.max(1, (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     const daysPassed = Math.min(totalDays, (now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
     const expectedPct = (daysPassed / totalDays) * 100;
+    if (expectedPct <= 0) return null;
     if (expectedPct < 10) return null;
     const ratio = progress / expectedPct;
     if (ratio >= 0.75) return { label: "En bonne voie", level: "green", dot: "bg-green-500", color: "text-green-700 dark:text-green-400", bg: "bg-green-50 dark:bg-green-950/30" };

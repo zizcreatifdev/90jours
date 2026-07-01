@@ -92,6 +92,16 @@ const StudentPortfolio = ({ cohortId, formationName, formationColor }: StudentPo
     setSaving(true);
 
     if (portfolio) {
+      const { data: current } = await supabase
+        .from("portfolios")
+        .select("status")
+        .eq("id", portfolio.id)
+        .maybeSingle();
+      if (current && current.status !== "pending") {
+        toast({ title: "Statut modifie", description: "Votre portfolio a ete evalue depuis votre derniere visite. Actualisez la page.", variant: "destructive" });
+        setSaving(false);
+        return;
+      }
       const { error } = await supabase
         .from("portfolios")
         .update({ url, description: description.trim() || null } as any)
