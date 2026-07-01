@@ -14,10 +14,17 @@ const Footer = () => {
                 <img src={settings.logo_url} alt="Logo" className="h-8 w-auto brightness-0 invert" />
               ) : (
                 <>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent">
-                    <span className="font-display text-xs font-bold text-accent-foreground">60</span>
-                  </div>
-                  <span className="font-display text-lg font-bold">60 jours de formation</span>
+                  <img
+                    src="/logos/Logo60jours_blanc.svg"
+                    alt="60jours"
+                    className="h-8 w-auto object-contain"
+                    onError={(e) => {
+                      e.currentTarget.classList.add("hidden");
+                      const next = e.currentTarget.nextElementSibling as HTMLElement;
+                      if (next) next.classList.remove("hidden");
+                    }}
+                  />
+                  <span className="hidden font-display text-xs font-bold text-primary-foreground">60</span>
                 </>
               )}
             </div>

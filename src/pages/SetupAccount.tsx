@@ -97,8 +97,19 @@ const SetupAccount = () => {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
         <div className="w-full max-w-sm text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary">
-            <span className="font-display text-2xl font-bold text-primary-foreground">60</span>
+          <div className="mx-auto mb-6">
+            <img
+              src="/logos/Logo60jours_noir.svg"
+              alt="60jours"
+              className="h-16 object-contain dark:hidden"
+              onError={(e) => { e.currentTarget.classList.add("!hidden"); }}
+            />
+            <img
+              src="/logos/Logo60jours_blanc.svg"
+              alt="60jours"
+              className="hidden h-16 object-contain dark:block"
+              onError={(e) => { e.currentTarget.classList.add("!hidden"); }}
+            />
           </div>
           <h1 className="mb-2 font-display text-2xl font-bold text-foreground">Lien expiré</h1>
           <p className="mb-6 text-muted-foreground">
@@ -116,8 +127,19 @@ const SetupAccount = () => {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary">
-            <span className="font-display text-2xl font-bold text-primary-foreground">60</span>
+          <div className="mx-auto mb-4">
+            <img
+              src="/logos/Logo60jours_noir.svg"
+              alt="60jours"
+              className="h-16 object-contain dark:hidden"
+              onError={(e) => { e.currentTarget.classList.add("!hidden"); }}
+            />
+            <img
+              src="/logos/Logo60jours_blanc.svg"
+              alt="60jours"
+              className="hidden h-16 object-contain dark:block"
+              onError={(e) => { e.currentTarget.classList.add("!hidden"); }}
+            />
           </div>
           <h1 className="mb-2 font-display text-2xl font-bold text-foreground">
             Finalisez votre compte

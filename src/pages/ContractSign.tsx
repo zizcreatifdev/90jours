@@ -383,9 +383,17 @@ const ContractSign = () => {
       <header className="sticky top-0 z-20 border-b border-border bg-card/90 backdrop-blur-sm px-6 py-4">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-              <span className="font-display text-xs font-bold text-primary-foreground">60</span>
-            </div>
+            <img
+              src="/logos/Logo60jours_blanc.svg"
+              alt="60jours"
+              className="h-9 w-auto object-contain"
+              onError={(e) => {
+                e.currentTarget.classList.add("hidden");
+                const next = e.currentTarget.nextElementSibling as HTMLElement;
+                if (next) next.classList.remove("hidden");
+              }}
+            />
+            <span className="hidden font-display text-xs font-bold text-primary-foreground">60</span>
             <div>
               <p className="font-display text-sm font-bold text-foreground">Contrat de Formation</p>
               <p className="text-xs text-muted-foreground">Veuillez lire l'integralite avant de signer</p>

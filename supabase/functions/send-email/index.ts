@@ -89,8 +89,8 @@ const layout = (innerHtml: string): string => `<!DOCTYPE html>
             <td style="background-color:${NAVY};padding:28px 32px;">
               <table role="presentation" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="background-color:${GOLD};border-radius:10px;width:40px;height:40px;text-align:center;vertical-align:middle;">
-                    <span style="font-family:Georgia,'Times New Roman',serif;font-size:16px;font-weight:bold;color:${NAVY};">60</span>
+                  <td style="vertical-align:middle;">
+                    <img src="https://60jours.com/logos/Logo60jours_blanc.png" alt="60jours" height="40" style="display:block;max-width:160px;height:auto;" />
                   </td>
                   <td style="padding-left:12px;">
                     <span style="font-family:Georgia,'Times New Roman',serif;font-size:18px;font-weight:bold;color:#ffffff;">60jours</span>

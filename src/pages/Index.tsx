@@ -737,10 +737,17 @@ const Index = () => {
                   <img src={settings.logo_url} alt="Logo" className="h-10 w-auto brightness-0 invert" />
                 ) : (
                   <>
-                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent">
-                      <span className="font-display text-xs font-bold text-accent-foreground">60</span>
-                    </div>
-                    <span className="font-display text-lg font-semibold text-white">60 jours</span>
+                    <img
+                      src="/logos/Logo60jours_blanc.svg"
+                      alt="60jours"
+                      className="h-10 w-auto object-contain"
+                      onError={(e) => {
+                        e.currentTarget.classList.add("hidden");
+                        const next = e.currentTarget.nextElementSibling as HTMLElement;
+                        if (next) next.classList.remove("hidden");
+                      }}
+                    />
+                    <span className="hidden font-display text-lg font-semibold text-white">60 jours</span>
                   </>
                 )}
               </div>

@@ -106,9 +106,19 @@ const ResetPassword = () => {
             {settings.logo_url ? (
               <img src={settings.logo_url} alt="60jours" className="h-16 mx-auto" />
             ) : (
-              <div className="flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-accent">
-                <span className="font-display text-3xl font-bold text-primary">60</span>
-              </div>
+              <>
+                <img
+                  src="/logos/Logo60jours_blanc.svg"
+                  alt="60jours"
+                  className="h-16 mx-auto object-contain"
+                  onError={(e) => {
+                    e.currentTarget.classList.add("hidden");
+                    const next = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (next) next.classList.remove("hidden");
+                  }}
+                />
+                <span className="hidden font-display text-3xl font-bold text-primary-foreground">60</span>
+              </>
             )}
           </div>
           <h2 className="mb-4 font-display text-3xl font-bold text-primary-foreground">
@@ -127,9 +137,20 @@ const ResetPassword = () => {
             {settings.logo_url ? (
               <img src={settings.logo_url} alt="60jours" className="h-10" />
             ) : (
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-                <span className="font-display text-sm font-bold text-primary-foreground">60</span>
-              </div>
+              <>
+                <img
+                  src="/logos/Logo60jours_noir.svg"
+                  alt="60jours"
+                  className="h-10 w-auto object-contain dark:hidden"
+                  onError={(e) => { e.currentTarget.classList.add("!hidden"); }}
+                />
+                <img
+                  src="/logos/Logo60jours_blanc.svg"
+                  alt="60jours"
+                  className="hidden h-10 w-auto object-contain dark:block"
+                  onError={(e) => { e.currentTarget.classList.add("!hidden"); }}
+                />
+              </>
             )}
           </div>
 

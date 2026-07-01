@@ -30,15 +30,15 @@ export default defineConfig(() => ({
         start_url: "/",
         icons: [
           {
-            src: "/pwa-icon.svg",
+            src: "/logos/Logo60jours_noir.png",
             sizes: "any",
-            type: "image/svg+xml",
+            type: "image/png",
             purpose: "any",
           },
           {
-            src: "/pwa-icon.svg",
+            src: "/logos/Logo60jours_noir.png",
             sizes: "any",
-            type: "image/svg+xml",
+            type: "image/png",
             purpose: "maskable",
           },
         ],

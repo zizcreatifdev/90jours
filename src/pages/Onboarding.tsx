@@ -159,10 +159,18 @@ const Onboarding = () => {
       <header className="border-b border-border bg-card px-6 py-4">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-              <span className="font-display text-xs font-bold text-primary-foreground">60</span>
-            </div>
-            <span className="font-display text-sm font-bold text-foreground">60 Jours</span>
+            <img
+              src="/logos/Logo60jours_noir.svg"
+              alt="60jours"
+              className="h-9 w-auto object-contain dark:hidden"
+              onError={(e) => { e.currentTarget.classList.add("!hidden"); }}
+            />
+            <img
+              src="/logos/Logo60jours_blanc.svg"
+              alt="60jours"
+              className="hidden h-9 w-auto object-contain dark:block"
+              onError={(e) => { e.currentTarget.classList.add("!hidden"); }}
+            />
           </div>
           {contractSigned && (
             <Link

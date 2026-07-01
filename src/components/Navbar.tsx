@@ -34,10 +34,17 @@ const Navbar = () => {
             <img src={settings.logo_url} alt="60jours" className="h-8 w-auto object-contain" />
           ) : (
             <>
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <span className="font-display text-xs font-bold text-primary-foreground">60</span>
-              </div>
-              <span className="font-display text-sm font-bold text-foreground">jours</span>
+              <img
+                src={isDark ? "/logos/Logo60jours_blanc.svg" : "/logos/Logo60jours_noir.svg"}
+                alt="60jours"
+                className="h-8 w-auto object-contain"
+                onError={(e) => {
+                  e.currentTarget.classList.add("hidden");
+                  const next = e.currentTarget.nextElementSibling as HTMLElement;
+                  if (next) next.classList.remove("hidden");
+                }}
+              />
+              <span className="hidden font-display text-sm font-bold text-foreground">60</span>
             </>
           )}
         </Link>

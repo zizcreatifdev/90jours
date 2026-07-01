@@ -149,6 +149,20 @@ const SidebarNav = ({
       >
         {settings.logo_url ? (
           <img src={settings.logo_url} alt="Logo" className="max-h-7 max-w-[85%] object-contain" />
+        ) : expanded ? (
+          <>
+            <img
+              src="/logos/Logo60jours_blanc.svg"
+              alt="60jours"
+              className="max-h-7 max-w-[85%] object-contain"
+              onError={(e) => {
+                e.currentTarget.classList.add("hidden");
+                const next = e.currentTarget.nextElementSibling as HTMLElement;
+                if (next) next.classList.remove("hidden");
+              }}
+            />
+            <span className="hidden font-display text-xs font-bold text-primary-foreground">60</span>
+          </>
         ) : (
           <span className="font-display text-xs font-bold text-primary-foreground">60</span>
         )}
