@@ -33,9 +33,10 @@ interface Recipient {
 interface StudentMessagesProps {
   cohortId: string;
   formationId?: string | null;
+  isArchived?: boolean;
 }
 
-const StudentMessages = ({ cohortId, formationId }: StudentMessagesProps) => {
+const StudentMessages = ({ cohortId, formationId, isArchived }: StudentMessagesProps) => {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -286,7 +287,7 @@ const StudentMessages = ({ cohortId, formationId }: StudentMessagesProps) => {
             <p className="text-sm text-muted-foreground">Echanges avec vos formateurs</p>
           </div>
         </div>
-        <Button size="sm" onClick={openNewMsg} className="gap-2">
+        <Button size="sm" onClick={openNewMsg} className="gap-2" disabled={!!isArchived}>
           <Plus className="h-4 w-4" />
           Nouveau message
         </Button>
@@ -435,34 +436,36 @@ const StudentMessages = ({ cohortId, formationId }: StudentMessagesProps) => {
                     </div>
                   ))}
 
-                  {/* Reply input */}
-                  {replyingTo === msg.id ? (
-                    <div className="px-5 py-3 border-t border-border/50">
-                      <div className="flex gap-2">
-                        <Textarea
-                          placeholder="Ecrire une reponse..."
-                          value={replyContent}
-                          onChange={e => setReplyContent(e.target.value)}
-                          className="min-h-[60px] text-sm bg-background"
-                          rows={2}
-                        />
-                        <div className="flex flex-col gap-1">
-                          <Button size="sm" onClick={() => handleReply(msg.id)} disabled={sending || !replyContent.trim()}>
-                            {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyContent(""); }}>
-                            Annuler
-                          </Button>
+                  {/* Reply input - hidden in archive mode */}
+                  {!isArchived && (
+                    replyingTo === msg.id ? (
+                      <div className="px-5 py-3 border-t border-border/50">
+                        <div className="flex gap-2">
+                          <Textarea
+                            placeholder="Ecrire une reponse..."
+                            value={replyContent}
+                            onChange={e => setReplyContent(e.target.value)}
+                            className="min-h-[60px] text-sm bg-background"
+                            rows={2}
+                          />
+                          <div className="flex flex-col gap-1">
+                            <Button size="sm" onClick={() => handleReply(msg.id)} disabled={sending || !replyContent.trim()}>
+                              {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyContent(""); }}>
+                              Annuler
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => { setReplyingTo(msg.id); setExpandedReplies(prev => new Set([...prev, msg.id])); }}
-                      className="flex w-full items-center gap-1.5 px-5 py-2.5 text-xs font-medium text-accent hover:text-accent/80 transition-colors border-t border-border/50"
-                    >
-                      <MessageSquare className="h-3.5 w-3.5" /> Repondre
-                    </button>
+                    ) : (
+                      <button
+                        onClick={() => { setReplyingTo(msg.id); setExpandedReplies(prev => new Set([...prev, msg.id])); }}
+                        className="flex w-full items-center gap-1.5 px-5 py-2.5 text-xs font-medium text-accent hover:text-accent/80 transition-colors border-t border-border/50"
+                      >
+                        <MessageSquare className="h-3.5 w-3.5" /> Repondre
+                      </button>
+                    )
                   )}
                 </div>
               </div>

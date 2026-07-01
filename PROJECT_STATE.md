@@ -1,8 +1,8 @@
 # PROJECT_STATE.md — État du Projet
 
-**Dernière mise à jour**: 30 juin 2026
+**Dernière mise à jour**: 1er juillet 2026
 **Branche active**: `main`
-**Prompt actuel**: integrations : purge cohorte complete, notifications attestation+contrat, dashboard realtime, revenus reels, carousel cleanup
+**Prompt actuel**: multi-enrollment : selecteur cohorte etudiant + mode archive formations terminees
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.

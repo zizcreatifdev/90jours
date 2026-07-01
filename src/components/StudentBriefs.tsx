@@ -39,6 +39,7 @@ interface StudentBriefsProps {
   cohortId: string;
   formationName?: string;
   formationColor?: string;
+  isArchived?: boolean;
 }
 
 // ── Skeleton de chargement ────────────────────────────────────────────────────
@@ -80,7 +81,7 @@ const BriefsSkeleton = () => (
 
 // ── Composant ─────────────────────────────────────────────────────────────────
 
-const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBriefsProps) => {
+const StudentBriefs = ({ cohortId, formationName, formationColor, isArchived }: StudentBriefsProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [briefs, setBriefs] = useState<Brief[]>([]);
@@ -403,7 +404,7 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
                         size="sm"
                         variant={isPastDeadline ? "outline" : "secondary"}
                         onClick={() => handleMarkCompleted(brief)}
-                        disabled={submitting === brief.id}
+                        disabled={submitting === brief.id || !!isArchived}
                       >
                         {submitting === brief.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <><CheckCircle2 className="mr-1 h-3.5 w-3.5" /> Réalisé</>}
                       </Button>
@@ -412,7 +413,7 @@ const StudentBriefs = ({ cohortId, formationName, formationColor }: StudentBrief
                       <Button
                         size="sm"
                         onClick={() => handleOpenDeliver(brief, sub)}
-                        disabled={submitting === brief.id}
+                        disabled={submitting === brief.id || !!isArchived}
                       >
                         <Send className="mr-1 h-3.5 w-3.5" /> Livrer
                       </Button>

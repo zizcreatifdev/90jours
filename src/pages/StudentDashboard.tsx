@@ -1,4 +1,4 @@
-import { BookOpen, Calendar, FileText, Megaphone, Send, Loader2, Search, Download, Users, CreditCard, ClipboardList, Award, ChevronDown, Menu, Play, ExternalLink, FileSignature, AlertCircle, RefreshCw, User } from "lucide-react";
+import { BookOpen, Calendar, FileText, Megaphone, Send, Loader2, Search, Download, Users, CreditCard, ClipboardList, Award, ChevronDown, Menu, Play, ExternalLink, FileSignature, AlertCircle, RefreshCw, User, Archive } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import DashboardSidebar from "@/components/DashboardSidebar";
@@ -28,6 +28,7 @@ import PaymentSummaryCard from "@/components/PaymentSummaryCard";
 import { useStudentBadges } from "@/hooks/use-student-badges";
 import { useProfileCompleteness } from "@/hooks/use-profile-completeness";
 import { sanitizeContractHtml } from "@/lib/sanitize-html";
+import { CONTRACT_CSS } from "@/lib/contract-style";
 
 interface EnrollmentWithCohort {
   id: string;
@@ -138,6 +139,9 @@ const StudentDashboard = () => {
   // Derived: current enrollment & cohort
   const enrollment = allEnrollments.find(e => e.id === selectedEnrollmentId);
   const cohort = enrollment?.cohorts;
+  const isArchiveMode = cohort
+    ? cohort.status === "archived" || cohort.status === "completed" || new Date(cohort.end_date) < new Date()
+    : false;
 
   // Persist selection
   useEffect(() => {
@@ -149,38 +153,42 @@ const StudentDashboard = () => {
     if (!cohort || !user) { setLoading(false); return; }
     const fetchCohortData = async () => {
       try {
-        // Onboarding gate: redirect if an active contract template exists and is not yet signed
-        const formationId = cohort.formation_id;
-        let templateFound = false;
-        if (formationId) {
-          const { data } = await supabase
-            .from("contract_templates")
-            .select("id")
-            .eq("is_active", true)
-            .eq("formation_id", formationId)
-            .maybeSingle();
-          if (data) templateFound = true;
-        }
-        if (!templateFound) {
-          const { data } = await supabase
-            .from("contract_templates")
-            .select("id")
-            .eq("is_active", true)
-            .is("formation_id", null)
-            .limit(1)
-            .maybeSingle();
-          if (data) templateFound = true;
-        }
-        if (templateFound) {
-          const { data: sc } = await supabase
-            .from("student_contracts")
-            .select("signed_at")
-            .eq("user_id", user.id)
-            .eq("cohort_id", cohort.id)
-            .maybeSingle();
-          if (!sc?.signed_at) {
-            navigate(`/onboarding?cohort_id=${cohort.id}`);
-            return;
+        // Onboarding gate: redirect if an active contract template exists and is not yet signed.
+        // Skip for terminated/archived cohorts (contract was already signed at enrollment time).
+        const isTerminated = cohort.status === "archived" || cohort.status === "completed" || new Date(cohort.end_date) < new Date();
+        if (!isTerminated) {
+          const formationId = cohort.formation_id;
+          let templateFound = false;
+          if (formationId) {
+            const { data } = await supabase
+              .from("contract_templates")
+              .select("id")
+              .eq("is_active", true)
+              .eq("formation_id", formationId)
+              .maybeSingle();
+            if (data) templateFound = true;
+          }
+          if (!templateFound) {
+            const { data } = await supabase
+              .from("contract_templates")
+              .select("id")
+              .eq("is_active", true)
+              .is("formation_id", null)
+              .limit(1)
+              .maybeSingle();
+            if (data) templateFound = true;
+          }
+          if (templateFound) {
+            const { data: sc } = await supabase
+              .from("student_contracts")
+              .select("signed_at")
+              .eq("user_id", user.id)
+              .eq("cohort_id", cohort.id)
+              .maybeSingle();
+            if (!sc?.signed_at) {
+              navigate(`/onboarding?cohort_id=${cohort.id}`);
+              return;
+            }
           }
         }
 
@@ -440,6 +448,14 @@ const StudentDashboard = () => {
         </header>
 
         <div className="p-4 md:p-8">
+          {/* Archive banner - shown on all tabs for terminated formations */}
+          {isArchiveMode && (
+            <div className="mb-4 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+              <Archive className="h-4 w-4 shrink-0" />
+              <p>Cette formation est terminee. Vous consultez votre historique en mode lecture seule : les livraisons de briefs et l'envoi de messages sont desactives.</p>
+            </div>
+          )}
+
           {activeTab === "dashboard" && (
             <>
               {/* Stats row */}
@@ -645,10 +661,12 @@ const StudentDashboard = () => {
                   <DialogHeader>
                     <DialogTitle className="font-display">Mon contrat de formation</DialogTitle>
                   </DialogHeader>
-                  <div
-                    className="rounded-xl border border-border bg-white text-[13px]"
-                    dangerouslySetInnerHTML={{ __html: sanitizeContractHtml(contract?.contract_snapshot || "") }}
-                  />
+                  <div className="rounded-xl border border-border bg-white text-[13px]">
+                    <style dangerouslySetInnerHTML={{ __html: CONTRACT_CSS }} />
+                    <div
+                      dangerouslySetInnerHTML={{ __html: sanitizeContractHtml((contract?.contract_snapshot || "").replace(/<style[\s\S]*?<\/style>/gi, "")) }}
+                    />
+                  </div>
                 </DialogContent>
               </Dialog>
             </>
@@ -661,11 +679,11 @@ const StudentDashboard = () => {
           )}
 
           {activeTab === "messages" && (
-            <StudentMessages cohortId={cohort.id} formationId={cohort.formation_id} />
+            <StudentMessages cohortId={cohort.id} formationId={cohort.formation_id} isArchived={isArchiveMode} />
           )}
 
           {activeTab === "briefs" && (
-            <StudentBriefs cohortId={cohort.id} formationName={enrollment.formation_name} formationColor={enrollment.formation_color || undefined} />
+            <StudentBriefs cohortId={cohort.id} formationName={enrollment.formation_name} formationColor={enrollment.formation_color || undefined} isArchived={isArchiveMode} />
           )}
 
           {activeTab === "portfolio" && (
