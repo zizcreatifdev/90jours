@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 1er juillet 2026
 **Branche active**: `main`
-**Prompt actuel**: admin : flag is_owner pour distinguer proprietaire et assistante (sections sensibles masquees)
+**Prompt actuel**: admin : 6 corrections (isOwner formateur, useEffect calendar, wave dynamique, categories rename, depenses edit, attestation tracker)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -76,7 +76,7 @@
 | Liste d'attente (WaitlistManager) | ✅ Complet | 100% |
 
 **Complétion globale**: 100%
-**Bugs connus**: Aucun (9 bugs d'intégration corrigés : purge cohorte, notifications, realtime, revenus, carousel)
+**Bugs connus**: Aucun (15 bugs corrigés : purge cohorte, notifications, realtime, revenus, carousel + 6 corrections audit : isOwner formateur, useEffect calendar, wave dynamique, categories rename, depenses edit/delete, attestation tracker error)
 **Prochaines étapes**: Tests d'intégration des flux critiques
 
 ---

@@ -69,8 +69,14 @@ const AttestationTracker = () => {
     const discountMap = buildDiscountMap(usageRows);
 
     // Get emails
-    const { data: emailData } = await supabase.functions.invoke("list-user-emails");
-    const emailMap: Record<string, string> = emailData?.emails || {};
+    let emailMap: Record<string, string> = {};
+    try {
+      const { data: emailData, error: emailError } = await supabase.functions.invoke("list-user-emails");
+      if (emailError) throw emailError;
+      emailMap = emailData?.emails || {};
+    } catch {
+      toast({ title: "Emails non disponibles", description: "Impossible de charger les adresses email.", variant: "destructive" });
+    }
 
     // Get portfolios
     const { data: portfolios } = await supabase.from("portfolios").select("user_id, cohort_id, status");

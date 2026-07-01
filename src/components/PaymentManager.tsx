@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { sendPushToUsers } from "@/hooks/use-push-notifications";
 import { supabase } from "@/integrations/supabase/client";
@@ -72,6 +72,21 @@ const PaymentManager = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
+  const [waveFormationId, setWaveFormationId] = useState("");
+
+  const waveFormations = useMemo(() => {
+    const seen = new Set<string>();
+    const result: { id: string; name: string; registration_fee: number; tranche_1_amount: number; tranche_2_amount: number; total_price: number }[] = [];
+    for (const c of cohorts) {
+      if (c.formation && !seen.has(c.formation.id)) {
+        seen.add(c.formation.id);
+        result.push(c.formation as typeof result[0]);
+      }
+    }
+    return result;
+  }, [cohorts]);
+
+  const waveFormation = waveFormations.find(f => f.id === waveFormationId) ?? null;
 
   // Form state
   const [selectedUser, setSelectedUser] = useState("");
@@ -324,25 +339,50 @@ const PaymentManager = () => {
   return (
     <div className="space-y-6">
       {/* Wave Payment Links */}
-      <div className="rounded-2xl border border-border bg-card p-5">
-        <h3 className="font-display text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-          <Wallet className="h-4 w-4" /> Liens Wave Business
-        </h3>
-      <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(10000)}>
-            <Copy className="h-3 w-3" /> Inscription (10 000 F)
-          </Button>
-          <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(25000)}>
-            <Copy className="h-3 w-3" /> Tranche (25 000 F)
-          </Button>
-          <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(50000)}>
-            <Copy className="h-3 w-3" /> Formation (50 000 F)
-          </Button>
+      {settings.wave_payment_url && (
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <h3 className="font-display text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+            <Wallet className="h-4 w-4" /> Liens Wave Business
+          </h3>
+          {waveFormations.length > 0 && (
+            <div className="mb-3">
+              <Select value={waveFormationId} onValueChange={setWaveFormationId}>
+                <SelectTrigger className="w-64">
+                  <SelectValue placeholder="Sélectionner une formation" />
+                </SelectTrigger>
+                <SelectContent>
+                  {waveFormations.map(f => (
+                    <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {waveFormation ? (
+              <>
+                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveFormation.registration_fee)}>
+                  <Copy className="h-3 w-3" /> Inscription ({waveFormation.registration_fee.toLocaleString("fr-FR")} F)
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveFormation.tranche_1_amount)}>
+                  <Copy className="h-3 w-3" /> Tranche 1 ({waveFormation.tranche_1_amount.toLocaleString("fr-FR")} F)
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveFormation.tranche_2_amount)}>
+                  <Copy className="h-3 w-3" /> Tranche 2 ({waveFormation.tranche_2_amount.toLocaleString("fr-FR")} F)
+                </Button>
+                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveFormation.total_price)}>
+                  <Copy className="h-3 w-3" /> Total ({waveFormation.total_price.toLocaleString("fr-FR")} F)
+                </Button>
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground">Selectionnez une formation pour voir les montants.</p>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Cliquez pour copier le lien de paiement Wave.
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Cliquez pour copier le lien de paiement Wave. Les étudiants peuvent payer la formation en plusieurs tranches (montant libre).
-        </p>
-      </div>
+      )}
 
       {/* Payment Stats */}
       <div className="grid gap-4 md:grid-cols-4">

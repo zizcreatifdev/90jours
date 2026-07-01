@@ -14,8 +14,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
   TrendingUp, TrendingDown, DollarSign, Download, Plus, Search, Check, FileText, ArrowUpRight, ArrowDownRight,
-  Loader2, Receipt, Users as UsersIcon,
+  Loader2, Receipt, Users as UsersIcon, Pencil, Trash2,
 } from "lucide-react";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { format, startOfMonth, endOfMonth, subMonths, subWeeks, subQuarters, subYears, startOfWeek, endOfWeek, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -199,6 +200,9 @@ const AccountingPanel = () => {
   const [expenseOpen, setExpenseOpen] = useState(false);
   const [newExpense, setNewExpense] = useState({ category: "autre", description: "", amount: "", expense_date: format(new Date(), "yyyy-MM-dd") });
   const [submitting, setSubmitting] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [editExpenseOpen, setEditExpenseOpen] = useState(false);
+  const [editExpenseForm, setEditExpenseForm] = useState({ category: "autre", description: "", amount: "", expense_date: "" });
 
   const handleAddExpense = async () => {
     if (!newExpense.description || !newExpense.amount) return;
@@ -218,6 +222,41 @@ const AccountingPanel = () => {
       toast({ title: "Dépense ajoutée" });
     }
     setSubmitting(false);
+  };
+
+  const handleEditExpense = (expense: Expense) => {
+    setEditingExpense(expense);
+    setEditExpenseForm({ category: expense.category, description: expense.description, amount: String(expense.amount), expense_date: expense.expense_date });
+    setEditExpenseOpen(true);
+  };
+
+  const handleUpdateExpense = async () => {
+    if (!editingExpense || !editExpenseForm.description || !editExpenseForm.amount) return;
+    setSubmitting(true);
+    const { error } = await supabase.from("expenses").update({
+      category: editExpenseForm.category,
+      description: editExpenseForm.description,
+      amount: parseInt(editExpenseForm.amount),
+      expense_date: editExpenseForm.expense_date,
+    }).eq("id", editingExpense.id);
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    } else {
+      setExpenses(prev => prev.map(e => e.id === editingExpense.id ? { ...e, category: editExpenseForm.category, description: editExpenseForm.description, amount: parseInt(editExpenseForm.amount), expense_date: editExpenseForm.expense_date } : e));
+      setEditExpenseOpen(false);
+      setEditingExpense(null);
+      toast({ title: "Dépense modifiée" });
+    }
+    setSubmitting(false);
+  };
+
+  const handleDeleteExpense = async (id: string) => {
+    const { error } = await supabase.from("expenses").delete().eq("id", id);
+    if (error) toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    else {
+      setExpenses(prev => prev.filter(e => e.id !== id));
+      toast({ title: "Dépense supprimée" });
+    }
   };
 
   // ── Add Staff Payment Dialog ──
@@ -458,6 +497,7 @@ const AccountingPanel = () => {
                   <th className="px-5 py-3 font-medium">Catégorie</th>
                   <th className="px-5 py-3 font-medium">Description</th>
                   <th className="px-5 py-3 font-medium">Montant</th>
+                  <th className="px-5 py-3 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -467,10 +507,32 @@ const AccountingPanel = () => {
                     <td className="px-5 py-3"><span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-muted-foreground">{categoryLabels[e.category]}</span></td>
                     <td className="px-5 py-3 text-sm text-foreground">{e.description}</td>
                     <td className="px-5 py-3 text-sm font-semibold text-destructive">-{formatCurrency(e.amount)}</td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-1">
+                        <button
+                          className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                          onClick={() => handleEditExpense(e)}
+                          title="Modifier"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <ConfirmDialog
+                          trigger={
+                            <button className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" title="Supprimer">
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          }
+                          title="Supprimer cette dépense ?"
+                          description="Cette action est irréversible."
+                          confirmLabel="Supprimer"
+                          onConfirm={() => handleDeleteExpense(e.id)}
+                        />
+                      </div>
+                    </td>
                   </tr>
                 ))}
                 {expenses.filter(e => inRange(e.expense_date)).length === 0 && (
-                  <tr><td colSpan={4} className="px-5 py-8 text-center text-sm text-muted-foreground">Aucune dépense sur cette période</td></tr>
+                  <tr><td colSpan={5} className="px-5 py-8 text-center text-sm text-muted-foreground">Aucune dépense sur cette période</td></tr>
                 )}
               </tbody>
             </table>
@@ -560,6 +622,30 @@ const AccountingPanel = () => {
           <Pagination page={historyPage} totalPages={historyTotalPages} onPageChange={setHistoryPage} />
         </TabsContent>
       </Tabs>
+
+      {/* Edit Expense Dialog */}
+      <Dialog open={editExpenseOpen} onOpenChange={v => { setEditExpenseOpen(v); if (!v) setEditingExpense(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Modifier la dépense</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Catégorie</Label>
+              <Select value={editExpenseForm.category} onValueChange={v => setEditExpenseForm(p => ({ ...p, category: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="formateur">Paiement formateur</SelectItem>
+                  <SelectItem value="technique">Frais techniques</SelectItem>
+                  <SelectItem value="autre">Autre</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Description</Label><Input value={editExpenseForm.description} onChange={e => setEditExpenseForm(p => ({ ...p, description: e.target.value }))} placeholder="Description de la dépense" /></div>
+            <div><Label>Montant (FCFA)</Label><Input type="number" value={editExpenseForm.amount} onChange={e => setEditExpenseForm(p => ({ ...p, amount: e.target.value }))} placeholder="0" /></div>
+            <div><Label>Date</Label><Input type="date" value={editExpenseForm.expense_date} onChange={e => setEditExpenseForm(p => ({ ...p, expense_date: e.target.value }))} /></div>
+            <Button onClick={handleUpdateExpense} disabled={submitting} className="w-full">{submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enregistrer"}</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Staff Payment Dialog */}
       <Dialog open={staffPayOpen} onOpenChange={setStaffPayOpen}>

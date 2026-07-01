@@ -22,7 +22,7 @@ interface Formateur {
 
 const FormateurManager = () => {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isOwner } = useAuth();
   const [formateurs, setFormateurs] = useState<Formateur[]>([]);
   const [formations, setFormations] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -270,17 +270,19 @@ const FormateurManager = () => {
                     </p>
                   </div>
                 </div>
-                <ConfirmDialog
-                  trigger={
-                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  }
-                  title="Retirer ce formateur ?"
-                  description={`${f.first_name || "Ce formateur"} ${f.last_name || ""} sera remis en tant qu'étudiant et retiré de toutes les formations.`}
-                  confirmLabel="Retirer"
-                  onConfirm={() => handleRemoveFormateur(f.user_id, `${f.first_name} ${f.last_name}`)}
-                />
+                {isOwner && (
+                  <ConfirmDialog
+                    trigger={
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    }
+                    title="Retirer ce formateur ?"
+                    description={`${f.first_name || "Ce formateur"} ${f.last_name || ""} sera remis en tant qu'étudiant et retiré de toutes les formations.`}
+                    confirmLabel="Retirer"
+                    onConfirm={() => handleRemoveFormateur(f.user_id, `${f.first_name} ${f.last_name}`)}
+                  />
+                )}
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {f.formations.map((fm) => (

@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { useCalendarEvents, type CalendarEvent } from "@/hooks/use-calendar-events";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -416,8 +416,8 @@ const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onCreated }: C
   const [cohorts, setCohorts] = useState<{ id: string; name: string; formation?: { name: string } | null }[]>([]);
 
   // Fetch cohorts for selector
-  useState(() => {
-    const fetch = async () => {
+  useEffect(() => {
+    const fetchCohorts = async () => {
       let query = supabase.from("cohorts").select("id, name, formation:formations(name)").eq("status", "active");
       if (cohortIds && cohortIds.length > 0) {
         query = query.in("id", cohortIds);
@@ -425,8 +425,8 @@ const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onCreated }: C
       const { data } = await query;
       if (data) setCohorts(data as any);
     };
-    fetch();
-  });
+    fetchCohorts();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
