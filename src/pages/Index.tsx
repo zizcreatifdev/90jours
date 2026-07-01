@@ -65,17 +65,35 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
 
   // Donnees pour les liens de partage
   const formationName = cohort.formation?.name ?? "60jours";
-  const durationDays = cohort.start_date && cohort.end_date
-    ? Math.round(
-        (new Date(cohort.end_date + "T00:00:00").getTime() - new Date(cohort.start_date + "T00:00:00").getTime())
-        / (1000 * 60 * 60 * 24)
-      )
-    : null;
   const price = cohort.total_price ?? cohort.formation?.total_price ?? null;
-  const durationPart = durationDays ? `${durationDays} jours` : null;
-  const pricePart = price ? `${price.toLocaleString("fr-FR")} FCFA` : null;
-  const details = [durationPart, pricePart].filter(Boolean).join(", ");
-  const whatsappMsg = `Decouvrez la formation ${formationName} chez 60jours !${details ? ` ${details}.` : ""} Inscrivez-vous : ${SITE_URL}`;
+
+  const cohortType = cohort.cohort_type === "initiation" ? "Initiation" : "Perfectionnement";
+  const cohortDays = cohort.cohort_type === "initiation" ? 30 : 60;
+
+  const rawDesc = cohort.formation?.description ?? "";
+  const descTrunc = rawDesc.length > 150 ? rawDesc.slice(0, 150).trimEnd() + "..." : rawDesc;
+
+  const spotsLabel = spotsLeft === 0
+    ? "Complet - liste d'attente ouverte"
+    : `${spotsLeft} place${spotsLeft > 1 ? "s" : ""} restante${spotsLeft > 1 ? "s" : ""}`;
+
+  const priceLine = price
+    ? cohort.cohort_type === "standard"
+      ? `${price.toLocaleString("fr-FR")} FCFA | Paiement en 2 fois possible | ${spotsLabel}`
+      : `${price.toLocaleString("fr-FR")} FCFA | ${spotsLabel}`
+    : spotsLabel;
+
+  const whatsappLines = [
+    `${formationName} - Formation ${cohortType} (${cohortDays} jours)`,
+    "",
+    descTrunc || null,
+    descTrunc ? "" : null,
+    priceLine,
+    "Inscriptions ouvertes sur 60jours.com",
+    "",
+    SITE_URL,
+  ].filter((l) => l !== null).join("\n");
+  const whatsappMsg = whatsappLines;
 
   const handleCopy = async () => {
     try {
