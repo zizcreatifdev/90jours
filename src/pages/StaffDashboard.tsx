@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { exportToCsv } from "@/lib/export-csv";
 import StaffTasks from "@/components/StaffTasks";
 import StaffMessages from "@/components/StaffMessages";
+import StudentFormations from "@/components/StudentFormations";
 import BriefManager from "@/components/BriefManager";
 import PortfolioManager from "@/components/PortfolioManager";
 import DashboardCalendar from "@/components/DashboardCalendar";
@@ -499,6 +500,10 @@ const StaffDashboard = () => {
           ) : tab === "messages" ? (
             <div className="mx-auto max-w-2xl">
               <StaffMessages />
+            </div>
+          ) : tab === "formations" ? (
+            <div className="mx-auto max-w-3xl">
+              <StudentFormations />
             </div>
           ) : tab === "attestations" ? (
             <div className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-10 text-center shadow-card">

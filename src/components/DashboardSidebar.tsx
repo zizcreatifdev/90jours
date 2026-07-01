@@ -90,6 +90,7 @@ const staffLinks: SidebarLink[] = [
   { href: "/staff?tab=attestations", label: "Attestations", icon: Award },
   { href: "/staff?tab=announcements", label: "Annonces", icon: Megaphone },
   { href: "/staff?tab=resources", label: "Ressources", icon: Upload },
+  { href: "/staff?tab=formations", label: "Formations", icon: GraduationCap, sectionLabel: "Inscription" },
 ];
 
 const studentLinks: SidebarLink[] = [
