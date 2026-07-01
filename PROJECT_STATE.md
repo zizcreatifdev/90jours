@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 1er juillet 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: formations : formulaire simplifie (prix/duree/niveau geres par la cohorte)
+**Prompt actuel**: cohort form : refonte complete (sections claires, tranches conditionnelles, pre-remplissage)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
