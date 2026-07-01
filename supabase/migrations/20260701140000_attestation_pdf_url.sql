@@ -10,7 +10,8 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('attestations', 'attestations', true)
 ON CONFLICT DO NOTHING;
 
-CREATE POLICY IF NOT EXISTS "Super admin can insert attestation PDFs"
+DROP POLICY IF EXISTS "Super admin can insert attestation PDFs" ON storage.objects;
+CREATE POLICY "Super admin can insert attestation PDFs"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -21,7 +22,8 @@ WITH CHECK (
   )
 );
 
-CREATE POLICY IF NOT EXISTS "Super admin can update attestation PDFs"
+DROP POLICY IF EXISTS "Super admin can update attestation PDFs" ON storage.objects;
+CREATE POLICY "Super admin can update attestation PDFs"
 ON storage.objects FOR UPDATE
 TO authenticated
 USING (

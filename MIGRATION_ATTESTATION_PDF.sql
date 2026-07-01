@@ -24,7 +24,8 @@ VALUES ('attestations', 'attestations', true)
 ON CONFLICT DO NOTHING;
 
 -- 4a. Autoriser super_admin a uploader les PDFs
-CREATE POLICY IF NOT EXISTS "Super admin can insert attestation PDFs"
+DROP POLICY IF EXISTS "Super admin can insert attestation PDFs" ON storage.objects;
+CREATE POLICY "Super admin can insert attestation PDFs"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (
@@ -36,7 +37,8 @@ WITH CHECK (
 );
 
 -- 4b. Autoriser super_admin a remplacer les PDFs existants (upsert)
-CREATE POLICY IF NOT EXISTS "Super admin can update attestation PDFs"
+DROP POLICY IF EXISTS "Super admin can update attestation PDFs" ON storage.objects;
+CREATE POLICY "Super admin can update attestation PDFs"
 ON storage.objects FOR UPDATE
 TO authenticated
 USING (
