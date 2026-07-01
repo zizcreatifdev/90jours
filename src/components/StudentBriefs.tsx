@@ -116,28 +116,66 @@ const StudentBriefs = ({ cohortId, formationName, formationColor, isArchived }: 
     }
   };
 
+  const loadBriefs = async () => {
+    if (!user || !cohortId) return;
+    const { data } = await supabase
+      .from("briefs")
+      .select("*, brief_categories(name)")
+      .eq("cohort_id", cohortId)
+      .lte("publish_at", new Date().toISOString())
+      .order("deadline", { ascending: true });
+    if (data) {
+      const briefObjs = data.map((b: any) => ({
+        ...b,
+        category_name: b.brief_categories?.name,
+        brief_frequency: b.brief_frequency,
+      })) as Brief[];
+      setBriefs(briefObjs);
+      return briefObjs;
+    }
+    return null;
+  };
+
   useEffect(() => {
     if (!user || !cohortId) return;
     const fetch = async () => {
-      const [briefsRes, subsRes] = await Promise.all([
-        supabase.from("briefs").select("*, brief_categories(name)").eq("cohort_id", cohortId).lte("publish_at", new Date().toISOString()).order("deadline", { ascending: true }),
+      const [briefObjs, subsRes] = await Promise.all([
+        loadBriefs(),
         supabase.from("brief_submissions").select("*").eq("user_id", user.id),
       ]);
-      if (briefsRes.data) {
-        const briefObjs = briefsRes.data.map((b: any) => ({ ...b, category_name: b.brief_categories?.name, brief_frequency: b.brief_frequency })) as Brief[];
-        setBriefs(briefObjs);
-        // M11 : filtrer les soumissions par les briefs de cette cohorte uniquement
-        // pour eviter qu'un statut d'une autre cohorte s'affiche ici.
-        if (subsRes.data) {
-          const briefIds = new Set(briefObjs.map(b => b.id));
-          setSubmissions(subsRes.data.filter(s => briefIds.has(s.brief_id)) as Submission[]);
-        }
+      if (briefObjs && subsRes.data) {
+        const briefIds = new Set(briefObjs.map(b => b.id));
+        setSubmissions(subsRes.data.filter(s => briefIds.has(s.brief_id)) as Submission[]);
       } else if (subsRes.data) {
         setSubmissions(subsRes.data as Submission[]);
       }
       setLoading(false);
     };
     fetch();
+  }, [user, cohortId]);
+
+  // Realtime : nouveaux briefs publies ou mis a jour dans la cohorte
+  useEffect(() => {
+    if (!user || !cohortId) return;
+    const channel = supabase
+      .channel(`briefs-student-${cohortId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "briefs", filter: `cohort_id=eq.${cohortId}` },
+        async (payload) => {
+          if (payload.eventType === "DELETE") {
+            setBriefs(prev => prev.filter(b => b.id !== (payload.old as Brief).id));
+            return;
+          }
+          const changed = payload.new as (Brief & { publish_at: string });
+          if (new Date(changed.publish_at) <= new Date()) {
+            await loadBriefs();
+          }
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, cohortId]);
 
   // Mark as "Réalisé"

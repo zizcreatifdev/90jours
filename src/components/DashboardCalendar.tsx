@@ -240,15 +240,20 @@ const EventCard = ({ event, role, onDeleted }: { event: CalendarEvent; role: str
 
   return (
     <div
-      className={`rounded-xl p-3 ${colors.bg}${isPersonal ? " border border-dashed border-emerald-300 dark:border-emerald-700" : ""}`}
+      className={`rounded-xl p-3 ${colors.bg}${isPersonal ? " border border-dashed border-emerald-300 dark:border-emerald-700" : ""}${event.isScheduled ? " opacity-60 border border-dashed border-blue-400 dark:border-blue-600" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {isPersonal && <Bookmark className={`h-3 w-3 shrink-0 ${colors.text}`} />}
             <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${colors.text} ${colors.bg}`}>
               {colors.label}
             </span>
+            {event.isScheduled && (
+              <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                Programme
+              </span>
+            )}
             {event.cohort_name && (
               <span className="text-[10px] text-muted-foreground">Cohorte {event.cohort_name}</span>
             )}

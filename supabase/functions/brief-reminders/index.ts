@@ -47,8 +47,9 @@ Deno.serve(async (_req) => {
     const { data: upcomingBriefs, error: briefsError } = await supabase
       .from("briefs")
       .select("id, title, deadline, cohort_id")
-      .gt("deadline", now.toISOString())   // not yet expired
-      .lte("deadline", in48h.toISOString()); // within 48 h
+      .gt("deadline", now.toISOString())    // not yet expired
+      .lte("deadline", in48h.toISOString()) // within 48 h
+      .lte("publish_at", now.toISOString()); // already published (not scheduled)
 
     if (briefsError) {
       console.error("briefs query error:", briefsError.message);

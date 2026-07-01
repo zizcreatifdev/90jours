@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Progress } from "@/components/ui/progress";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, Trash2, ClipboardList, CheckCircle2, Clock, AlertTriangle, Tag, MessageSquare, ChevronDown, ChevronUp, Save, ExternalLink, Paperclip } from "lucide-react";
+import { Plus, Loader2, Trash2, ClipboardList, CheckCircle2, Clock, AlertTriangle, Tag, MessageSquare, ChevronDown, ChevronUp, Save, ExternalLink, Paperclip, Pencil } from "lucide-react";
 
 interface BriefCategory {
   id: string;
@@ -75,6 +75,7 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
   const [expandedBriefs, setExpandedBriefs] = useState<Set<string>>(new Set());
   const [feedbackEdits, setFeedbackEdits] = useState<Record<string, string>>({});
   const [savingFeedback, setSavingFeedback] = useState<Set<string>>(new Set());
+  const [editBrief, setEditBrief] = useState<Brief | null>(null);
 
   const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
     { title, deadline },
@@ -86,7 +87,25 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
 
   useEffect(() => {
     if (open) reset();
+    else setEditBrief(null);
   }, [open, reset]);
+
+  const toDatetimeLocal = (iso: string) => {
+    const d = new Date(iso);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const handleOpenEdit = (brief: Brief) => {
+    setEditBrief(brief);
+    setTitle(brief.title);
+    setDescription(brief.description || "");
+    setDeadline(toDatetimeLocal(brief.deadline));
+    setPublishAt(toDatetimeLocal(brief.publish_at));
+    setCategoryId(brief.category_id || "");
+    setBriefFrequency(brief.brief_frequency || "");
+    setOpen(true);
+  };
 
   useEffect(() => {
     supabase.from("brief_categories").select("*").order("name").then(({ data }) => {
@@ -136,48 +155,88 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
     fetch();
   }, [selectedCohort]);
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const sendBriefNotifications = async (briefTitle: string, briefDescription: string | null) => {
+    const studentIds = students.map((s: any) => s.user_id);
+    sendPushToUsers(studentIds, `Nouveau brief : ${briefTitle}`, briefDescription?.substring(0, 200) || "Un nouveau brief a ete ajoute.");
+    if (studentIds.length > 0) {
+      await supabase.from("notifications").insert(
+        studentIds.map((uid: string) => ({
+          user_id: uid,
+          cohort_id: selectedCohort,
+          type: "brief",
+          title: `Nouveau brief disponible : ${briefTitle}`,
+          message: briefDescription?.substring(0, 200) || "Un nouveau brief a ete publie dans votre cohorte.",
+          created_by: user?.id ?? null,
+        }))
+      );
+    }
+  };
+
+  const reloadBriefs = async () => {
+    const { data } = await supabase
+      .from("briefs")
+      .select("*, brief_categories(id, name)")
+      .eq("cohort_id", selectedCohort)
+      .order("deadline", { ascending: true });
+    if (data) setBriefs((data || []).map((b: any) => ({ ...b, category: b.brief_categories })) as Brief[]);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateAll()) return;
     if (!selectedCohort || !user) return;
     setSaving(true);
-    const { data: newBrief, error } = await supabase.from("briefs").insert({
-      cohort_id: selectedCohort,
-      title,
-      description: description || null,
-      deadline: new Date(deadline).toISOString(),
-      publish_at: publishAt ? new Date(publishAt).toISOString() : new Date().toISOString(),
-      created_by: user.id,
-      category_id: categoryId || null,
-      brief_frequency: briefFrequency || null,
-    } as any).select().single();
-    setSaving(false);
-    if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: publishAt && new Date(publishAt) > new Date() ? "Brief programmé !" : "Brief publié !" });
 
-      // Notification push + in-app pour les etudiants inscrits (publication immediate uniquement)
-      if (!publishAt || new Date(publishAt) <= new Date()) {
-        const studentIds = students.map((s: any) => s.user_id);
-        sendPushToUsers(studentIds, `Nouveau brief : ${title}`, description?.substring(0, 200) || "Un nouveau brief a été ajouté.");
-        if (studentIds.length > 0) {
-          await supabase.from("notifications").insert(
-            studentIds.map((uid: string) => ({
-              user_id: uid,
-              cohort_id: selectedCohort,
-              type: "brief",
-              title: `Nouveau brief disponible : ${title}`,
-              message: description?.substring(0, 200) || "Un nouveau brief a été publié dans votre cohorte.",
-              created_by: user?.id ?? null,
-            }))
-          );
+    const newPublishAt = publishAt ? new Date(publishAt).toISOString() : new Date().toISOString();
+    const isImmediate = new Date(newPublishAt) <= new Date();
+
+    if (editBrief) {
+      // Mode edition
+      const wasScheduled = new Date(editBrief.publish_at) > new Date();
+      const { error } = await supabase.from("briefs").update({
+        title,
+        description: description || null,
+        deadline: new Date(deadline).toISOString(),
+        publish_at: newPublishAt,
+        category_id: categoryId || null,
+        brief_frequency: briefFrequency || null,
+      } as any).eq("id", editBrief.id);
+      setSaving(false);
+      if (error) {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: isImmediate ? "Brief mis a jour et publie." : "Brief mis a jour." });
+        // Notifier les etudiants si le brief passe de programme a publie
+        if (wasScheduled && isImmediate) {
+          await sendBriefNotifications(title, description);
         }
+        setTitle(""); setDescription(""); setDeadline(""); setPublishAt(""); setCategoryId(""); setBriefFrequency("");
+        setEditBrief(null); setOpen(false);
+        await reloadBriefs();
       }
-
-      setTitle(""); setDescription(""); setDeadline(""); setPublishAt(""); setCategoryId(""); setBriefFrequency(""); setOpen(false);
-      const { data } = await supabase.from("briefs").select("*").eq("cohort_id", selectedCohort).order("deadline", { ascending: true });
-      if (data) setBriefs(data as Brief[]);
+    } else {
+      // Mode creation
+      const { error } = await supabase.from("briefs").insert({
+        cohort_id: selectedCohort,
+        title,
+        description: description || null,
+        deadline: new Date(deadline).toISOString(),
+        publish_at: newPublishAt,
+        created_by: user.id,
+        category_id: categoryId || null,
+        brief_frequency: briefFrequency || null,
+      } as any).select().single();
+      setSaving(false);
+      if (error) {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: isImmediate ? "Brief publie !" : "Brief programme !" });
+        if (isImmediate) {
+          await sendBriefNotifications(title, description);
+        }
+        setTitle(""); setDescription(""); setDeadline(""); setPublishAt(""); setCategoryId(""); setBriefFrequency(""); setOpen(false);
+        await reloadBriefs();
+      }
     }
   };
 
@@ -261,9 +320,9 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
               </DialogTrigger>
               <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                  <DialogTitle className="font-display">Publier un brief</DialogTitle>
+                  <DialogTitle className="font-display">{editBrief ? "Modifier le brief" : "Publier un brief"}</DialogTitle>
                 </DialogHeader>
-                <form onSubmit={handleCreate} className="space-y-4 pt-2">
+                <form onSubmit={handleSubmit} className="space-y-4 pt-2">
                   <div>
                     <RequiredLabel required>Titre</RequiredLabel>
                     <Input value={title} onChange={e => setTitle(e.target.value)} onBlur={() => handleBlur("title")} aria-invalid={!!showError("title")} placeholder="Ex: Création d'un logo" />
@@ -308,7 +367,7 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
                   </div>
                   <Button type="submit" disabled={saving || !isValid} className="w-full">
                     {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Publier
+                    {editBrief ? "Mettre a jour" : "Publier"}
                   </Button>
                 </form>
               </DialogContent>
@@ -358,13 +417,22 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
                           <span>Deadline : {deadlineDate.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                         </div>
                       </div>
-                      <ConfirmDialog
-                        trigger={<button className="text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="h-4 w-4" /></button>}
-                        title="Supprimer ce brief ?"
-                        description="Toutes les soumissions associées seront également supprimées."
-                        confirmLabel="Supprimer"
-                        onConfirm={() => handleDelete(brief.id)}
-                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleOpenEdit(brief)}
+                          className="text-muted-foreground hover:text-foreground transition-colors"
+                          aria-label="Modifier le brief"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <ConfirmDialog
+                          trigger={<button className="text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="h-4 w-4" /></button>}
+                          title="Supprimer ce brief ?"
+                          description="Toutes les soumissions associees seront egalement supprimees."
+                          confirmLabel="Supprimer"
+                          onConfirm={() => handleDelete(brief.id)}
+                        />
+                      </div>
                     </div>
                     {/* Stats */}
                     <div className="mt-4 flex items-center gap-6">

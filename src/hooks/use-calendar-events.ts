@@ -15,6 +15,7 @@ export interface CalendarEvent {
   duration_minutes?: number;
   user_id?: string;
   hasExplicitTime?: boolean;
+  isScheduled?: boolean;
 }
 
 interface UseCalendarEventsOptions {
@@ -79,19 +80,21 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
 
         (briefs || []).forEach((b: any) => {
           const info = cohortMap.get(b.cohort_id);
-          if (new Date(b.publish_at) <= new Date()) {
-            allEvents.push({
-              id: b.id,
-              type: "brief",
-              title: b.title,
-              description: b.description,
-              date: new Date(b.deadline),
-              cohort_id: b.cohort_id,
-              cohort_name: info?.name,
-              formation_id: info?.formation_id,
-              formation_name: info?.formation_name,
-            });
-          }
+          const isPublished = new Date(b.publish_at) <= new Date();
+          // Etudiants : uniquement les briefs publies
+          if (role === "student" && !isPublished) return;
+          allEvents.push({
+            id: b.id,
+            type: "brief",
+            title: b.title,
+            description: b.description,
+            date: new Date(b.deadline),
+            cohort_id: b.cohort_id,
+            cohort_name: info?.name,
+            formation_id: info?.formation_id,
+            formation_name: info?.formation_name,
+            isScheduled: !isPublished,
+          });
         });
       }
 
