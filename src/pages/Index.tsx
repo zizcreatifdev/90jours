@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { AlertCircle, ArrowRight, Bell, ChevronDown, Copy, Loader2, Quote, RefreshCw, Zap } from "lucide-react";
+import { AlertCircle, ArrowRight, Award, Bell, ChevronDown, Compass, Copy, Loader2, PenTool, Quote, RefreshCw, Users, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -30,21 +30,25 @@ const HOW_STEPS = [
     number: "01",
     title: "Choisissez votre discipline",
     description: "Graphisme, Motion Design ou Vibecoding : trouvez la filière qui correspond à votre ambition et à votre rythme de progression.",
+    icon: Compass,
   },
   {
     number: "02",
     title: "Rejoignez une cohorte",
     description: "25 apprenants maximum par session. Un encadrement individualisé dans une dynamique collective qui accélère l'apprentissage.",
+    icon: Users,
   },
   {
     number: "03",
     title: "Progressez par la pratique",
     description: "Briefs professionnels, projets concrets et retours exigeants de formateurs issus directement du secteur créatif.",
+    icon: PenTool,
   },
   {
     number: "04",
     title: "Obtenez votre attestation",
     description: "À l'issue des 60 jours, recevez une attestation officielle et intégrez un réseau d'alumni actifs dans les industries créatives.",
+    icon: Award,
   },
 ];
 
@@ -522,27 +526,32 @@ const Index = () => {
             </p>
           </div>
 
-          {/* Steps : editorial, typographic, no icons */}
+          {/* Steps : editorial, typographic */}
           <div className="grid gap-px bg-border md:grid-cols-4">
-            {HOW_STEPS.map((step, i) => (
-              <div
-                key={step.number}
-                className={cn(
-                  "bg-white px-8 py-10 transition-all duration-700",
-                  howVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
-                )}
-                style={{ transitionDelay: howVisible ? `${i * 100}ms` : "0ms" }}
-              >
-                {/* Big number */}
-                <p className="mb-6 font-display text-7xl font-black leading-none text-accent/[0.12] select-none">
-                  {step.number}
-                </p>
-                {/* Short accent bar */}
-                <div className="mb-5 h-0.5 w-8 bg-accent" />
-                <h3 className="mb-3 font-display text-base font-bold text-foreground">{step.title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">{step.description}</p>
-              </div>
-            ))}
+            {HOW_STEPS.map((step, i) => {
+              const Icon = step.icon;
+              return (
+                <div
+                  key={step.number}
+                  className={cn(
+                    "bg-white px-8 py-10 transition-all duration-700",
+                    howVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+                  )}
+                  style={{ transitionDelay: howVisible ? `${i * 100}ms` : "0ms" }}
+                >
+                  {/* Icon */}
+                  <Icon className="mb-4 h-6 w-6 text-accent" />
+                  {/* Big number */}
+                  <p className="mb-6 font-display text-7xl font-black leading-none text-accent/[0.12] select-none">
+                    {step.number}
+                  </p>
+                  {/* Short accent bar */}
+                  <div className="mb-5 h-0.5 w-8 bg-accent" />
+                  <h3 className="mb-3 font-display text-base font-bold text-foreground">{step.title}</h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{step.description}</p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
