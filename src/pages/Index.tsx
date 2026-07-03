@@ -733,7 +733,7 @@ const Index = () => {
       )}
 
       {/* ===== SECTION 5 : CTA FINAL ===== */}
-      <section className="relative overflow-hidden bg-background py-28">
+      <section className="relative overflow-hidden bg-white py-28">
         {/* Fine gold top border */}
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/35 to-transparent" />
 
