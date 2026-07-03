@@ -58,6 +58,7 @@ interface PublicCohortCardProps {
 
 const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: PublicCohortCardProps) => {
   const { toast } = useToast();
+  const [expanded, setExpanded] = useState(false);
   const enrolled = cohort.enrollment_count ?? 0;
   const spotsLeft = cohort.capacity - enrolled;
   const isFull = spotsLeft === 0;
@@ -70,7 +71,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
   const cohortType = cohort.cohort_type === "initiation" ? "Initiation" : "Perfectionnement";
   const cohortDays = cohort.cohort_type === "initiation" ? 30 : 60;
 
-  const rawDesc = cohort.formation?.description ?? "";
+  const rawDesc = cohort.description || cohort.formation?.description || "";
   const descTrunc = rawDesc.length > 150 ? rawDesc.slice(0, 150).trimEnd() + "..." : rawDesc;
 
   const spotsLabel = spotsLeft === 0
@@ -147,10 +148,22 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
         </p>
 
         {/* Description */}
-        {cohort.formation?.description && (
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground line-clamp-2">
-            {cohort.formation.description}
-          </p>
+        {rawDesc && (
+          <div className="mt-3">
+            <p className={cn("text-sm leading-relaxed text-muted-foreground", !expanded && "line-clamp-2")}>
+              {rawDesc}
+            </p>
+            {rawDesc.length > 100 && (
+              <button
+                type="button"
+                className="mt-1 text-[12px] cursor-pointer bg-transparent border-0 p-0"
+                style={{ color: "#C5A05A" }}
+                onClick={() => setExpanded(e => !e)}
+              >
+                {expanded ? "Lire moins" : "Lire plus"}
+              </button>
+            )}
+          </div>
         )}
 
         {/* Spacer */}
