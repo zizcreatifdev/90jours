@@ -115,8 +115,10 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
     >
       {/* Header : bleu royal pour Initiation, bleu nuit pour Perfectionnement */}
       <div
-        className="flex items-center justify-between px-5 py-3"
-        style={{ backgroundColor: cohort.cohort_type === "standard" ? "#001D52" : "#003BA4" }}
+        className={cn(
+          "flex items-center justify-between px-5 py-3",
+          cohort.cohort_type === "standard" ? "bg-navy-deep" : "bg-navy"
+        )}
       >
         {cohort.start_date && cohort.end_date ? (
           <p className="text-[11px] font-medium text-white/70">
@@ -126,10 +128,10 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
           <span />
         )}
         <span
-          className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-white"
-          style={{
-            backgroundColor: cohort.cohort_type === "standard" ? "#C5A05A" : "rgba(255,255,255,0.2)",
-          }}
+          className={cn(
+            "rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-white",
+            cohort.cohort_type === "standard" ? "bg-accent" : "bg-white/20"
+          )}
         >
           {cohort.cohort_type === "standard" ? "Perfectionnement" : "Initiation"}
         </span>
@@ -143,7 +145,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
         </h3>
 
         {/* Sous-titre : nom de la cohorte, discret en doré petites caps */}
-        <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-[#C5A05A]">
+        <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.2em] text-accent">
           Promo {cohort.name}
         </p>
 
@@ -156,8 +158,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
             {rawDesc.length > 100 && (
               <button
                 type="button"
-                className="mt-1 text-[12px] cursor-pointer bg-transparent border-0 py-2 px-1 min-h-[44px] flex items-center"
-                style={{ color: "#C5A05A" }}
+                className="mt-1 text-[12px] cursor-pointer bg-transparent border-0 py-2 px-1 min-h-[44px] flex items-center text-accent"
                 onClick={() => setExpanded(e => !e)}
               >
                 {expanded ? "Lire moins" : "Lire plus"}
@@ -201,14 +202,14 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
               {isFull ? (
                 <button
                   onClick={() => onWaitlist(cohort.formation_id ?? null)}
-                  className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-[#C5A05A] px-3 text-xs font-semibold text-[#C5A05A] transition-colors hover:bg-[#C5A05A]/10"
+                  className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-accent px-3 text-xs font-semibold text-accent transition-colors hover:bg-accent/10"
                 >
                   <Bell className="h-3 w-3" />
                   Me prévenir
                 </button>
               ) : (
                 <Link to={`/register?cohort=${cohort.id}`}>
-                  <span className="inline-flex items-center gap-1.5 text-sm font-bold text-[#C5A05A] transition-all hover:gap-2.5">
+                  <span className="inline-flex items-center gap-1.5 text-sm font-bold text-accent transition-all hover:gap-2.5">
                     S'inscrire
                     <ArrowRight className="h-4 w-4" />
                   </span>
@@ -263,7 +264,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
           <button
             onClick={handleCopy}
             aria-label="Copier le lien"
-            className="rounded-md p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground/60 transition-colors hover:text-[#C5A05A]"
+            className="rounded-md p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground/60 transition-colors hover:text-accent"
           >
             <Copy className="h-4 w-4" />
           </button>
@@ -365,12 +366,12 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0a0a0a]">
+    <div className="min-h-screen bg-background">
 
       {/* ===== HERO FULLSCREEN ===== */}
-      <section className="relative h-screen w-full overflow-hidden bg-[#003BA4]">
+      <section className="relative h-screen w-full overflow-hidden bg-navy">
         {/* Premium navy base + fallback background (shown when no hero_slides are uploaded) */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#003BA4] via-[#002E83] to-[#001D52]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-navy via-navy-light to-navy-deep" />
         <div
           className="absolute inset-0"
           style={{ backgroundImage: "radial-gradient(120% 80% at 75% 18%, rgba(197,160,90,0.16), transparent 55%)" }}
@@ -384,7 +385,7 @@ const Index = () => {
             className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${i === currentSlide ? "opacity-100" : "opacity-0"}`}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#001D52] via-[#001D52]/60 to-[#001D52]/25" />
+        <div className="absolute inset-0 bg-gradient-to-t from-navy-deep via-navy-deep/60 to-navy-deep/25" />
 
         {/* Top bar: Logo left, Nav right */}
         <div className="relative z-10 flex items-center justify-between px-6 py-6 md:px-10 md:py-8">
@@ -459,7 +460,7 @@ const Index = () => {
               <Link to="/admin">
                 <Button
                   size="lg"
-                  className="rounded-full bg-accent px-8 font-semibold text-accent-foreground shadow-lg shadow-[#C5A05A]/25 transition-all hover:bg-[#d4b06a] hover:shadow-[#C5A05A]/40"
+                  className="rounded-full bg-accent px-8 font-semibold text-accent-foreground shadow-lg shadow-accent/25 transition-all hover:bg-accent-hover hover:shadow-accent/40"
                 >
                   Mon espace
                 </Button>
@@ -468,7 +469,7 @@ const Index = () => {
               <Link to="/register">
                 <Button
                   size="lg"
-                  className="rounded-full bg-accent px-8 font-semibold text-accent-foreground shadow-lg shadow-[#C5A05A]/25 transition-all hover:bg-[#d4b06a] hover:shadow-[#C5A05A]/40"
+                  className="rounded-full bg-accent px-8 font-semibold text-accent-foreground shadow-lg shadow-accent/25 transition-all hover:bg-accent-hover hover:shadow-accent/40"
                 >
                   S'inscrire maintenant
                 </Button>
@@ -508,7 +509,7 @@ const Index = () => {
       <section
         id="how"
         ref={howRef}
-        className="bg-white dark:bg-[#111111] py-24 overflow-hidden"
+        className="bg-background dark:bg-[#111111] py-24 overflow-hidden"
       >
         <div className="container mx-auto px-6 sm:px-8 lg:px-12">
           <div className="mb-16 text-center">
@@ -527,7 +528,7 @@ const Index = () => {
               <div
                 key={step.number}
                 className={cn(
-                  "bg-white dark:bg-[#111111] px-8 py-10 transition-all duration-700",
+                  "bg-white px-8 py-10 transition-all duration-700",
                   howVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
                 )}
                 style={{ transitionDelay: howVisible ? `${i * 100}ms` : "0ms" }}
@@ -550,7 +551,7 @@ const Index = () => {
       <section
         id="formations"
         ref={formationsRef}
-        className="bg-[#f8f8f8] dark:bg-[#0a0a0a] py-24"
+        className="bg-background dark:bg-[#0a0a0a] py-24"
       >
         <div className="container mx-auto px-6 sm:px-8 lg:px-12">
           <div className="mb-16 text-center">
@@ -574,7 +575,7 @@ const Index = () => {
               <p className="mt-2 text-sm text-muted-foreground">Veuillez réessayer dans quelques instants.</p>
               <button
                 onClick={() => refetchCohorts()}
-                className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#C5A05A] px-6 py-2.5 text-sm font-semibold text-[#C5A05A] transition-colors hover:bg-[#C5A05A]/10"
+                className="mt-6 inline-flex items-center gap-2 rounded-full border border-accent px-6 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent/10"
               >
                 <RefreshCw className="h-4 w-4" />
                 Réessayer
@@ -586,7 +587,7 @@ const Index = () => {
               <p className="mt-2 text-sm text-muted-foreground">De nouvelles cohortes arrivent prochainement.</p>
               <button
                 onClick={() => { setWaitlistFormationId(null); setWaitlistOpen(true); }}
-                className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#C5A05A] px-6 py-2.5 text-sm font-semibold text-[#C5A05A] transition-colors hover:bg-[#C5A05A]/10"
+                className="mt-6 inline-flex items-center gap-2 rounded-full border border-accent px-6 py-2.5 text-sm font-semibold text-accent transition-colors hover:bg-accent/10"
               >
                 Rejoindre la liste d'attente
               </button>
@@ -647,7 +648,7 @@ const Index = () => {
 
       {/* ===== SECTION 4 : TÉMOIGNAGES (hidden if none) ===== */}
       {testimonials.length > 0 && (
-        <section className="bg-white dark:bg-[#111111] py-24 overflow-hidden">
+        <section className="bg-background dark:bg-[#111111] py-24 overflow-hidden">
           <div className="container mx-auto px-6 sm:px-8 lg:px-12">
             <div className="mb-14 text-center">
               <p className="mb-3 text-sm font-semibold uppercase tracking-widest text-accent">Alumni</p>
@@ -658,7 +659,7 @@ const Index = () => {
 
             {/* Carousel */}
             <div className="relative mx-auto max-w-3xl">
-              <div className="overflow-hidden rounded-2xl border border-border bg-[#f8f8f8] dark:bg-[#1a1a1a] p-8 md:p-12">
+              <div className="overflow-hidden rounded-2xl border border-border bg-white dark:bg-[#1a1a1a] p-8 md:p-12">
                 {testimonials.map((t, i) => (
                   <div
                     key={t.id}
@@ -732,28 +733,23 @@ const Index = () => {
       )}
 
       {/* ===== SECTION 5 : CTA FINAL ===== */}
-      <section className="relative overflow-hidden bg-[#003BA4] py-28">
-        {/* Subtle gold radial glow from below */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ backgroundImage: "radial-gradient(75% 55% at 50% 110%, rgba(197,160,90,0.20), transparent 60%)" }}
-        />
+      <section className="relative overflow-hidden bg-background py-28">
         {/* Fine gold top border */}
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#C5A05A]/35 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/35 to-transparent" />
 
         <div className="relative z-10 container mx-auto px-6 sm:px-8 lg:px-12 text-center">
           <p className="mb-4 text-sm font-semibold uppercase tracking-widest text-accent">Passez à l'action</p>
-          <h2 className="mb-4 font-display text-3xl font-bold text-white md:text-5xl">
+          <h2 className="mb-4 font-display text-3xl font-bold text-foreground md:text-5xl">
             Prêts à transformer votre trajectoire ?
           </h2>
-          <p className="mx-auto mb-10 max-w-xl text-white/65 md:text-lg">
+          <p className="mx-auto mb-10 max-w-xl text-muted-foreground md:text-lg">
             Rejoignez des centaines de créatifs qui ont consacré 60 jours à faire de leur passion un véritable métier.
           </p>
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Link to="/register">
               <Button
                 size="lg"
-                className="rounded-full bg-accent px-10 font-bold text-accent-foreground shadow-lg shadow-[#C5A05A]/25 transition-all hover:bg-[#d4b06a] hover:shadow-[#C5A05A]/40"
+                className="rounded-full bg-accent px-10 font-bold text-accent-foreground shadow-lg shadow-accent/25 transition-all hover:bg-accent-hover hover:shadow-accent/40"
               >
                 Commencer maintenant
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -763,7 +759,7 @@ const Index = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="rounded-full border-white/25 bg-white/5 px-10 font-semibold text-white backdrop-blur-sm transition-all hover:border-white/50 hover:bg-white/10"
+                className="rounded-full border-foreground/25 bg-foreground/5 px-10 font-semibold text-foreground transition-all hover:border-foreground/50 hover:bg-foreground/10"
               >
                 J'ai déjà un compte
               </Button>
@@ -773,7 +769,7 @@ const Index = () => {
       </section>
 
       {/* ===== SECTION 6 : FOOTER ===== */}
-      <footer className="border-t border-white/10 bg-[#001D52] text-white">
+      <footer className="border-t border-foreground/10 bg-navy-deep text-white">
         <div className="container mx-auto px-6 sm:px-8 lg:px-12 py-14">
           <div className="grid gap-10 md:grid-cols-3">
             {/* Col 1 : Logo + tagline */}
@@ -800,7 +796,7 @@ const Index = () => {
               <p className="text-sm leading-relaxed text-white/60 max-w-xs">
                 {settings.footer_text || "Des formations intensives qui transforment votre créativité en 60 jours."}
               </p>
-              <div className="mt-5 h-px w-12 bg-[#C5A05A]/40" />
+              <div className="mt-5 h-px w-12 bg-accent/40" />
             </div>
 
             {/* Col 2 : Navigation */}
