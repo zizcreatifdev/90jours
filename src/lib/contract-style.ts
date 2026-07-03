@@ -15,7 +15,7 @@
 
 export const CONTRACT_STYLE = `<style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap');
-.contract-doc{--navy:#0E1B2E;--gold:#C5A05A;--ink:#2b3445;--muted:#6b7280;--line:#e7e3da;font-family:'Inter',Arial,sans-serif;color:var(--ink);line-height:1.75;background:#FBFAF8;margin:0;padding:0}
+.contract-doc{--navy:#2E2212;--gold:#C5A05A;--ink:#2b3445;--muted:#6b7280;--line:#e7e3da;font-family:'Inter',Arial,sans-serif;color:var(--ink);line-height:1.75;background:#FBFAF8;margin:0;padding:0}
 .contract-doc *{box-sizing:border-box}
 .contract-doc .page{max-width:760px;margin:0 auto;padding:56px 48px;background:#FBFAF8}
 .contract-doc .doc-head{text-align:center;margin-bottom:42px}

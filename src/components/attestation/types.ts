@@ -53,7 +53,7 @@ export const DEFAULT_TEMPLATE: AttestationTemplate = {
       id: "sidebarBg",
       type: "rect",
       x: 0, y: 0, width: 28.5, height: 100,
-      color: "#0E1B2E",
+      color: "#001D52",
     },
 
     // Filet or vertical de separation
@@ -240,7 +240,7 @@ export const DEFAULT_TEMPLATE: AttestationTemplate = {
       fontSize: 32,
       fontWeight: "bold",
       textAlign: "center",
-      color: "#0E1B2E",
+      color: "#2E2212",
     },
 
     // Filet or sous le nom
@@ -311,7 +311,7 @@ export const DEFAULT_TEMPLATE: AttestationTemplate = {
       fontWeight: "normal",
       fontStyle: "italic",
       textAlign: "left",
-      color: "#0E1B2E",
+      color: "#2E2212",
     },
     {
       id: "directorLine",

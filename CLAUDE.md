@@ -32,6 +32,25 @@ git push -u origin claude/create-project-state-K3MOH
 
 ---
 
+## Palette de Couleurs (identite visuelle)
+
+| Role | Hex | Usage |
+|------|-----|-------|
+| Bleu royal | `#003BA4` | Sidebar, boutons, CTA, headers, nav |
+| Bleu nuit | `#001D52` | Footer, attestation sidebar, zones tres sombres |
+| Bleu hover | `#002E83` | Hover sur les boutons bleu royal |
+| Bleu clair | `#93B6EE` | Badges, accents legers, hover states doux |
+| Dore | `#C5A05A` | Accent principal, garder identique |
+| Brun chaud | `#2E2212` | Texte principal, headings, titres |
+| Brun gris | `#8B8070` | Texte secondaire, muted |
+| Creme | `#F3EFE2` | Fond de page (body/background) |
+| Sable | `#E8DCC8` | Bordures, separateurs |
+| Blanc | `#FFFFFF` | Cartes et surfaces (contraste sur fond creme) |
+
+Ne jamais utiliser `#0E1B2E` (ancien navy). Le dore `#C5A05A` est intouchable.
+
+---
+
 ## Stack : Ne Jamais Changer
 
 - **React 18** avec hooks fonctionnels uniquement (pas de classes)

@@ -113,7 +113,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
       style={{ transitionDelay: formationsVisible ? `${index * 80}ms` : "0ms" }}
     >
       {/* Navy header : duree a gauche, niveau a droite */}
-      <div className="flex items-center justify-between bg-[#0E1B2E] px-5 py-3">
+      <div className="flex items-center justify-between bg-[#003BA4] px-5 py-3">
         {cohort.start_date && cohort.end_date ? (
           <p className="text-[11px] font-medium text-white/70">
             {Math.round((new Date(cohort.end_date + "T00:00:00").getTime() - new Date(cohort.start_date + "T00:00:00").getTime()) / (1000 * 60 * 60 * 24))} jours
@@ -354,9 +354,9 @@ const Index = () => {
     <div className="min-h-screen bg-white dark:bg-[#0a0a0a]">
 
       {/* ===== HERO FULLSCREEN ===== */}
-      <section className="relative h-screen w-full overflow-hidden bg-[#0E1B2E]">
+      <section className="relative h-screen w-full overflow-hidden bg-[#003BA4]">
         {/* Premium navy base + fallback background (shown when no hero_slides are uploaded) */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0E1B2E] via-[#13243d] to-[#0a1422]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#003BA4] via-[#002E83] to-[#001D52]" />
         <div
           className="absolute inset-0"
           style={{ backgroundImage: "radial-gradient(120% 80% at 75% 18%, rgba(197,160,90,0.16), transparent 55%)" }}
@@ -370,7 +370,7 @@ const Index = () => {
             className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${i === currentSlide ? "opacity-100" : "opacity-0"}`}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0E1B2E] via-[#0E1B2E]/60 to-[#0E1B2E]/25" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#001D52] via-[#001D52]/60 to-[#001D52]/25" />
 
         {/* Top bar: Logo left, Nav right */}
         <div className="relative z-10 flex items-center justify-between px-6 py-6 md:px-10 md:py-8">
@@ -716,7 +716,7 @@ const Index = () => {
       )}
 
       {/* ===== SECTION 5 : CTA FINAL ===== */}
-      <section className="relative overflow-hidden bg-[#0E1B2E] py-28">
+      <section className="relative overflow-hidden bg-[#003BA4] py-28">
         {/* Subtle gold radial glow from below */}
         <div
           className="absolute inset-0 pointer-events-none"
@@ -757,7 +757,7 @@ const Index = () => {
       </section>
 
       {/* ===== SECTION 6 : FOOTER ===== */}
-      <footer className="border-t border-white/10 bg-[#0E1B2E] text-white">
+      <footer className="border-t border-white/10 bg-[#001D52] text-white">
         <div className="container mx-auto px-6 sm:px-8 lg:px-12 py-14">
           <div className="grid gap-10 md:grid-cols-3">
             {/* Col 1 : Logo + tagline */}

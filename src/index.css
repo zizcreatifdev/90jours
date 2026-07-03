@@ -6,55 +6,55 @@
 
 @layer base {
   :root {
-    --background: 40 33% 98%;
-    --foreground: 216 32% 14%;
+    --background: 46 42% 92%;
+    --foreground: 34 44% 13%;
 
     --card: 0 0% 100%;
-    --card-foreground: 216 32% 14%;
+    --card-foreground: 34 44% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 216 32% 14%;
+    --popover-foreground: 34 44% 13%;
 
-    --primary: 216 54% 12%;
-    --primary-foreground: 40 33% 98%;
+    --primary: 218 100% 32%;
+    --primary-foreground: 46 42% 92%;
 
     --secondary: 40 24% 94%;
-    --secondary-foreground: 216 40% 14%;
+    --secondary-foreground: 34 44% 13%;
 
     --muted: 40 22% 95%;
-    --muted-foreground: 30 10% 42%;
+    --muted-foreground: 36 11% 49%;
 
     --accent: 39 48% 56%;
-    --accent-foreground: 216 54% 12%;
+    --accent-foreground: 34 44% 13%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 20% 89%;
-    --input: 40 20% 89%;
+    --border: 38 41% 85%;
+    --input: 38 41% 85%;
     --ring: 39 48% 56%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 216 32% 14%;
-    --sidebar-primary: 216 54% 12%;
-    --sidebar-primary-foreground: 40 33% 98%;
+    --sidebar-foreground: 34 44% 13%;
+    --sidebar-primary: 218 100% 32%;
+    --sidebar-primary-foreground: 46 42% 92%;
     --sidebar-accent: 40 22% 95%;
-    --sidebar-accent-foreground: 216 32% 14%;
-    --sidebar-border: 40 20% 91%;
+    --sidebar-accent-foreground: 34 44% 13%;
+    --sidebar-border: 38 41% 85%;
     --sidebar-ring: 39 48% 56%;
 
     /* Custom tokens */
     --coral: 39 48% 56%;
-    --coral-foreground: 216 54% 12%;
-    --navy: 216 54% 12%;
-    --navy-light: 216 45% 20%;
-    --cream: 40 33% 98%;
+    --coral-foreground: 34 44% 13%;
+    --navy: 218 100% 32%;
+    --navy-light: 219 100% 26%;
+    --cream: 46 42% 92%;
     --success: 145 65% 42%;
     --success-foreground: 0 0% 100%;
     --warning: 38 70% 48%;
-    --warning-foreground: 216 54% 12%;
+    --warning-foreground: 34 44% 13%;
 
     /* Glass tokens */
     --glass-bg: 0 0% 100% / 0.6;
@@ -85,7 +85,7 @@
     --muted-foreground: 220 10% 60%;
 
     --accent: 39 48% 56%;
-    --accent-foreground: 216 54% 12%;
+    --accent-foreground: 34 44% 13%;
 
     --destructive: 0 62% 30%;
     --destructive-foreground: 40 20% 95%;
@@ -96,7 +96,7 @@
     --sidebar-background: 220 25% 6%;
     --sidebar-foreground: 40 20% 95%;
     --sidebar-primary: 39 48% 56%;
-    --sidebar-primary-foreground: 216 54% 12%;
+    --sidebar-primary-foreground: 34 44% 13%;
     --sidebar-accent: 220 20% 15%;
     --sidebar-accent-foreground: 40 20% 95%;
     --sidebar-border: 220 20% 15%;

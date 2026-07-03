@@ -47,7 +47,7 @@ const APP_URL_FALLBACK = "https://60jours.vercel.app";
 const CONTACT_EMAIL = "contact@60jours.com";
 
 // Palette 60jours (couleurs en dur car un email ne peut pas lire les CSS vars).
-const NAVY = "#0E1B2E";
+const NAVY = "#003BA4";
 const GOLD = "#C5A05A";
 const CREAM = "#FBFAF8";
 const INK = "#1F2937";

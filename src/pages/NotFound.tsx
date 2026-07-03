@@ -5,7 +5,7 @@ const NotFound = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#0E1B2E] px-6 py-16 text-center">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#001D52] px-6 py-16 text-center">
       <svg
         viewBox="0 0 560 280"
         fill="none"
@@ -138,7 +138,7 @@ const NotFound = () => {
 
       <Button
         onClick={() => navigate("/")}
-        className="bg-[#C5A05A] px-8 text-[#0E1B2E] font-semibold hover:bg-[#b08d49] transition-colors"
+        className="bg-[#C5A05A] px-8 text-[#2E2212] font-semibold hover:bg-[#b08d49] transition-colors"
       >
         Retour à l'accueil
       </Button>

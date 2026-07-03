@@ -24,8 +24,8 @@ export default defineConfig(() => ({
         name: "60 jours de formation",
         short_name: "60jours",
         description: "Formations intensives créatives en 60 jours",
-        theme_color: "#0E1B2E",
-        background_color: "#0E1B2E",
+        theme_color: "#003BA4",
+        background_color: "#003BA4",
         display: "standalone",
         start_url: "/",
         icons: [

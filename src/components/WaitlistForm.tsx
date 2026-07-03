@@ -107,7 +107,7 @@ const WaitlistForm = ({ preselectedFormationId, onSuccess }: WaitlistFormProps) 
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#C5A05A]/15">
           <CheckCircle className="h-8 w-8 text-[#C5A05A]" />
         </div>
-        <h3 className="font-display text-xl font-bold text-[#0E1B2E] dark:text-[#FBFAF8]">
+        <h3 className="font-display text-xl font-bold text-[#2E2212] dark:text-[#FBFAF8]">
           Vous etes sur la liste !
         </h3>
         <p className="max-w-xs text-sm text-muted-foreground">
