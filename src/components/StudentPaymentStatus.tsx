@@ -377,7 +377,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
         </div>
         <div className="flex items-center gap-2">
           {!done && (
-            <Button size="sm" variant="outline" className="h-7 text-xs gap-1" asChild>
+            <Button size="sm" variant="outline" className="min-h-[44px] text-xs gap-1" asChild>
               <a href={waveHref(waveAmount)} target="_blank" rel="noopener noreferrer">
                 <ExternalLink className="h-3 w-3" /> Payer {fmt(waveAmount)}
               </a>
@@ -458,7 +458,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-3 px-6 py-4 border-b border-border">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 px-6 py-4 border-b border-border">
         <div className="text-center">
           <p className="text-xs text-muted-foreground">Total payé</p>
           <p className="text-sm font-bold text-foreground">{fmt(totalPaid)}</p>
@@ -551,7 +551,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
               type="button"
               onClick={() => setPayMode("once")}
               className={cn(
-                "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+                "rounded-md px-4 py-2 text-sm font-medium transition-colors",
                 payMode === "once" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -561,7 +561,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
               type="button"
               onClick={() => setPayMode("split")}
               className={cn(
-                "rounded-md px-3 py-1 text-xs font-medium transition-colors",
+                "rounded-md px-4 py-2 text-sm font-medium transition-colors",
                 payMode === "split" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
             >

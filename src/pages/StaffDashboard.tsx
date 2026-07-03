@@ -395,7 +395,7 @@ const StaffDashboard = () => {
               </div>
               <ConfirmDialog
                 trigger={
-                  <button className="ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
+                  <button className="ml-2 flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 }
@@ -463,7 +463,7 @@ const StaffDashboard = () => {
               </a>
               <ConfirmDialog
                 trigger={
-                  <button className="ml-2 flex-shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
+                  <button className="ml-2 flex-shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 }
@@ -557,7 +557,7 @@ const StaffDashboard = () => {
                   <Award className="h-5 w-5 text-accent" />
                   <h2 className="font-display text-lg font-semibold text-foreground">Attestations</h2>
                 </div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="rounded-xl bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-900 p-4 text-center">
                     <p className="text-2xl font-bold text-green-700 dark:text-green-400 font-display">
                       {attStats?.issued ?? "-"}

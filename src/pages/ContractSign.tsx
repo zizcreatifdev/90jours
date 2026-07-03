@@ -402,7 +402,7 @@ const ContractSign = () => {
           <div className="flex items-center gap-2">
             <FileSignature className="h-5 w-5 text-muted-foreground" />
             {!scrolledToBottom && (
-              <span className="animate-bounce text-xs text-muted-foreground hidden sm:inline">
+              <span className="animate-bounce text-xs text-muted-foreground">
                 Scroll jusqu'en bas
               </span>
             )}
@@ -460,13 +460,13 @@ const ContractSign = () => {
                 "rounded-xl border p-4 transition-colors",
                 accepted ? "border-green-200 bg-green-50/50 dark:border-green-800/40 dark:bg-green-950/20" : "border-border"
               )}>
-                <label className="flex cursor-pointer items-start gap-3 text-sm">
+                <label className="flex cursor-pointer items-start gap-3 text-sm min-h-[44px]">
                   <input
                     type="checkbox"
                     checked={accepted}
                     onChange={e => setAccepted(e.target.checked)}
                     disabled={!scrolledToBottom}
-                    className="mt-0.5 h-4 w-4 rounded accent-accent disabled:opacity-40"
+                    className="mt-0.5 h-5 w-5 rounded accent-accent disabled:opacity-40"
                   />
                   <span className={cn(!scrolledToBottom && "opacity-40")}>
                     J'ai lu et j'accepte l'integralite de ce contrat de formation.

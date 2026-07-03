@@ -200,36 +200,36 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
           <div className="flex items-start gap-0">
             {/* Step 1: Portfolio */}
             <div className="flex flex-col items-center flex-1">
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border-2 ${portfolioValidated ? "bg-green-100 border-green-400 text-green-700 dark:bg-green-950/40 dark:border-green-600 dark:text-green-400" : "bg-card border-border text-muted-foreground"}`}>
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold border-2 ${portfolioValidated ? "bg-green-100 border-green-400 text-green-700 dark:bg-green-950/40 dark:border-green-600 dark:text-green-400" : "bg-card border-border text-muted-foreground"}`}>
                 {portfolioValidated ? <CheckCircle2 className="h-4 w-4" /> : "1"}
               </div>
-              <p className={`mt-1 text-center text-[10px] font-semibold ${portfolioValidated ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>Portfolio</p>
+              <p className={`mt-1 text-center text-xs font-semibold ${portfolioValidated ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>Portfolio</p>
               {!portfolioValidated && (
-                <a href="/student?tab=portfolio" className="mt-0.5 text-[10px] text-accent hover:underline">Soumettre</a>
+                <a href="/student?tab=portfolio" className="mt-0.5 text-xs text-accent hover:underline">Soumettre</a>
               )}
             </div>
             {/* Connector 1-2 */}
-            <div className={`flex-1 max-w-[28px] h-0.5 mt-4 ${portfolioValidated ? "bg-green-400 dark:bg-green-600" : "bg-border"}`} />
+            <div className={`flex-1 max-w-[28px] h-0.5 mt-5 ${portfolioValidated ? "bg-green-400 dark:bg-green-600" : "bg-border"}`} />
             {/* Step 2: Paiement */}
             <div className="flex flex-col items-center flex-1">
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border-2 ${paymentsComplete ? "bg-green-100 border-green-400 text-green-700 dark:bg-green-950/40 dark:border-green-600 dark:text-green-400" : portfolioValidated ? "bg-card border-border text-muted-foreground" : "bg-card border-border/40 text-muted-foreground/40"}`}>
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold border-2 ${paymentsComplete ? "bg-green-100 border-green-400 text-green-700 dark:bg-green-950/40 dark:border-green-600 dark:text-green-400" : portfolioValidated ? "bg-card border-border text-muted-foreground" : "bg-card border-border/40 text-muted-foreground/40"}`}>
                 {paymentsComplete ? <CheckCircle2 className="h-4 w-4" /> : "2"}
               </div>
-              <p className={`mt-1 text-center text-[10px] font-semibold ${paymentsComplete ? "text-green-600 dark:text-green-400" : portfolioValidated ? "text-muted-foreground" : "text-muted-foreground/40"}`}>Paiement</p>
+              <p className={`mt-1 text-center text-xs font-semibold ${paymentsComplete ? "text-green-600 dark:text-green-400" : portfolioValidated ? "text-muted-foreground" : "text-muted-foreground/40"}`}>Paiement</p>
               {!paymentsComplete && portfolioValidated && (
-                <a href="/student?tab=payments" className="mt-0.5 text-[10px] text-accent hover:underline">Payer</a>
+                <a href="/student?tab=payments" className="mt-0.5 text-xs text-accent hover:underline">Payer</a>
               )}
             </div>
             {/* Connector 2-3 */}
-            <div className={`flex-1 max-w-[28px] h-0.5 mt-4 ${paymentsComplete && portfolioValidated ? "bg-green-400 dark:bg-green-600" : "bg-border"}`} />
+            <div className={`flex-1 max-w-[28px] h-0.5 mt-5 ${paymentsComplete && portfolioValidated ? "bg-green-400 dark:bg-green-600" : "bg-border"}`} />
             {/* Step 3: Admin */}
             <div className="flex flex-col items-center flex-1">
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold border-2 ${portfolioValidated && paymentsComplete ? "bg-card border-border text-muted-foreground" : "bg-card border-border/40 text-muted-foreground/40"}`}>
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold border-2 ${portfolioValidated && paymentsComplete ? "bg-card border-border text-muted-foreground" : "bg-card border-border/40 text-muted-foreground/40"}`}>
                 3
               </div>
-              <p className={`mt-1 text-center text-[10px] font-semibold ${portfolioValidated && paymentsComplete ? "text-muted-foreground" : "text-muted-foreground/40"}`}>Admin</p>
+              <p className={`mt-1 text-center text-xs font-semibold ${portfolioValidated && paymentsComplete ? "text-muted-foreground" : "text-muted-foreground/40"}`}>Admin</p>
               {portfolioValidated && paymentsComplete && (
-                <p className="mt-0.5 text-[10px] text-yellow-600 dark:text-yellow-400">En attente...</p>
+                <p className="mt-0.5 text-xs text-yellow-600 dark:text-yellow-400">En attente...</p>
               )}
             </div>
           </div>

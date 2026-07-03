@@ -449,7 +449,7 @@ const StudentDashboard = () => {
               {!profileLoading && profilePercent < 100 && (
                 <Link
                   to="/profile"
-                  className="hidden sm:flex items-center gap-1 rounded-full border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-950/40 transition-colors whitespace-nowrap"
+                  className="flex flex-wrap items-center gap-1 rounded-full border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/20 px-2.5 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-950/40 transition-colors whitespace-nowrap"
                 >
                   <User className="h-3 w-3" />
                   Profil {profilePercent}%
