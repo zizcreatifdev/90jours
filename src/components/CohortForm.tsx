@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import type { CohortRow } from "@/hooks/use-cohorts";
 
 interface CohortFormProps {
@@ -42,6 +43,14 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formations, setFormations] = useState<Formation[]>([]);
+
+  const computePayOnce = (c?: CohortRow) => {
+    if (c) {
+      return c.registration_fee != null && c.total_price != null && c.registration_fee === c.total_price;
+    }
+    return false;
+  };
+  const [payOnce, setPayOnce] = useState(() => computePayOnce(cohort));
 
   // tranche_2_amount is derived, not stored in form state
   const initialForm = () => ({
@@ -81,8 +90,10 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
 
   useEffect(() => {
     if (open) {
-      setForm(initialForm());
+      const f = initialForm();
+      setForm(f);
       reset();
+      setPayOnce(cohort ? computePayOnce(cohort) : f.cohort_type === "initiation");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -98,6 +109,13 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
     };
     if (open) fetchFormations();
   }, [open]);
+
+  // Sync registration_fee = total_price when payOnce is active
+  useEffect(() => {
+    if (payOnce) {
+      setForm(prev => ({ ...prev, registration_fee: prev.total_price }));
+    }
+  }, [form.total_price, payOnce]);
 
   // Auto-recalculate end_date when start_date or cohort_type changes
   useEffect(() => {
@@ -127,12 +145,14 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
     const sel = formations.find(f => f.id === form.formation_id) ?? null;
     if (newType === "initiation") {
       setForm(prev => ({ ...prev, cohort_type: newType, tranche_1_amount: null }));
+      setPayOnce(true);
     } else {
       setForm(prev => ({
         ...prev,
         cohort_type: newType,
         tranche_1_amount: sel?.tranche_1_amount ?? prev.tranche_1_amount,
       }));
+      setPayOnce(false);
     }
     handleBlur("cohort_type");
   };
@@ -333,6 +353,16 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
               <h4 className="font-display text-sm font-semibold text-foreground">Tarification</h4>
               <p className="text-xs text-muted-foreground mt-0.5">Tarifs specifiques a cette cohorte.</p>
             </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="pay-once"
+                checked={payOnce}
+                onCheckedChange={setPayOnce}
+              />
+              <Label htmlFor="pay-once" className="text-sm font-normal cursor-pointer">
+                Paiement en une fois
+              </Label>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="c-tprice">Total formation (FCFA)</Label>
@@ -355,8 +385,11 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
                   onChange={e => setForm(prev => ({ ...prev, registration_fee: e.target.value !== "" ? parseInt(e.target.value) : null }))}
                   placeholder="Ex : 10000"
                   aria-invalid={!!inscriptionError}
+                  disabled={payOnce}
+                  readOnly={payOnce}
+                  className={payOnce ? "bg-muted cursor-default" : ""}
                 />
-                {inscriptionError && <p className="mt-1 text-xs text-destructive">{inscriptionError}</p>}
+                {inscriptionError && !payOnce && <p className="mt-1 text-xs text-destructive">{inscriptionError}</p>}
               </div>
             </div>
             {isPerfectionnement && (
