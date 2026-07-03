@@ -112,8 +112,11 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
       )}
       style={{ transitionDelay: formationsVisible ? `${index * 80}ms` : "0ms" }}
     >
-      {/* Navy header : duree a gauche, niveau a droite */}
-      <div className="flex items-center justify-between bg-[#003BA4] px-5 py-3">
+      {/* Header : bleu royal pour Initiation, bleu nuit pour Perfectionnement */}
+      <div
+        className="flex items-center justify-between px-5 py-3"
+        style={{ backgroundColor: cohort.cohort_type === "standard" ? "#001D52" : "#003BA4" }}
+      >
         {cohort.start_date && cohort.end_date ? (
           <p className="text-[11px] font-medium text-white/70">
             {Math.round((new Date(cohort.end_date + "T00:00:00").getTime() - new Date(cohort.start_date + "T00:00:00").getTime()) / (1000 * 60 * 60 * 24))} jours
@@ -122,12 +125,10 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
           <span />
         )}
         <span
-          className={cn(
-            "rounded-full px-2.5 py-0.5 text-[10px] font-semibold",
-            cohort.cohort_type === "standard"
-              ? "bg-[#C5A05A]/25 text-[#d4b06a]"
-              : "bg-white/10 text-[#C5A05A]"
-          )}
+          className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold text-white"
+          style={{
+            backgroundColor: cohort.cohort_type === "standard" ? "#C5A05A" : "rgba(255,255,255,0.2)",
+          }}
         >
           {cohort.cohort_type === "standard" ? "Perfectionnement" : "Initiation"}
         </span>
