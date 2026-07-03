@@ -201,7 +201,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
               {isFull ? (
                 <button
                   onClick={() => onWaitlist(cohort.formation_id ?? null)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-[#C5A05A] px-3 py-1.5 text-[11px] font-semibold text-[#C5A05A] transition-colors hover:bg-[#C5A05A]/10"
+                  className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-[#C5A05A] px-3 text-xs font-semibold text-[#C5A05A] transition-colors hover:bg-[#C5A05A]/10"
                 >
                   <Bell className="h-3 w-3" />
                   Me prévenir

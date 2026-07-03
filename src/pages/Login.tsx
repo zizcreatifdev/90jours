@@ -111,7 +111,7 @@ const Login = () => {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <RequiredLabel htmlFor="login-email" required>Email</RequiredLabel>
-              <Input id="login-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => handleBlur("email")} aria-invalid={!!showError("email")} placeholder="votre@email.com" />
+              <Input id="login-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => handleBlur("email")} aria-invalid={!!showError("email")} placeholder="votre@email.com" className="h-11" />
               <FieldError message={showError("email")} />
             </div>
             <div>
@@ -124,7 +124,7 @@ const Login = () => {
                   Mot de passe oublié ?
                 </Link>
               </div>
-              <Input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} onBlur={() => handleBlur("password")} aria-invalid={!!showError("password")} placeholder="••••••••" />
+              <Input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} onBlur={() => handleBlur("password")} aria-invalid={!!showError("password")} placeholder="••••••••" className="h-11" />
               <FieldError message={showError("password")} />
             </div>
             <Button type="submit" disabled={loading || !isValid} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold">

@@ -278,7 +278,7 @@ const EventCard = ({ event, role, onDeleted }: { event: CalendarEvent; role: str
             onClick={handleDelete}
             disabled={deleting}
             aria-label="Supprimer l'evenement"
-            className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-xs text-muted-foreground hover:text-destructive transition-colors"
           >
             {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : "×"}
           </button>

@@ -205,7 +205,7 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
               </div>
               <p className={`mt-1 text-center text-xs font-semibold ${portfolioValidated ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>Portfolio</p>
               {!portfolioValidated && (
-                <a href="/student?tab=portfolio" className="mt-0.5 text-xs text-accent hover:underline">Soumettre</a>
+                <a href="/student?tab=portfolio" className="mt-0.5 inline-flex min-h-[44px] items-center text-xs text-accent hover:underline">Soumettre</a>
               )}
             </div>
             {/* Connector 1-2 */}
@@ -217,7 +217,7 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
               </div>
               <p className={`mt-1 text-center text-xs font-semibold ${paymentsComplete ? "text-green-600 dark:text-green-400" : portfolioValidated ? "text-muted-foreground" : "text-muted-foreground/40"}`}>Paiement</p>
               {!paymentsComplete && portfolioValidated && (
-                <a href="/student?tab=payments" className="mt-0.5 text-xs text-accent hover:underline">Payer</a>
+                <a href="/student?tab=payments" className="mt-0.5 inline-flex min-h-[44px] items-center text-xs text-accent hover:underline">Payer</a>
               )}
             </div>
             {/* Connector 2-3 */}

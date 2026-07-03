@@ -111,7 +111,7 @@ const CategoryManager = () => {
                       className="h-7 text-sm"
                       autoFocus
                     />
-                    <Button size="sm" className="h-7 px-2 text-xs" onClick={() => handleRename(cat.id)}>OK</Button>
+                    <Button size="sm" className="min-h-[44px] px-2 text-xs" onClick={() => handleRename(cat.id)}>OK</Button>
                     <button className="text-xs text-muted-foreground hover:text-foreground" onClick={() => { setEditingId(null); setEditingName(""); }}>Annuler</button>
                   </div>
                 ) : (

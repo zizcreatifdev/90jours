@@ -744,7 +744,7 @@ const AdminDashboard = () => {
                                     trigger={
                                       <button
                                         disabled={archiving === cohort.id}
-                                        className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                                         title="Archiver"
                                       >
                                         {archiving === cohort.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Archive className="h-4 w-4" />}
@@ -761,7 +761,7 @@ const AdminDashboard = () => {
                                     trigger={
                                       <button
                                         disabled={deleting === cohort.id}
-                                        className="flex h-8 w-8 items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+                                        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
                                         title="Supprimer définitivement"
                                       >
                                         {deleting === cohort.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}

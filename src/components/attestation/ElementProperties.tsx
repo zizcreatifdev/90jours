@@ -30,7 +30,7 @@ const ElementProperties = ({ element, onUpdate, onDelete }: ElementPropertiesPro
         <h4 className="font-semibold text-foreground text-xs uppercase tracking-wider">
           {element.type === "text" ? "Texte" : element.type === "image" ? "Image" : element.type === "rect" ? "Rectangle" : element.type === "line" ? "Ligne" : "Decoration"}
         </h4>
-        <Button variant="ghost" size="sm" onClick={onDelete} className="h-7 w-7 p-0 text-destructive hover:text-destructive">
+        <Button variant="ghost" size="sm" onClick={onDelete} className="min-h-[44px] min-w-[44px] p-0 text-destructive hover:text-destructive">
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>

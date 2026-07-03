@@ -513,7 +513,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
                   <span className="text-muted-foreground line-through">{fmt(inscriptionAmount)}</span>
                   <span className="font-semibold text-accent">{fmt(promoApplied.newAmount)}</span>
                 </div>
-                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={handleRemovePromo}>
+                <Button size="sm" variant="ghost" className="min-h-[44px] text-xs" onClick={handleRemovePromo}>
                   Retirer
                 </Button>
               </div>
@@ -551,7 +551,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
               type="button"
               onClick={() => setPayMode("once")}
               className={cn(
-                "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                "flex items-center rounded-md px-4 py-2 text-sm font-medium transition-colors min-h-[44px]",
                 payMode === "once" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -561,7 +561,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
               type="button"
               onClick={() => setPayMode("split")}
               className={cn(
-                "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                "flex items-center rounded-md px-4 py-2 text-sm font-medium transition-colors min-h-[44px]",
                 payMode === "split" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
             >
