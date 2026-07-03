@@ -202,7 +202,7 @@ const ProfilePage = () => {
             <Menu className="h-5 w-5" />
           </button>
           <Link to={dashboardPath}>
-            <Button variant="ghost" size="sm" className="gap-1">
+            <Button variant="ghost" size="sm" className="gap-1 min-h-[44px]">
               <ArrowLeft className="h-4 w-4" /> Retour
             </Button>
           </Link>

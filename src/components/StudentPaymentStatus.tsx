@@ -406,7 +406,7 @@ const StudentPaymentStatus = ({ cohortId, formationName, formationColor }: { coh
         {remaining > 0 && declareOptions.length > 0 && (
           <Dialog open={declareOpen} onOpenChange={setDeclareOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="gap-1 text-xs">
+              <Button size="sm" className="gap-1 text-xs min-h-[44px]">
                 <Plus className="h-3 w-3" /> Déclarer un paiement
               </Button>
             </DialogTrigger>

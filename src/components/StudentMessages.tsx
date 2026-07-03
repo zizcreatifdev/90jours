@@ -460,6 +460,7 @@ const StudentMessages = ({ cohortId, formationId, isArchived }: StudentMessagesP
                             onChange={e => setReplyContent(e.target.value)}
                             className="min-h-[60px] text-sm bg-background"
                             rows={2}
+                            onFocus={(e) => setTimeout(() => e.target.scrollIntoView({ behavior: "smooth", block: "center" }), 300)}
                           />
                           <div className="flex flex-col gap-1">
                             <Button size="sm" onClick={() => handleReply(msg.id)} disabled={sending || !replyContent.trim()} className="min-h-[44px]">

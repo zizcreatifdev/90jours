@@ -148,7 +148,7 @@ const StudentAttestation = ({ cohortId }: StudentAttestationProps) => {
           <Award className="h-5 w-5 text-accent" />
           <h3 className="font-display font-semibold text-foreground">Attestation de formation</h3>
         </div>
-        <Button size="sm" variant="ghost" onClick={fetchAll} disabled={loading} className="gap-1 text-xs text-muted-foreground">
+        <Button size="sm" variant="ghost" onClick={fetchAll} disabled={loading} className="gap-1 text-xs text-muted-foreground min-h-[44px]">
           <RefreshCw className="h-3.5 w-3.5" /> Actualiser
         </Button>
       </div>

@@ -363,7 +363,7 @@ const DashboardSidebar = ({ role, mobileOpen, onMobileOpenChange }: DashboardSid
     <>
       {/* Mobile sheet */}
       <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
-        <SheetContent side="left" className="w-[220px] p-0 border-r border-border bg-card">
+        <SheetContent side="left" className="w-[220px] p-0 border-r border-border bg-card pb-[env(safe-area-inset-bottom)]">
           <SidebarNav
             links={links}
             role={role}

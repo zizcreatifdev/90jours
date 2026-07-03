@@ -465,7 +465,7 @@ const AccountingPanel = () => {
           <div className="flex justify-end">
             <Dialog open={expenseOpen} onOpenChange={setExpenseOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="gap-1"><Plus className="h-4 w-4" /> Ajouter une dépense</Button>
+                <Button size="sm" className="gap-1 min-h-[44px]"><Plus className="h-4 w-4" /> Ajouter une dépense</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Nouvelle dépense</DialogTitle></DialogHeader>
@@ -581,7 +581,7 @@ const AccountingPanel = () => {
                 <SelectItem value="Autre">Autre</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm" onClick={handleExport} className="gap-1"><Download className="h-4 w-4" /> Export CSV</Button>
+            <Button variant="outline" size="sm" onClick={handleExport} className="gap-1 min-h-[44px]"><Download className="h-4 w-4" /> Export CSV</Button>
           </div>
           <div className="rounded-2xl border border-border bg-card shadow-card overflow-x-auto">
             <table className="w-full">
@@ -700,7 +700,7 @@ const StaffPaymentsSection = ({ staffPayments, staffType, onMarkPaid, onAdd }: {
   return (
     <>
       <div className="flex justify-end">
-        <Button size="sm" className="gap-1" onClick={onAdd}><Plus className="h-4 w-4" /> Ajouter un paiement</Button>
+        <Button size="sm" className="gap-1 min-h-[44px]" onClick={onAdd}><Plus className="h-4 w-4" /> Ajouter un paiement</Button>
       </div>
       {grouped.length === 0 ? (
         <div className="rounded-2xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">
@@ -750,7 +750,7 @@ const StaffPaymentsSection = ({ staffPayments, staffType, onMarkPaid, onAdd }: {
                         <td className="px-5 py-3 text-sm text-muted-foreground">{p.notes || "-"}</td>
                         <td className="px-5 py-3">
                           {p.status === "pending" && (
-                            <Button size="sm" variant="outline" className="gap-1 text-xs" onClick={() => onMarkPaid(p.id)}>
+                            <Button size="sm" variant="outline" className="gap-1 text-xs min-h-[44px]" onClick={() => onMarkPaid(p.id)}>
                               <Check className="h-3 w-3" /> Marquer payé
                             </Button>
                           )}

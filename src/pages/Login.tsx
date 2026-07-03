@@ -119,7 +119,7 @@ const Login = () => {
                 <RequiredLabel htmlFor="login-password" required>Mot de passe</RequiredLabel>
                 <Link
                   to="/forgot-password"
-                  className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                  className="min-h-[44px] flex items-center text-xs text-muted-foreground hover:text-foreground hover:underline"
                 >
                   Mot de passe oublié ?
                 </Link>

@@ -338,7 +338,7 @@ const CreatePersonalEventDialog = ({ open, onOpenChange, onCreated }: CreatePers
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="gap-1">
+        <Button size="sm" variant="outline" className="gap-1 min-h-[44px]">
           <Plus className="h-4 w-4" /> Ajouter
         </Button>
       </DialogTrigger>
@@ -465,7 +465,7 @@ const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onCreated }: C
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1">
+        <Button size="sm" className="gap-1 min-h-[44px]">
           <Plus className="h-4 w-4" /> Ajouter
         </Button>
       </DialogTrigger>

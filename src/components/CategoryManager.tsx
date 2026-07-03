@@ -121,14 +121,14 @@ const CategoryManager = () => {
               {editingId !== cat.id && (
                 <div className="flex items-center gap-1 shrink-0">
                   <button
-                    className="text-muted-foreground hover:text-foreground transition-colors p-1"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                     onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }}
                     title="Renommer"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
                   <ConfirmDialog
-                    trigger={<button className="text-muted-foreground hover:text-destructive transition-colors p-1"><Trash2 className="h-4 w-4" /></button>}
+                    trigger={<button className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="h-4 w-4" /></button>}
                     title="Supprimer cette catégorie ?"
                     description="Les briefs associés ne seront pas supprimés mais perdront leur catégorie."
                     confirmLabel="Supprimer"

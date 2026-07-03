@@ -841,7 +841,7 @@ const AdminDashboard = () => {
                         <Loader2 className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
                       )}
                     </div>
-                    <Button variant="outline" size="sm" onClick={handleExportUsers} className="gap-1">
+                    <Button variant="outline" size="sm" onClick={handleExportUsers} className="gap-1 min-h-[44px]">
                       <Download className="h-4 w-4" /> CSV
                     </Button>
                   </div>

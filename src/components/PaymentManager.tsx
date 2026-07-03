@@ -453,12 +453,12 @@ const PaymentManager = () => {
                 <Loader2 className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted-foreground" />
               )}
             </div>
-            <Button variant="outline" size="sm" onClick={handleExport} className="gap-1">
+            <Button variant="outline" size="sm" onClick={handleExport} className="gap-1 min-h-[44px]">
               <Download className="h-4 w-4" /> CSV
             </Button>
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="gap-1">
+                <Button size="sm" className="gap-1 min-h-[44px]">
                   <Plus className="h-4 w-4" /> Ajouter un paiement
                 </Button>
               </DialogTrigger>
@@ -675,12 +675,12 @@ const PaymentManager = () => {
                       </td>
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => handleRestore(p.id)}>
+                          <Button variant="ghost" size="sm" className="text-xs gap-1 min-h-[44px]" onClick={() => handleRestore(p.id)}>
                             <RotateCcw className="h-3 w-3" /> Restaurer
                           </Button>
                           <ConfirmDialog
                             trigger={
-                              <Button variant="ghost" size="sm" className="text-xs gap-1 text-destructive hover:text-destructive">
+                              <Button variant="ghost" size="sm" className="text-xs gap-1 text-destructive hover:text-destructive min-h-[44px]">
                                 <AlertTriangle className="h-3 w-3" /> Supprimer
                               </Button>
                             }

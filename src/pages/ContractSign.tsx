@@ -424,7 +424,7 @@ const ContractSign = () => {
             <div
               ref={scrollRef}
               onScroll={handleScroll}
-              className="h-[65vh] overflow-y-auto rounded-2xl border border-border bg-white shadow-card"
+              className="h-[50vh] sm:h-[65vh] overflow-y-auto rounded-2xl border border-border bg-white shadow-card"
             >
               {/* Style injecte directement (source interne, non soumis a DOMPurify qui strip <style>) */}
               <style dangerouslySetInnerHTML={{ __html: CONTRACT_CSS }} />

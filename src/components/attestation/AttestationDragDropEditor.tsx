@@ -258,7 +258,7 @@ const AttestationDragDropEditor = () => {
                 <Layers className="h-3.5 w-3.5" /> Bande degrade
               </Button>
               <div className="flex-1" />
-              <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1 text-xs text-muted-foreground">
+              <Button variant="ghost" size="sm" onClick={handleReset} className="gap-1 text-xs text-muted-foreground min-h-[44px]">
                 <RotateCcw className="h-3.5 w-3.5" /> Réinitialiser
               </Button>
               <Button onClick={handleSave} disabled={saving} size="sm" className="gap-1.5">

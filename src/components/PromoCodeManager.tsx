@@ -169,7 +169,7 @@ const PromoCodeManager = () => {
         </h2>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" onClick={openCreate} className="gap-1">
+            <Button size="sm" onClick={openCreate} className="gap-1 min-h-[44px]">
               <Plus className="h-4 w-4" /> Nouveau code
             </Button>
           </DialogTrigger>

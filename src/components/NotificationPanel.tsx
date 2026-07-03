@@ -151,7 +151,7 @@ const NotificationPanel = () => {
               )}
             </SheetTitle>
             {unreadCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={markAllRead} className="text-xs gap-1">
+              <Button variant="ghost" size="sm" onClick={markAllRead} className="text-xs gap-1 min-h-[44px]">
                 <CheckCheck className="h-3.5 w-3.5" /> Tout lire
               </Button>
             )}

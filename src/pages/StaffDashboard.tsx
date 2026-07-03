@@ -626,9 +626,9 @@ const StaffDashboard = () => {
                 <div className="flex items-center gap-2">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input placeholder="Rechercher..." className="w-40 pl-9 bg-secondary border-0 h-8 text-xs" value={studentSearch} onChange={e => setStudentSearch(e.target.value)} />
+                    <Input placeholder="Rechercher..." className="w-40 pl-9 bg-secondary border-0 h-11 text-xs" value={studentSearch} onChange={e => setStudentSearch(e.target.value)} />
                   </div>
-                  <Button variant="outline" size="sm" onClick={handleExportStudents} className="gap-1 h-8 text-xs">
+                  <Button variant="outline" size="sm" onClick={handleExportStudents} className="gap-1 min-h-[44px] text-xs">
                     <Download className="h-3 w-3" /> CSV
                   </Button>
                 </div>
