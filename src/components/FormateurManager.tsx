@@ -208,7 +208,7 @@ const FormateurManager = () => {
               <DialogTitle className="font-display">Inviter un membre staff</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleInvite} className="space-y-4 pt-2">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <RequiredLabel htmlFor="inv-first" required>Prénom</RequiredLabel>
                   <Input id="inv-first" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} onBlur={() => handleBlur("first_name")} aria-invalid={!!showError("first_name")} placeholder="Prénom" />

@@ -332,7 +332,7 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
                     <Label>Description</Label>
                     <Textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Détails du brief..." rows={3} />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <Label>Catégorie</Label>
                       <Select value={categoryId} onValueChange={setCategoryId}>
@@ -420,13 +420,13 @@ const BriefManager = ({ cohortId, role }: BriefManagerProps) => {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleOpenEdit(brief)}
-                          className="text-muted-foreground hover:text-foreground transition-colors"
+                          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                           aria-label="Modifier le brief"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <ConfirmDialog
-                          trigger={<button className="text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="h-4 w-4" /></button>}
+                          trigger={<button className="min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground hover:text-destructive transition-colors"><Trash2 className="h-4 w-4" /></button>}
                           title="Supprimer ce brief ?"
                           description="Toutes les soumissions associees seront egalement supprimees."
                           confirmLabel="Supprimer"

@@ -321,7 +321,7 @@ const TaskManager = () => {
                   <Label>Description</Label>
                   <Textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Détails de la tâche..." rows={3} />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <RequiredLabel required>Assigné à</RequiredLabel>
                     <Select value={form.assigned_to} onValueChange={v => { setForm({ ...form, assigned_to: v }); handleBlur("assigned_to"); }}>
@@ -347,7 +347,7 @@ const TaskManager = () => {
                     <FieldError message={showError("priority")} />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <Label>Cohorte <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
                     <Select value={form.cohort_id} onValueChange={v => setForm({ ...form, cohort_id: v })}>

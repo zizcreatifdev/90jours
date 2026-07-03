@@ -325,7 +325,7 @@ const TestimonialsManager = () => {
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <RequiredLabel htmlFor="t-name" required>Nom</RequiredLabel>
                 <Input

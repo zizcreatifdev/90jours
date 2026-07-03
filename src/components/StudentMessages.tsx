@@ -300,7 +300,7 @@ const StudentMessages = ({ cohortId, formationId, isArchived }: StudentMessagesP
             <p className="text-sm text-muted-foreground">Echanges avec vos formateurs</p>
           </div>
         </div>
-        <Button size="sm" onClick={openNewMsg} className="gap-2" disabled={!!isArchived}>
+        <Button size="sm" onClick={openNewMsg} className="gap-2 min-h-[44px]" disabled={!!isArchived}>
           <Plus className="h-4 w-4" />
           Nouveau message
         </Button>
@@ -462,10 +462,10 @@ const StudentMessages = ({ cohortId, formationId, isArchived }: StudentMessagesP
                             rows={2}
                           />
                           <div className="flex flex-col gap-1">
-                            <Button size="sm" onClick={() => handleReply(msg.id)} disabled={sending || !replyContent.trim()}>
+                            <Button size="sm" onClick={() => handleReply(msg.id)} disabled={sending || !replyContent.trim()} className="min-h-[44px]">
                               {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyContent(""); }}>
+                            <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyContent(""); }} className="min-h-[44px]">
                               Annuler
                             </Button>
                           </div>

@@ -510,7 +510,7 @@ const AccountingPanel = () => {
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-1">
                         <button
-                          className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                          className="flex h-11 w-11 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
                           onClick={() => handleEditExpense(e)}
                           title="Modifier"
                         >
@@ -518,7 +518,7 @@ const AccountingPanel = () => {
                         </button>
                         <ConfirmDialog
                           trigger={
-                            <button className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" title="Supprimer">
+                            <button className="flex h-11 w-11 items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors" title="Supprimer">
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
                           }
@@ -664,7 +664,7 @@ const AccountingPanel = () => {
               </Select>
             </div>
             <div><Label>Montant (FCFA)</Label><Input type="number" value={newStaffPay.amount} onChange={e => setNewStaffPay(p => ({ ...p, amount: e.target.value }))} /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div><Label>Début période</Label><Input type="date" value={newStaffPay.period_start} onChange={e => setNewStaffPay(p => ({ ...p, period_start: e.target.value }))} /></div>
               <div><Label>Fin période</Label><Input type="date" value={newStaffPay.period_end} onChange={e => setNewStaffPay(p => ({ ...p, period_end: e.target.value }))} /></div>
             </div>

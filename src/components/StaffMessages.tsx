@@ -308,7 +308,7 @@ const StaffMessages = () => {
         <button
           onClick={() => switchTab("admin")}
           className={cn(
-            "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px",
+            "min-h-[44px] px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px",
             activeTab === "admin"
               ? "border-primary text-foreground"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -324,7 +324,7 @@ const StaffMessages = () => {
         <button
           onClick={() => switchTab("students")}
           className={cn(
-            "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px",
+            "min-h-[44px] flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px",
             activeTab === "students"
               ? "border-primary text-foreground"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -409,10 +409,10 @@ const StaffMessages = () => {
                             rows={2}
                           />
                           <div className="flex flex-col gap-1">
-                            <Button size="sm" onClick={() => handleReplyAdmin(msg.id, msg.sender_id)} disabled={sending || !replyContent.trim()}>
+                            <Button size="sm" onClick={() => handleReplyAdmin(msg.id, msg.sender_id)} disabled={sending || !replyContent.trim()} className="min-h-[44px]">
                               {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyContent(""); }}>
+                            <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyContent(""); }} className="min-h-[44px]">
                               Annuler
                             </Button>
                           </div>
@@ -515,10 +515,10 @@ const StaffMessages = () => {
                             rows={2}
                           />
                           <div className="flex flex-col gap-1">
-                            <Button size="sm" onClick={() => handleReplyStudent(msg.id, msg.cohort_id)} disabled={sending || !replyContent.trim()}>
+                            <Button size="sm" onClick={() => handleReplyStudent(msg.id, msg.cohort_id)} disabled={sending || !replyContent.trim()} className="min-h-[44px]">
                               {sending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                             </Button>
-                            <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyContent(""); }}>
+                            <Button size="sm" variant="ghost" onClick={() => { setReplyingTo(null); setReplyContent(""); }} className="min-h-[44px]">
                               Annuler
                             </Button>
                           </div>

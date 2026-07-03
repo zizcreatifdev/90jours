@@ -190,7 +190,7 @@ const PromoCodeManager = () => {
                 <Label>Description</Label>
                 <Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Ex: Réduction de lancement" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <RequiredLabel required>Type de réduction</RequiredLabel>
                   <Select value={form.discount_type} onValueChange={v => { setForm(f => ({ ...f, discount_type: v })); handleBlur("discount_type"); }}>
@@ -309,12 +309,12 @@ const PromoCodeManager = () => {
                   </td>
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-1">
-                      <button onClick={() => openEdit(c)} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">
+                      <button onClick={() => openEdit(c)} className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">
                         <Pencil className="h-4 w-4" />
                       </button>
                       <ConfirmDialog
                         trigger={
-                          <button className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors">
+                          <button className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors">
                             <Trash2 className="h-4 w-4" />
                           </button>
                         }

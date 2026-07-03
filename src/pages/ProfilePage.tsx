@@ -226,9 +226,9 @@ const ProfilePage = () => {
                 className="absolute inset-0 flex items-center justify-center rounded-full bg-foreground/0 group-hover:bg-foreground/40 transition-colors cursor-pointer"
               >
                 {uploading ? (
-                  <Loader2 className="h-6 w-6 animate-spin text-background opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Loader2 className="h-6 w-6 animate-spin text-background opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" />
                 ) : (
-                  <Camera className="h-6 w-6 text-background opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Camera className="h-6 w-6 text-background opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" />
                 )}
               </button>
               <input

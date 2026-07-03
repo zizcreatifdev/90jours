@@ -495,7 +495,7 @@ const StaffDashboard = () => {
           </div>
           <div className="flex items-center gap-2 md:gap-4">
             <Select value={selectedCohortId} onValueChange={setSelectedCohortId}>
-              <SelectTrigger className="w-36 md:w-48">
+              <SelectTrigger className="w-36 md:w-48 h-11">
                 <SelectValue placeholder="Choisir une cohorte" />
               </SelectTrigger>
               <SelectContent>

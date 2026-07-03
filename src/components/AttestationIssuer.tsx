@@ -831,7 +831,7 @@ const AttestationIssuer = () => {
                               size="sm"
                               variant="ghost"
                               onClick={() => setPreviewStudent(s)}
-                              className="gap-1 text-xs h-7 px-2"
+                              className="gap-1 text-xs min-h-[44px] px-2"
                             >
                               <Eye className="h-3 w-3" /> Apercu
                             </Button>
@@ -840,7 +840,7 @@ const AttestationIssuer = () => {
                             isOwner && (
                               <ConfirmDialog
                                 trigger={
-                                  <Button size="sm" variant="ghost" className="gap-1 text-xs h-7 px-2 text-destructive hover:text-destructive">
+                                  <Button size="sm" variant="ghost" className="gap-1 text-xs min-h-[44px] px-2 text-destructive hover:text-destructive">
                                     <XCircle className="h-3 w-3" /> Revoquer
                                   </Button>
                                 }

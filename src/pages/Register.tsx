@@ -404,12 +404,12 @@ const Register = () => {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
                       <RequiredLabel htmlFor="firstName" required>Prénom</RequiredLabel>
-                      <Input id="firstName" maxLength={50} value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} onBlur={() => handleBlur("firstName")} aria-invalid={!!showError("firstName")} placeholder="Aminata" />
+                      <Input id="firstName" maxLength={50} value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} onBlur={() => handleBlur("firstName")} aria-invalid={!!showError("firstName")} placeholder="Aminata" className="h-11" />
                       <FieldError message={showError("firstName")} />
                     </div>
                     <div>
                       <RequiredLabel htmlFor="lastName" required>Nom</RequiredLabel>
-                      <Input id="lastName" maxLength={50} value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} onBlur={() => handleBlur("lastName")} aria-invalid={!!showError("lastName")} placeholder="Diallo" />
+                      <Input id="lastName" maxLength={50} value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} onBlur={() => handleBlur("lastName")} aria-invalid={!!showError("lastName")} placeholder="Diallo" className="h-11" />
                       <FieldError message={showError("lastName")} />
                     </div>
                   </div>
@@ -434,6 +434,7 @@ const Register = () => {
                       }}
                       aria-invalid={!!showError("email")}
                       placeholder="aminata@email.com"
+                      className="h-11"
                     />
                     <FieldError message={showError("email")} />
                     {!showError("email") && emailSuggestion && (
@@ -455,13 +456,13 @@ const Register = () => {
                   </div>
                   <div className="mt-4">
                     <RequiredLabel htmlFor="password" required>Mot de passe</RequiredLabel>
-                    <Input id="password" type="password" minLength={8} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} onBlur={() => handleBlur("password")} aria-invalid={!!showError("password")} placeholder="••••••••" />
+                    <Input id="password" type="password" minLength={8} value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} onBlur={() => handleBlur("password")} aria-invalid={!!showError("password")} placeholder="••••••••" className="h-11" />
                     <FieldError message={showError("password")} />
                     <PasswordStrengthIndicator password={formData.password} />
                   </div>
                   <div className="mt-4">
                     <RequiredLabel htmlFor="phone" required>Téléphone</RequiredLabel>
-                    <Input id="phone" type="tel" maxLength={20} value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} onBlur={() => handleBlur("phone")} aria-invalid={!!showError("phone")} placeholder="+221 77 000 00 00" />
+                    <Input id="phone" type="tel" maxLength={20} value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} onBlur={() => handleBlur("phone")} aria-invalid={!!showError("phone")} placeholder="+221 77 000 00 00" className="h-11" />
                     <FieldError message={showError("phone")} />
                   </div>
                 </>

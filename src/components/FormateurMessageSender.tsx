@@ -137,7 +137,7 @@ const FormateurMessageSender = () => {
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSend} className="space-y-4 pt-2">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <RequiredLabel required>Cohorte</RequiredLabel>
               <Select value={cohortId} onValueChange={(v) => { setCohortId(v); handleBlur("cohortId"); }}>

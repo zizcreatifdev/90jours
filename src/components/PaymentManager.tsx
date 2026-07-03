@@ -372,16 +372,16 @@ const PaymentManager = () => {
           <div className="flex flex-wrap gap-2">
             {waveCohort ? (
               <>
-                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveCohort.registration_fee)}>
+                <Button variant="outline" size="sm" className="gap-1 text-xs min-h-[44px]" onClick={() => copyWaveLink(waveCohort.registration_fee)}>
                   <Copy className="h-3 w-3" /> Inscription ({waveCohort.registration_fee.toLocaleString("fr-FR")} F)
                 </Button>
-                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveCohort.tranche_1_amount)}>
+                <Button variant="outline" size="sm" className="gap-1 text-xs min-h-[44px]" onClick={() => copyWaveLink(waveCohort.tranche_1_amount)}>
                   <Copy className="h-3 w-3" /> Tranche 1 ({waveCohort.tranche_1_amount.toLocaleString("fr-FR")} F)
                 </Button>
-                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveCohort.tranche_2_amount)}>
+                <Button variant="outline" size="sm" className="gap-1 text-xs min-h-[44px]" onClick={() => copyWaveLink(waveCohort.tranche_2_amount)}>
                   <Copy className="h-3 w-3" /> Tranche 2 ({waveCohort.tranche_2_amount.toLocaleString("fr-FR")} F)
                 </Button>
-                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => copyWaveLink(waveCohort.total_price)}>
+                <Button variant="outline" size="sm" className="gap-1 text-xs min-h-[44px]" onClick={() => copyWaveLink(waveCohort.total_price)}>
                   <Copy className="h-3 w-3" /> Total ({waveCohort.total_price.toLocaleString("fr-FR")} F)
                 </Button>
               </>
@@ -599,14 +599,14 @@ const PaymentManager = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="text-xs"
+                          className="text-xs min-h-[44px]"
                           onClick={() => handleToggleStatus(p.id, p.status)}
                         >
                           {p.status === "paid" ? "→ En attente" : "→ Payé"}
                         </Button>
                         <ConfirmDialog
                           trigger={
-                            <button className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors">
+                            <button className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors">
                               <Trash2 className="h-4 w-4" />
                             </button>
                           }
