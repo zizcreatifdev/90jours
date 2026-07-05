@@ -29,6 +29,7 @@ export interface CohortRow {
     tranche_2_amount: number;
     attestation_color: string | null;
     duration_days: number;
+    slug: string;
   } | null;
 }
 
@@ -51,7 +52,7 @@ async function fetchCohortsData(): Promise<CohortRow[]> {
     supabase
       .from("cohorts")
       .select(
-        "*, formation:formations(id, name, description, level, registration_fee, total_price, tranche_1_amount, tranche_2_amount, attestation_color, duration_days)"
+        "*, formation:formations(id, name, description, level, registration_fee, total_price, tranche_1_amount, tranche_2_amount, attestation_color, duration_days, slug)"
       )
       .order("start_date"),
     supabase.rpc("get_all_cohort_enrollment_counts"),

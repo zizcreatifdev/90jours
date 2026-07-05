@@ -1,8 +1,8 @@
 # PROJECT_STATE.md — État du Projet
 
-**Dernière mise à jour**: 3 juillet 2026
+**Dernière mise à jour**: 5 juillet 2026
 **Branche active**: `main`
-**Prompt actuel**: accueil - icones Lucide sur les 4 etapes Comment ca marche
+**Prompt actuel**: formations - page dediee par formation (/formation/:slug) niveau 1
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -19,7 +19,7 @@
 | Métrique | Valeur |
 |---------|--------|
 | Composants React | 103 |
-| Pages | 14 |
+| Pages | 15 |
 | Hooks custom | 10 |
 | Tables Supabase | 34 |
 | Migrations SQL | 56 |
@@ -404,4 +404,5 @@
 | mobile-batch-4 | 2026-07-03 | Corrections zones tactiles residuelles apres audit post-batch. 10 corrections : StudentPaymentStatus toggle min-h-[44px] + bouton Retirer h-7->min-h-[44px] ; StudentAttestation liens Soumettre/Payer inline-flex min-h-[44px] ; Login inputs email+password h-11 ; Index.tsx bouton "Me prevenir" min-h-[44px] text-xs ; AdminDashboard boutons Archiver+Supprimer h-8 w-8->min-h-[44px] min-w-[44px] ; CategoryManager bouton OK h-7->min-h-[44px] ; DashboardCalendar bouton x suppression evenement min-h-[44px] min-w-[44px] ; toast.tsx bouton fermeture opacity-100 sm:opacity-0 sm:group-hover:opacity-100 + min-h-[44px] min-w-[44px] ; ElementProperties bouton supprimer h-7 w-7->min-h-[44px] min-w-[44px]. Drag-drop attestation non touche (desktop-only assume). build OK, 66/66 tests. | Termine |
 | icones-comment-ca-marche | 2026-07-03 | Ajout icones Lucide sur les 4 etapes de "Comment ca marche" (Index.tsx). Champ `icon` ajoute a HOW_STEPS (l.28) : Compass (discipline), Users (cohorte), PenTool (pratique), Award (attestation). Import Lucide etendu. Rendu JSX : map converti en block function, const Icon = step.icon, rendu <Icon className="mb-4 h-6 w-6 text-accent" /> en haut de chaque cellule (avant le chiffre filigrane). Placement : icone doree pleine en tete, puis chiffre watermark 12% opacite, puis barre doree, titre, description. Tout le reste intact : grille md:grid-cols-4, animation cascade, barre doree, chiffre filigrane. build OK, 66/66 tests. | Termine |
 | cta-fond-blanc | 2026-07-03 | CTA final : bg-background (creme) -> bg-white (blanc pur pleine largeur) pour contraste net avec le footer bg-navy-deep juste en dessous. Hairline doree existante (via-accent/35) assure la separation creme/blanc avec la section temoignages. Texte verifie : text-foreground 16:1 OK, text-muted-foreground 3.89:1 OK (large text), text-accent 2.46:1 (label decoratif all-caps). Tous les contrastes meilleurs sur blanc que sur creme. build OK, 66/66 tests. | Termine |
+| formation-page-dediee | 2026-07-05 | Page dediee par formation (/formation/:slug) niveau 1. Nouvelle route publique App.tsx + page FormationPage.tsx : hero bg-navy-deep (lien retour, badge level, titre Fraunces, description, bouton S'inscrire), stats row (3 cartes blanches : duree/sessions/tarif), section "A propos" + deliverable card, section "Sessions disponibles" (anchor #sessions) avec cartes cohortes (header navy/navy-deep selon type, dates, places, prix, CTA /register?cohort=id), Footer reutilise. Bouton S'inscrire hero : 1 session ouverte -> navigate /register?cohort=<id> directement ; 0 ou N sessions -> scroll vers #sessions. Partages Index.tsx mis a jour : shareUrl = ${SITE_URL}/formation/${slug} (fallback SITE_URL si slug absent) sur WhatsApp/Facebook/LinkedIn/Copy. use-cohorts.ts : slug ajoute au SELECT formations + au type CohortRow.formation. build OK, 66/66 tests. | Termine |
 | refonte-couleurs-accueil | 2026-07-03 | Refonte couleurs Index.tsx selon systeme editorial chaleureux. Nouveaux tokens Tailwind/CSS : navy.deep (#001D52) via --navy-deep:219 100% 16% ; accent.hover (#d4b06a) via --accent-hover:40 55% 62%. Fonds de sections corps passes a bg-background (creme #F3EFE2) : root div, "Comment ca marche", "Nos formations", "Temoignages", CTA final (precedemment bg-[#003BA4]). Cartes blanches conservees (cohort cards, step cells, carousel card). Hero + footer : tokens navy/navy-light/navy-deep. CTA final : texte passe text-white/text-white/65 -> text-foreground/text-muted-foreground ; bouton secondaire border-white/25 bg-white/5 text-white -> border-foreground/25 bg-foreground/5 text-foreground ; glow radial retire (effet muet sur fond creme). 9 occurrences #C5A05A centralisees en text-accent/border-accent/bg-accent/bg-accent/40 ; hover:bg-[#d4b06a] -> hover:bg-accent-hover. Inline styles de carte (header couleur, badge couleur) convertis en classes Tailwind. style={{ color }} sur bouton "Lire plus" retire, remplace par text-accent. Zero emoji, zero tiret long, build OK, 66/66 tests. | Termine |

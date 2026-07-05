@@ -23,6 +23,7 @@ const ContractSign   = React.lazy(() => import("./pages/ContractSign"));
 const Onboarding     = React.lazy(() => import("./pages/Onboarding"));
 const NotFound          = React.lazy(() => import("./pages/NotFound"));
 const StudentProfilePage = React.lazy(() => import("./pages/StudentProfilePage"));
+const FormationPage      = React.lazy(() => import("./pages/FormationPage"));
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
                 <Route path="/student/:id" element={<ProtectedRoute requiredRoles={["super_admin", "staff"]}><StudentProfilePage /></ProtectedRoute>} />
                 <Route path="/contract-sign" element={<ProtectedRoute><ContractSign /></ProtectedRoute>} />
                 <Route path="/onboarding" element={<ProtectedRoute requiredRole="student"><Onboarding /></ProtectedRoute>} />
+                <Route path="/formation/:slug" element={<FormationPage />} />
                 <Route path="/setup-account" element={<SetupAccount />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />

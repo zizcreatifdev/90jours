@@ -71,6 +71,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
   // Donnees pour les liens de partage
   const formationName = cohort.formation?.name ?? "60jours";
   const price = cohort.total_price ?? cohort.formation?.total_price ?? null;
+  const shareUrl = cohort.formation?.slug ? `${SITE_URL}/formation/${cohort.formation.slug}` : SITE_URL;
 
   const cohortType = cohort.cohort_type === "initiation" ? "Initiation" : "Perfectionnement";
   const cohortDays = cohort.cohort_type === "initiation" ? 30 : 60;
@@ -96,13 +97,13 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
     priceLine,
     "Inscriptions ouvertes sur 60jours.com",
     "",
-    SITE_URL,
+    shareUrl,
   ].filter((l) => l !== null).join("\n");
   const whatsappMsg = whatsappLines;
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(SITE_URL);
+      await navigator.clipboard.writeText(shareUrl);
       toast({ title: "Lien copie", description: "L'URL a ete copiee dans le presse-papier." });
     } catch {
       toast({ title: "Impossible de copier le lien", variant: "destructive" });
@@ -242,7 +243,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
           </a>
           {/* Facebook */}
           <a
-            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(SITE_URL)}`}
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Partager sur Facebook"
@@ -254,7 +255,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
           </a>
           {/* LinkedIn */}
           <a
-            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(SITE_URL)}`}
+            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Partager sur LinkedIn"
