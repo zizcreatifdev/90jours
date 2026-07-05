@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { AlertCircle, ArrowRight, Award, Bell, ChevronDown, Compass, Copy, Loader2, PenTool, Quote, RefreshCw, Users, Zap } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useCohorts } from "@/hooks/use-cohorts";
@@ -62,6 +62,7 @@ interface PublicCohortCardProps {
 
 const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: PublicCohortCardProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
   const enrolled = cohort.enrollment_count ?? 0;
   const spotsLeft = cohort.capacity - enrolled;
@@ -71,7 +72,8 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
   // Donnees pour les liens de partage
   const formationName = cohort.formation?.name ?? "60jours";
   const price = cohort.total_price ?? cohort.formation?.total_price ?? null;
-  const shareUrl = cohort.formation?.slug ? `${SITE_URL}/formation/${cohort.formation.slug}` : SITE_URL;
+  const formationSlug = cohort.formation?.slug ?? null;
+  const shareUrl = formationSlug ? `${SITE_URL}/formation/${formationSlug}` : SITE_URL;
 
   const cohortType = cohort.cohort_type === "initiation" ? "Initiation" : "Perfectionnement";
   const cohortDays = cohort.cohort_type === "initiation" ? 30 : 60;
@@ -113,10 +115,12 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
   return (
     <div
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-white dark:bg-[#111111] transition-all duration-500 hover:-translate-y-1",
+        "group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-white dark:bg-[#111111] transition-all duration-500 hover:-translate-y-1 hover:shadow-card-hover",
+        formationSlug && "cursor-pointer",
         formationsVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       )}
       style={{ transitionDelay: formationsVisible ? `${index * 80}ms` : "0ms" }}
+      onClick={() => { if (formationSlug) navigate(`/formation/${formationSlug}`); }}
     >
       {/* Header : bleu royal pour Initiation, bleu nuit pour Perfectionnement */}
       <div
@@ -164,7 +168,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
               <button
                 type="button"
                 className="mt-1 text-[12px] cursor-pointer bg-transparent border-0 py-2 px-1 min-h-[44px] flex items-center text-accent"
-                onClick={() => setExpanded(e => !e)}
+                onClick={(e) => { e.stopPropagation(); setExpanded(v => !v); }}
               >
                 {expanded ? "Lire moins" : "Lire plus"}
               </button>
@@ -206,14 +210,14 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
               )}
               {isFull ? (
                 <button
-                  onClick={() => onWaitlist(cohort.formation_id ?? null)}
+                  onClick={(e) => { e.stopPropagation(); onWaitlist(cohort.formation_id ?? null); }}
                   className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-accent px-3 text-xs font-semibold text-accent transition-colors hover:bg-accent/10"
                 >
                   <Bell className="h-3 w-3" />
                   Me prévenir
                 </button>
               ) : (
-                <Link to={`/register?cohort=${cohort.id}`}>
+                <Link to={`/register?cohort=${cohort.id}`} onClick={(e) => e.stopPropagation()}>
                   <span className="inline-flex items-center gap-1.5 text-sm font-bold text-accent transition-all hover:gap-2.5">
                     S'inscrire
                     <ArrowRight className="h-4 w-4" />
@@ -235,6 +239,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Partager sur WhatsApp"
+            onClick={(e) => e.stopPropagation()}
             className="rounded-md p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground/60 transition-colors hover:text-[#25D366]"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -247,6 +252,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Partager sur Facebook"
+            onClick={(e) => e.stopPropagation()}
             className="rounded-md p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground/60 transition-colors hover:text-[#1877F2]"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -259,6 +265,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Partager sur LinkedIn"
+            onClick={(e) => e.stopPropagation()}
             className="rounded-md p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground/60 transition-colors hover:text-[#0A66C2]"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -267,7 +274,7 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
           </a>
           {/* Copier le lien */}
           <button
-            onClick={handleCopy}
+            onClick={(e) => { e.stopPropagation(); void handleCopy(); }}
             aria-label="Copier le lien"
             className="rounded-md p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center text-muted-foreground/60 transition-colors hover:text-accent"
           >
