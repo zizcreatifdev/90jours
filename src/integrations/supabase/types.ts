@@ -293,12 +293,12 @@ export type Database = {
           cohort_type: string
           created_at: string
           description: string | null
-          end_date: string
+          end_date: string | null
           formation_id: string | null
           id: string
           name: string
           registration_fee: number | null
-          start_date: string
+          start_date: string | null
           status: string
           total_price: number | null
           tranche_1_amount: number | null
@@ -310,12 +310,12 @@ export type Database = {
           cohort_type?: string
           created_at?: string
           description?: string | null
-          end_date: string
+          end_date?: string | null
           formation_id?: string | null
           id?: string
           name: string
           registration_fee?: number | null
-          start_date: string
+          start_date?: string | null
           status?: string
           total_price?: number | null
           tranche_1_amount?: number | null

@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 interface Props {
   cohortId: string;
-  cohortStartDate: string;
+  cohortStartDate: string | null;
   formationId: string | null;
 }
 

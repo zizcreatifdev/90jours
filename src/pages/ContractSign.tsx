@@ -25,8 +25,8 @@ const fillTemplate = (html: string, vars: Record<string, string>): string =>
 interface CohortRow {
   id: string;
   name: string;
-  start_date: string;
-  end_date: string;
+  start_date: string | null;
+  end_date: string | null;
   formation_id: string | null;
   total_price: number | null;
   registration_fee: number | null;
@@ -201,12 +201,12 @@ const ContractSign = () => {
         formation: formation?.name || "60 Jours",
         cohorte: c.name,
         formateur: formateurName,
-        date_debut: new Date(c.start_date + "T00:00:00").toLocaleDateString("fr-FR", {
-          day: "numeric", month: "long", year: "numeric",
-        }),
-        date_fin: new Date(c.end_date + "T00:00:00").toLocaleDateString("fr-FR", {
-          day: "numeric", month: "long", year: "numeric",
-        }),
+        date_debut: c.start_date
+          ? new Date(c.start_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+          : "",
+        date_fin: c.end_date
+          ? new Date(c.end_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+          : "",
         montant: (c.total_price ?? formation?.total_price) != null
           ? `${(c.total_price ?? formation!.total_price)!.toLocaleString("fr-FR")} FCFA`
           : "A definir",

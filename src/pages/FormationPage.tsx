@@ -273,21 +273,11 @@ const FormationPage = () => {
                       <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent">
                         Promo {cohort.name}
                       </p>
-                      {cohort.start_date && cohort.end_date && (
-                        <p className="mt-3 text-xs text-muted-foreground">
-                          {new Date(cohort.start_date + "T00:00:00").toLocaleDateString("fr-FR", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })}
-                          {" "}au{" "}
-                          {new Date(cohort.end_date + "T00:00:00").toLocaleDateString("fr-FR", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })}
-                        </p>
-                      )}
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        {cohort.start_date && cohort.end_date
+                          ? `${new Date(cohort.start_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })} au ${new Date(cohort.end_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}`
+                          : "Demarrage des que le groupe est complet"}
+                      </p>
 
                       <div className="mt-auto flex items-center justify-between gap-2 pt-4">
                         <span

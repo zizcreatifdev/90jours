@@ -34,7 +34,7 @@ export interface StudentBadge {
 
 export interface BadgeCheckContext {
   cohortId: string;
-  cohortStartDate: string;
+  cohortStartDate: string | null;
   cohortStatus: string;
 }
 

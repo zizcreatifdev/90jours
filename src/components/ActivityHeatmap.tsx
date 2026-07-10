@@ -6,8 +6,8 @@ interface Submission {
 
 interface ActivityHeatmapProps {
   submissions: Submission[];
-  cohortStartDate: string;
-  cohortEndDate: string;
+  cohortStartDate: string | null;
+  cohortEndDate: string | null;
 }
 
 const DAY_LABELS = ["L", "", "M", "", "J", "", "S"];
@@ -20,6 +20,14 @@ const ActivityHeatmap = ({ submissions, cohortStartDate, cohortEndDate }: Activi
     const day = s.completed_at.slice(0, 10);
     activityMap.set(day, (activityMap.get(day) || 0) + 1);
   });
+
+  if (!cohortStartDate || !cohortEndDate) {
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">Activite disponible une fois la date de demarrage fixee.</p>
+      </div>
+    );
+  }
 
   const cohortStart = new Date(cohortStartDate);
   const cohortEnd = new Date(cohortEndDate);

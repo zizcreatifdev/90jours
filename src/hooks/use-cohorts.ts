@@ -6,8 +6,8 @@ export interface CohortRow {
   id: string;
   name: string;
   description: string | null;
-  start_date: string;
-  end_date: string;
+  start_date: string | null;
+  end_date: string | null;
   capacity: number;
   status: string;
   created_at: string;

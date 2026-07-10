@@ -74,7 +74,6 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
       formation_id: form.formation_id,
       name: form.name,
       cohort_type: form.cohort_type,
-      start_date: form.start_date,
       capacity: form.capacity,
       status: form.status,
     },
@@ -82,7 +81,6 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
       formation_id: { required: "La formation est requise." },
       name: { required: "Le nom de la cohorte est requis." },
       cohort_type: { required: "Le type est requis." },
-      start_date: { required: "La date de debut est requise." },
       capacity: { required: true, validate: (v) => Number(v) > 0 ? null : "La capacite doit etre superieure a 0." },
       status: { required: "Le statut est requis." },
     },
@@ -182,6 +180,8 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
       const payload = {
         ...form,
         formation_id: form.formation_id || null,
+        start_date: form.start_date || null,
+        end_date: form.end_date || null,
         tranche_2_amount: isPerfectionnement ? Math.max(0, tranche2Computed) : null,
       };
       if (cohort) {
@@ -289,16 +289,15 @@ const CohortForm = ({ cohort, onSaved }: CohortFormProps) => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <RequiredLabel htmlFor="c-start" required>Date de debut</RequiredLabel>
+                <Label htmlFor="c-start">Date de debut</Label>
                 <Input
                   id="c-start"
                   type="date"
                   value={form.start_date}
                   onChange={e => setForm({ ...form, start_date: e.target.value })}
-                  onBlur={() => handleBlur("start_date")}
-                  aria-invalid={!!showError("start_date")}
+                  aria-invalid={false}
                 />
-                <FieldError message={showError("start_date")} />
+                <p className="mt-1 text-xs text-muted-foreground">Laissez vide pour une cohorte a date non fixee (demarrage quand le groupe est complet).</p>
               </div>
               <div>
                 <Label htmlFor="c-end">Date de fin</Label>

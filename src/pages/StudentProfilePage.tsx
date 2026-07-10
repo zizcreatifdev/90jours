@@ -30,7 +30,7 @@ interface Enrollment {
   cohort_id: string;
   enrolled_at: string;
   progress: number;
-  cohorts: { name: string; start_date: string; end_date: string } | null;
+  cohorts: { name: string; start_date: string | null; end_date: string | null } | null;
 }
 
 interface BriefSubmission {

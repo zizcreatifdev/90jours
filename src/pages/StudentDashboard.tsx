@@ -140,7 +140,7 @@ const StudentDashboard = () => {
   const enrollment = allEnrollments.find(e => e.id === selectedEnrollmentId);
   const cohort = enrollment?.cohorts;
   const isArchiveMode = cohort
-    ? cohort.status === "archived" || cohort.status === "completed" || new Date(cohort.end_date + "T00:00:00") < new Date()
+    ? cohort.status === "archived" || cohort.status === "completed" || (!!cohort.end_date && new Date(cohort.end_date + "T00:00:00") < new Date())
     : false;
 
   // Persist selection
@@ -155,7 +155,7 @@ const StudentDashboard = () => {
       try {
         // Onboarding gate: redirect if an active contract template exists and is not yet signed.
         // Skip for terminated/archived cohorts (contract was already signed at enrollment time).
-        const isTerminated = cohort.status === "archived" || cohort.status === "completed" || new Date(cohort.end_date + "T00:00:00") < new Date();
+        const isTerminated = cohort.status === "archived" || cohort.status === "completed" || (!!cohort.end_date && new Date(cohort.end_date + "T00:00:00") < new Date());
         if (!isTerminated) {
           const { data: profileData } = await supabase
             .from("profiles")
@@ -402,12 +402,15 @@ const StudentDashboard = () => {
 
   const deliveredCount = briefSubmissions.length;
   const progress = publishedBriefCount > 0 ? Math.round((deliveredCount / publishedBriefCount) * 100) : 0;
-  const startDate = new Date(cohort.start_date + "T00:00:00");
-  const endDate = new Date(cohort.end_date + "T00:00:00");
-  const daysTotal = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+  const hasDates = !!cohort.start_date && !!cohort.end_date;
   const now = new Date();
-  const daysPassed = Math.max(0, Math.min(daysTotal, Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))));
-  const daysLeft = Math.max(0, daysTotal - daysPassed);
+  const daysTotal = hasDates
+    ? Math.max(1, Math.ceil((new Date(cohort.end_date! + "T00:00:00").getTime() - new Date(cohort.start_date! + "T00:00:00").getTime()) / (1000 * 60 * 60 * 24)))
+    : 0;
+  const daysPassed = hasDates
+    ? Math.max(0, Math.min(daysTotal, Math.floor((now.getTime() - new Date(cohort.start_date! + "T00:00:00").getTime()) / (1000 * 60 * 60 * 24))))
+    : 0;
+  const daysLeft = hasDates ? Math.max(0, daysTotal - daysPassed) : 0;
 
 
   const filteredResources = resources.filter(r =>
@@ -421,7 +424,7 @@ const StudentDashboard = () => {
     return "Bonsoir";
   };
 
-  const fmt = (d: string) => new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "";
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -513,7 +516,7 @@ const StudentDashboard = () => {
               <div className="mb-4 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard icon={BookOpen} label="Progression globale" value={`${progress}%`} variant="accent" />
                 <StatsCard icon={FileText} label="Ressources disponibles" value={resources.length} />
-                <StatsCard icon={Calendar} label="Jours restants" value={daysLeft} subtitle={`sur ${daysTotal} jours`} />
+                <StatsCard icon={Calendar} label="Jours restants" value={hasDates ? daysLeft : "-"} subtitle={hasDates ? `sur ${daysTotal} jours` : "date non fixee"} />
                 <StatsCard icon={Users} label="Participants" value={enrollmentCount} subtitle={`sur ${cohort.capacity} places`} />
               </div>
 
@@ -530,7 +533,9 @@ const StudentDashboard = () => {
                   <div>
                     <h3 className="font-display text-lg font-bold">{enrollment.formation_name && `${enrollment.formation_name}, `}Cohorte {cohort.name}</h3>
                     <p className="mt-1 text-sm opacity-80">
-                      Du {fmt(cohort.start_date)} au {fmt(cohort.end_date)}
+                      {cohort.start_date && cohort.end_date
+                        ? `Du ${fmt(cohort.start_date)} au ${fmt(cohort.end_date)}`
+                        : "Demarrage des que le groupe est complet"}
                     </p>
                     <p className="mt-0.5 text-xs opacity-60">{enrollmentCount}/{cohort.capacity} participants • Statut: {cohort.status === "active" ? "En cours" : cohort.status === "upcoming" ? "À venir" : "Terminée"}</p>
                   </div>

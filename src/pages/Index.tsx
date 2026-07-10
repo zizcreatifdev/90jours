@@ -183,9 +183,15 @@ const PublicCohortCard = ({ cohort, index, formationsVisible, onWaitlist }: Publ
         <div className="mt-4 space-y-2 border-t border-border pt-4">
           {/* Dates */}
           <p className="text-xs text-muted-foreground">
-            {new Date(cohort.start_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
-            <span className="mx-1.5">-</span>
-            {new Date(cohort.end_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+            {cohort.start_date && cohort.end_date ? (
+              <>
+                {new Date(cohort.start_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                <span className="mx-1.5">-</span>
+                {new Date(cohort.end_date + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+              </>
+            ) : (
+              "Demarrage des que le groupe est complet"
+            )}
           </p>
           {/* Places + CTA */}
           <div className="flex items-center justify-between gap-2">

@@ -54,7 +54,7 @@ const StudentFormations = () => {
             c !== null &&
             c.status !== "archived" &&
             c.status !== "completed" &&
-            new Date(c.end_date + "T00:00:00") >= today
+            (!c.end_date || new Date(c.end_date + "T00:00:00") >= today)
           );
         }).length;
         setActiveEnrollmentCount(activeCount);
@@ -196,8 +196,8 @@ const StudentFormations = () => {
 
   const loading = cohortsLoading || enrollmentsLoading;
 
-  const fmt = (d: string) =>
-    new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+  const fmt = (d: string | null) =>
+    d ? new Date(d + "T00:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "";
 
   const fmtPrice = (p: number) =>
     new Intl.NumberFormat("fr-FR").format(p) + " FCFA";
@@ -307,7 +307,9 @@ const StudentFormations = () => {
                     <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5 shrink-0" />
-                        {fmt(cohort.start_date)} au {fmt(cohort.end_date)}
+                        {cohort.start_date && cohort.end_date
+                          ? `${fmt(cohort.start_date)} au ${fmt(cohort.end_date)}`
+                          : "Demarrage des que le groupe est complet"}
                       </span>
                       <span
                         className={`flex items-center gap-1.5 ${
