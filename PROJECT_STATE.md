@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 11 juillet 2026
 **Branche active**: `main`
-**Prompt actuel**: calendrier batch 1 : couleurs palette unifiees, icones par type, solidite
+**Prompt actuel**: calendrier batch 2 : dates cohorte, bouton aujourd'hui, edition evenements, widget prochains evenements, vue liste
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.

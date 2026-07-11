@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { useCalendarEvents, type CalendarEvent } from "@/hooks/use-calendar-events";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,8 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useFormValidation } from "@/hooks/use-form-validation";
 import { EVENT_TYPE_STYLES } from "@/lib/calendar-event-styles";
 import { cn } from "@/lib/utils";
-import { CalendarDays, Plus, Loader2, Clock, X, AlertCircle } from "lucide-react";
-import { format, isSameDay } from "date-fns";
+import { CalendarDays, Plus, Loader2, Clock, X, AlertCircle, LayoutGrid, List, Pencil } from "lucide-react";
+import { format, isSameDay, startOfDay } from "date-fns";
 import { fr } from "date-fns/locale";
 
 interface DashboardCalendarProps {
@@ -25,11 +25,24 @@ interface DashboardCalendarProps {
 const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
   const [formationFilter, setFormationFilter] = useState("all");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [calMonth, setCalMonth] = useState<Date>(new Date());
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [createOpen, setCreateOpen] = useState(false);
   const [createPersonalOpen, setCreatePersonalOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editPersonalOpen, setEditPersonalOpen] = useState(false);
+  const [eventToEdit, setEventToEdit] = useState<CalendarEvent | undefined>();
   const [typeFilter, setTypeFilter] = useState<Set<string>>(
-    () => new Set(Object.keys(EVENT_TYPE_STYLES))
+    () => new Set(Object.keys(EVENT_TYPE_STYLES).filter((k) => k !== "cohort_date"))
   );
+
+  const { toast } = useToast();
+
+  const { events, loading, hasError, formations, refetch } = useCalendarEvents({
+    cohortIds,
+    formationFilter: role === "admin" ? formationFilter : undefined,
+    role,
+  });
 
   const toggleType = (type: string) => {
     setTypeFilter((prev) => {
@@ -39,16 +52,27 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
       return next;
     });
   };
-  const { toast } = useToast();
 
-  const { events, loading, hasError, formations, refetch } = useCalendarEvents({
-    cohortIds,
-    formationFilter: role === "admin" ? formationFilter : undefined,
-    role,
-  });
+  const handleToday = () => {
+    const today = new Date();
+    setSelectedDate(today);
+    setCalMonth(today);
+  };
+
+  const handleEdit = (event: CalendarEvent) => {
+    setEventToEdit(event);
+    if (event.type === "personal") {
+      setEditPersonalOpen(true);
+    } else {
+      setEditOpen(true);
+    }
+  };
 
   const filteredEvents = useMemo(
-    () => (role === "student" ? events.filter((e) => typeFilter.has(e.type)) : events),
+    () =>
+      role === "student"
+        ? events.filter((e) => e.type === "cohort_date" || typeFilter.has(e.type))
+        : events,
     [events, typeFilter, role]
   );
 
@@ -69,6 +93,23 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
     return map;
   }, [filteredEvents]);
 
+  const upcomingListEvents = useMemo(() => {
+    const today = startOfDay(new Date());
+    return filteredEvents
+      .filter((e) => e.date >= today)
+      .sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [filteredEvents]);
+
+  const handleCloseEdit = (v: boolean) => {
+    setEditOpen(v);
+    if (!v) setEventToEdit(undefined);
+  };
+
+  const handleCloseEditPersonal = (v: boolean) => {
+    setEditPersonalOpen(v);
+    if (!v) setEventToEdit(undefined);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -76,7 +117,7 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
         <h2 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
           <CalendarDays className="h-5 w-5" /> Calendrier
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           {role === "admin" && formations.length > 0 && (
             <Select value={formationFilter} onValueChange={setFormationFilter}>
               <SelectTrigger className="w-48">
@@ -90,21 +131,33 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
               </SelectContent>
             </Select>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleToday}
+            className="gap-1.5 min-h-[44px] text-xs"
+          >
+            <CalendarDays className="h-3.5 w-3.5" />
+            Aujourd'hui
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setViewMode((v) => (v === "grid" ? "list" : "grid"))}
+            aria-label={viewMode === "grid" ? "Passer en vue liste" : "Passer en vue grille"}
+            className="min-h-[44px]"
+          >
+            {viewMode === "grid" ? <List className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
+          </Button>
           {(role === "admin" || role === "staff") && (
-            <CreateEventDialog
-              open={createOpen}
-              onOpenChange={setCreateOpen}
-              cohortIds={cohortIds}
-              role={role}
-              onCreated={refetch}
-            />
+            <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1 min-h-[44px]">
+              <Plus className="h-4 w-4" /> Ajouter
+            </Button>
           )}
           {role === "student" && (
-            <CreatePersonalEventDialog
-              open={createPersonalOpen}
-              onOpenChange={setCreatePersonalOpen}
-              onCreated={refetch}
-            />
+            <Button size="sm" variant="outline" onClick={() => setCreatePersonalOpen(true)} className="gap-1 min-h-[44px]">
+              <Plus className="h-4 w-4" /> Ajouter
+            </Button>
           )}
         </div>
       </div>
@@ -118,108 +171,195 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
 
       {role === "student" && (
         <div className="flex flex-wrap gap-2">
-          {Object.entries(EVENT_TYPE_STYLES).map(([type, style]) => {
-            const active = typeFilter.has(type);
-            return (
-              <button
-                key={type}
-                onClick={() => toggleType(type)}
-                aria-pressed={active}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-3 text-xs font-semibold border transition-all min-h-[44px]",
-                  active
-                    ? cn(style.bg, style.text, "border-transparent")
-                    : "bg-card text-muted-foreground border-border opacity-40"
-                )}
-              >
-                <div className={cn("h-2 w-2 rounded-full", active ? style.dot : "bg-muted-foreground")} />
-                {style.label}
-              </button>
-            );
-          })}
+          {Object.entries(EVENT_TYPE_STYLES)
+            .filter(([type]) => type !== "cohort_date")
+            .map(([type, style]) => {
+              const active = typeFilter.has(type);
+              return (
+                <button
+                  key={type}
+                  onClick={() => toggleType(type)}
+                  aria-pressed={active}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-3 text-xs font-semibold border transition-all min-h-[44px]",
+                    active
+                      ? cn(style.bg, style.text, "border-transparent")
+                      : "bg-card text-muted-foreground border-border opacity-40"
+                  )}
+                >
+                  <div className={cn("h-2 w-2 rounded-full", active ? style.dot : "bg-muted-foreground")} />
+                  {style.label}
+                </button>
+              );
+            })}
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
-        {/* Calendar */}
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            locale={fr}
-            modifiers={{
-              hasEvent: (date) => eventDates.has(format(date, "yyyy-MM-dd")),
-            }}
-            modifiersClassNames={{
-              hasEvent: "font-bold",
-            }}
-            components={{
-              DayContent: ({ date }) => {
-                const key = format(date, "yyyy-MM-dd");
-                const types = eventDates.get(key);
-                return (
-                  <div className="relative flex flex-col items-center">
-                    <span>{date.getDate()}</span>
-                    {types && (
-                      <div className="absolute -bottom-1 flex gap-0.5">
-                        {Array.from(types).map((t) => (
-                          <div key={t} className={cn("h-1 w-1 rounded-full", EVENT_TYPE_STYLES[t]?.dot ?? "bg-muted-foreground")} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              },
-            }}
-          />
-          {/* Legend (student uses chips above as legend) */}
-          {role !== "student" && (
-            <div className="mt-3 flex flex-wrap gap-3 px-2">
-              {Object.entries(EVENT_TYPE_STYLES)
-                .filter(([key]) => key !== "personal")
-                .map(([key, style]) => (
-                  <div key={key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <div className={cn("h-2 w-2 rounded-full", style.dot)} />
-                    {style.label}
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
+      {/* Grid view */}
+      {viewMode === "grid" && (
+        <div className="grid gap-6 lg:grid-cols-[auto_1fr]">
+          {/* Calendar */}
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              month={calMonth}
+              onMonthChange={setCalMonth}
+              locale={fr}
+              modifiers={{
+                hasEvent: (date) => eventDates.has(format(date, "yyyy-MM-dd")),
+              }}
+              modifiersClassNames={{
+                hasEvent: "font-bold",
+              }}
+              components={{
+                DayContent: ({ date }) => {
+                  const key = format(date, "yyyy-MM-dd");
+                  const types = eventDates.get(key);
+                  return (
+                    <div className="relative flex flex-col items-center">
+                      <span>{date.getDate()}</span>
+                      {types && (
+                        <div className="absolute -bottom-1 flex gap-0.5">
+                          {Array.from(types).map((t) => (
+                            <div key={t} className={cn("h-1 w-1 rounded-full", EVENT_TYPE_STYLES[t]?.dot ?? "bg-muted-foreground")} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                },
+              }}
+            />
+            {role !== "student" && (
+              <div className="mt-3 flex flex-wrap gap-3 px-2">
+                {Object.entries(EVENT_TYPE_STYLES)
+                  .filter(([key]) => key !== "personal")
+                  .map(([key, style]) => (
+                    <div key={key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <div className={cn("h-2 w-2 rounded-full", style.dot)} />
+                      {style.label}
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
 
-        {/* Events list */}
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-card min-h-[300px]">
+          {/* Events for selected day */}
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-card min-h-[300px]">
+            <h3 className="font-display text-sm font-semibold text-foreground mb-3">
+              {selectedDate ? format(selectedDate, "EEEE d MMMM yyyy", { locale: fr }) : "Selectionnez un jour"}
+            </h3>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : selectedEvents.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">Aucun evenement ce jour</p>
+            ) : (
+              <div className="space-y-2">
+                {selectedEvents.map((event) => (
+                  <EventCard key={event.id} event={event} role={role} onDeleted={refetch} onEdit={handleEdit} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* List view */}
+      {viewMode === "list" && (
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
           <h3 className="font-display text-sm font-semibold text-foreground mb-3">
-            {selectedDate ? format(selectedDate, "EEEE d MMMM yyyy", { locale: fr }) : "Selectionnez un jour"}
+            Evenements a venir
           </h3>
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
-          ) : selectedEvents.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Aucun evenement ce jour</p>
+          ) : upcomingListEvents.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Aucun evenement a venir</p>
           ) : (
             <div className="space-y-2">
-              {selectedEvents.map((event) => (
-                <EventCard key={event.id} event={event} role={role} onDeleted={refetch} />
-              ))}
+              {upcomingListEvents.map((event, idx) => {
+                const prevEvent = idx > 0 ? upcomingListEvents[idx - 1] : null;
+                const showDateHeader = !prevEvent || !isSameDay(event.date, prevEvent.date);
+                return (
+                  <div key={event.id}>
+                    {showDateHeader && (
+                      <p className="mb-1 mt-3 first:mt-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {format(event.date, "EEEE d MMMM", { locale: fr })}
+                      </p>
+                    )}
+                    <EventCard event={event} role={role} onDeleted={refetch} onEdit={handleEdit} />
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
-      </div>
+      )}
+
+      {/* Create event dialog (admin/staff) */}
+      <CreateEventDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        cohortIds={cohortIds}
+        role={role}
+        onSaved={refetch}
+      />
+      {/* Edit event dialog (admin/staff) */}
+      <CreateEventDialog
+        open={editOpen}
+        onOpenChange={handleCloseEdit}
+        cohortIds={cohortIds}
+        role={role}
+        onSaved={refetch}
+        editEvent={eventToEdit}
+      />
+      {/* Create personal event dialog (student) */}
+      <CreatePersonalEventDialog
+        open={createPersonalOpen}
+        onOpenChange={setCreatePersonalOpen}
+        onSaved={refetch}
+      />
+      {/* Edit personal event dialog (student) */}
+      <CreatePersonalEventDialog
+        open={editPersonalOpen}
+        onOpenChange={handleCloseEditPersonal}
+        onSaved={refetch}
+        editEvent={eventToEdit}
+      />
     </div>
   );
 };
 
-const EventCard = ({ event, role, onDeleted }: { event: CalendarEvent; role: string; onDeleted: () => void }) => {
+interface EventCardProps {
+  event: CalendarEvent;
+  role: string;
+  onDeleted: () => void;
+  onEdit: (event: CalendarEvent) => void;
+}
+
+const EventCard = ({ event, role, onDeleted, onEdit }: EventCardProps) => {
   const style = EVENT_TYPE_STYLES[event.type] ?? EVENT_TYPE_STYLES["brief"];
   const { toast } = useToast();
   const [deleting, setDeleting] = useState(false);
 
   const isPersonal = event.type === "personal";
+  const isCohortDate = event.type === "cohort_date";
+
   const canDelete =
-    ((role === "admin" || role === "staff") && event.type !== "brief") || isPersonal;
+    !isCohortDate && (
+      ((role === "admin" || role === "staff") && event.type !== "brief") || isPersonal
+    );
+
+  const canEdit =
+    !isCohortDate && (
+      ((role === "admin" || role === "staff") && (event.type === "masterclass" || event.type === "research")) ||
+      (role === "student" && isPersonal)
+    );
 
   const handleDelete = async () => {
     setDeleting(true);
@@ -247,6 +387,7 @@ const EventCard = ({ event, role, onDeleted }: { event: CalendarEvent; role: str
         "rounded-xl p-3",
         style.bg,
         isPersonal && cn("border border-dashed", style.border),
+        isCohortDate && cn("border border-dashed", style.border),
         event.isScheduled && "opacity-60 border border-dashed border-primary/30"
       )}
     >
@@ -281,15 +422,28 @@ const EventCard = ({ event, role, onDeleted }: { event: CalendarEvent; role: str
             </div>
           )}
         </div>
-        {canDelete && (
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            aria-label="Supprimer l'evenement"
-            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
-          >
-            {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-4 w-4" />}
-          </button>
+        {(canEdit || canDelete) && (
+          <div className="flex shrink-0 items-center">
+            {canEdit && (
+              <button
+                onClick={() => onEdit(event)}
+                aria-label="Modifier l'evenement"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            )}
+            {canDelete && (
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                aria-label="Supprimer l'evenement"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
+              >
+                {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-4 w-4" />}
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -299,10 +453,11 @@ const EventCard = ({ event, role, onDeleted }: { event: CalendarEvent; role: str
 interface CreatePersonalEventDialogProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  onCreated: () => void;
+  onSaved: () => void;
+  editEvent?: CalendarEvent;
 }
 
-const CreatePersonalEventDialog = ({ open, onOpenChange, onCreated }: CreatePersonalEventDialogProps) => {
+const CreatePersonalEventDialog = ({ open, onOpenChange, onSaved, editEvent }: CreatePersonalEventDialogProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [title, setTitle] = useState("");
@@ -318,40 +473,73 @@ const CreatePersonalEventDialog = ({ open, onOpenChange, onCreated }: CreatePers
     setDescription("");
   };
 
+  useEffect(() => {
+    if (open) {
+      if (editEvent) {
+        setTitle(editEvent.title);
+        setDescription(editEvent.description ?? "");
+        setDate(format(editEvent.date, "yyyy-MM-dd"));
+        setTime(editEvent.hasExplicitTime ? format(editEvent.date, "HH:mm") : "");
+      } else {
+        reset();
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !title.trim() || !date) return;
     setSaving(true);
 
-    const { error } = await supabase.from("personal_events").insert({
-      user_id: user.id,
-      title: title.trim(),
-      description: description.trim() || null,
-      event_date: date,
-      event_time: time || null,
-    });
+    if (editEvent) {
+      const { error } = await supabase
+        .from("personal_events")
+        .update({
+          title: title.trim(),
+          description: description.trim() || null,
+          event_date: date,
+          event_time: time || null,
+        })
+        .eq("id", editEvent.id);
 
-    setSaving(false);
-    if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      setSaving(false);
+      if (error) {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Evenement modifie" });
+        onOpenChange(false);
+        onSaved();
+      }
     } else {
-      toast({ title: "Evenement cree" });
-      reset();
-      onOpenChange(false);
-      onCreated();
+      const { error } = await supabase.from("personal_events").insert({
+        user_id: user.id,
+        title: title.trim(),
+        description: description.trim() || null,
+        event_date: date,
+        event_time: time || null,
+      });
+
+      setSaving(false);
+      if (error) {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Evenement cree" });
+        onOpenChange(false);
+        onSaved();
+      }
     }
   };
 
+  const isEdit = !!editEvent;
+
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="gap-1 min-h-[44px]">
-          <Plus className="h-4 w-4" /> Ajouter
-        </Button>
-      </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle className="font-display">Nouvel evenement personnel</DialogTitle>
+          <DialogTitle className="font-display">
+            {isEdit ? "Modifier l'evenement" : "Nouvel evenement personnel"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div>
@@ -397,8 +585,8 @@ const CreatePersonalEventDialog = ({ open, onOpenChange, onCreated }: CreatePers
             disabled={saving || !title.trim() || !date}
             className="w-full"
           >
-            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-            Creer
+            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEdit ? <Pencil className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+            {isEdit ? "Enregistrer" : "Creer"}
           </Button>
         </form>
       </DialogContent>
@@ -411,10 +599,11 @@ interface CreateEventDialogProps {
   onOpenChange: (v: boolean) => void;
   cohortIds?: string[];
   role: string;
-  onCreated: () => void;
+  onSaved: () => void;
+  editEvent?: CalendarEvent;
 }
 
-const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onCreated }: CreateEventDialogProps) => {
+const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onSaved, editEvent }: CreateEventDialogProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [type, setType] = useState<"masterclass" | "research">("masterclass");
@@ -438,12 +627,21 @@ const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onCreated }: C
 
   useEffect(() => {
     if (open) {
-      setType("masterclass");
-      setTitle("");
-      setDescription("");
-      setScheduledAt("");
-      setDuration("60");
-      setCohortId("");
+      if (editEvent) {
+        setType(editEvent.type as "masterclass" | "research");
+        setTitle(editEvent.title);
+        setDescription(editEvent.description ?? "");
+        setScheduledAt(format(editEvent.date, "yyyy-MM-dd'T'HH:mm"));
+        setDuration(editEvent.duration_minutes ? String(editEvent.duration_minutes) : "60");
+        setCohortId(editEvent.cohort_id ?? "");
+      } else {
+        setType("masterclass");
+        setTitle("");
+        setDescription("");
+        setScheduledAt("");
+        setDuration("60");
+        setCohortId("");
+      }
       setCohortsError(false);
       resetValidation();
     }
@@ -475,41 +673,64 @@ const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onCreated }: C
     setSaving(true);
 
     const table = type === "masterclass" ? "masterclass_sessions" : "research_sessions";
-    const payload: Record<string, unknown> = {
-      title: title.trim(),
-      description: description.trim() || null,
-      scheduled_at: scheduledAt,
-      cohort_id: cohortId,
-      created_by: user.id,
-    };
-    if (type === "masterclass") payload.duration_minutes = parseInt(duration) || 60;
 
-    const { error } = await supabase.from(table).insert(payload);
-    setSaving(false);
-    if (error) {
-      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    if (editEvent) {
+      const payload: Record<string, unknown> = {
+        title: title.trim(),
+        description: description.trim() || null,
+        scheduled_at: scheduledAt,
+      };
+      if (type === "masterclass") payload.duration_minutes = parseInt(duration) || 60;
+
+      const { error } = await supabase.from(table).update(payload).eq("id", editEvent.id);
+      setSaving(false);
+      if (error) {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Evenement modifie !" });
+        onOpenChange(false);
+        onSaved();
+      }
     } else {
-      toast({ title: "Evenement cree !" });
-      onOpenChange(false);
-      onCreated();
+      const payload: Record<string, unknown> = {
+        title: title.trim(),
+        description: description.trim() || null,
+        scheduled_at: scheduledAt,
+        cohort_id: cohortId,
+        created_by: user.id,
+      };
+      if (type === "masterclass") payload.duration_minutes = parseInt(duration) || 60;
+
+      const { error } = await supabase.from(table).insert(payload);
+      setSaving(false);
+      if (error) {
+        toast({ title: "Erreur", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Evenement cree !" });
+        onOpenChange(false);
+        onSaved();
+      }
     }
   };
 
+  const isEdit = !!editEvent;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="gap-1 min-h-[44px]">
-          <Plus className="h-4 w-4" /> Ajouter
-        </Button>
-      </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-display">Nouvel evenement</DialogTitle>
+          <DialogTitle className="font-display">
+            {isEdit ? "Modifier l'evenement" : "Nouvel evenement"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div>
             <Label>Type</Label>
-            <Select value={type} onValueChange={(v) => setType(v as "masterclass" | "research")}>
+            <Select
+              value={type}
+              onValueChange={(v) => setType(v as "masterclass" | "research")}
+              disabled={isEdit}
+            >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="masterclass">Masterclass</SelectItem>
@@ -522,7 +743,7 @@ const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onCreated }: C
             {cohortsError && (
               <p className="text-xs text-destructive">Impossible de charger les cohortes.</p>
             )}
-            <Select value={cohortId} onValueChange={setCohortId}>
+            <Select value={cohortId} onValueChange={setCohortId} disabled={isEdit}>
               <SelectTrigger
                 className={cn(showError("cohortId") && "border-destructive")}
                 onBlur={() => handleBlur("cohortId")}
@@ -580,8 +801,8 @@ const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onCreated }: C
             </div>
           )}
           <Button type="submit" disabled={saving || !isValid} className="w-full">
-            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-            Creer
+            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isEdit ? <Pencil className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+            {isEdit ? "Enregistrer" : "Creer"}
           </Button>
         </form>
       </DialogContent>

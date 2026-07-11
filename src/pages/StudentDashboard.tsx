@@ -13,6 +13,8 @@ import StudentAttestation from "@/components/StudentAttestation";
 import StudentMessages from "@/components/StudentMessages";
 import StudentFormations from "@/components/StudentFormations";
 import DashboardCalendar from "@/components/DashboardCalendar";
+import UpcomingEvents from "@/components/UpcomingEvents";
+import { useCalendarEvents } from "@/hooks/use-calendar-events";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -298,6 +300,12 @@ const StudentDashboard = () => {
   // Keep a stable ref so the realtime callback always uses the latest version
   const checkBadgesRef = useRef(checkAndAwardBadges);
   useEffect(() => { checkBadgesRef.current = checkAndAwardBadges; }, [checkAndAwardBadges]);
+
+  // Prochains evenements widget (alimented par le meme hook que DashboardCalendar)
+  const { events: widgetEvents, loading: widgetLoading } = useCalendarEvents({
+    cohortIds: cohort ? [cohort.id] : [],
+    role: "student",
+  });
 
   // Run badge check on initial cohort load
   useEffect(() => {
@@ -635,6 +643,9 @@ const StudentDashboard = () => {
 
                 {/* Right sidebar: Announcements only on dashboard */}
                 <div className="space-y-6">
+                  {/* Prochains evenements */}
+                  <UpcomingEvents events={widgetEvents} loading={widgetLoading} />
+
                   {/* Announcements feed */}
                   <div className="rounded-2xl border border-border bg-card shadow-card">
                     <div className="flex items-center justify-between border-b border-border px-6 py-4">

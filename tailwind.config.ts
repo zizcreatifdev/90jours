@@ -71,6 +71,7 @@ export default {
         },
         "calendar-brief": "hsl(var(--calendar-brief))",
         "calendar-personal": "hsl(var(--calendar-personal))",
+        "calendar-cohort": "hsl(var(--calendar-cohort))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

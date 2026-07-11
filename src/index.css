@@ -61,6 +61,7 @@
     /* Calendar event type tokens */
     --calendar-brief: 262 22% 48%;
     --calendar-personal: 152 22% 42%;
+    --calendar-cohort: 185 45% 35%;
 
     /* Glass tokens */
     --glass-bg: 0 0% 100% / 0.6;
@@ -111,6 +112,7 @@
     /* Calendar event type tokens dark */
     --calendar-brief: 262 28% 68%;
     --calendar-personal: 152 28% 62%;
+    --calendar-cohort: 185 50% 65%;
 
     /* Glass tokens dark */
     --glass-bg: 220 25% 12% / 0.5;

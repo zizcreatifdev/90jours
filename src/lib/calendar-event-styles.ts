@@ -1,4 +1,4 @@
-import { Video, FlaskConical, FileText, Bookmark } from "lucide-react";
+import { Video, FlaskConical, FileText, Bookmark, Flag } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface EventTypeStyle {
@@ -46,5 +46,13 @@ export const EVENT_TYPE_STYLES: Record<string, EventTypeStyle> = {
     dot: "bg-calendar-personal",
     label: "Personnel",
     Icon: Bookmark,
+  },
+  cohort_date: {
+    bg: "bg-calendar-cohort/15",
+    text: "text-calendar-cohort",
+    border: "border-calendar-cohort/30",
+    dot: "bg-calendar-cohort",
+    label: "Cohorte",
+    Icon: Flag,
   },
 };

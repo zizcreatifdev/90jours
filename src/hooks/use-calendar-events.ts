@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export interface CalendarEvent {
   id: string;
-  type: "brief" | "masterclass" | "research" | "personal";
+  type: "brief" | "masterclass" | "research" | "personal" | "cohort_date";
   title: string;
   description?: string | null;
   date: Date;
@@ -41,13 +41,13 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
       // Fetch cohorts with formation info for labeling
       const { data: cohorts, error: cohortsError } = await supabase
         .from("cohorts")
-        .select("id, name, formation_id, formation:formations(id, name)");
+        .select("id, name, formation_id, start_date, end_date, formation:formations(id, name)");
       if (cohortsError) {
         console.error("Erreur chargement cohortes du calendrier", cohortsError);
         anyError = true;
       }
 
-      const cohortMap = new Map<string, { name: string; formation_id: string | null; formation_name: string | null }>();
+      const cohortMap = new Map<string, { name: string; formation_id: string | null; formation_name: string | null; start_date: string | null; end_date: string | null }>();
       const formationSet = new Map<string, string>();
 
       (cohorts || []).forEach((c: any) => {
@@ -55,6 +55,8 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
           name: c.name,
           formation_id: c.formation_id,
           formation_name: c.formation?.name || null,
+          start_date: c.start_date || null,
+          end_date: c.end_date || null,
         });
         if (c.formation) formationSet.set(c.formation.id, c.formation.name);
       });
@@ -193,6 +195,44 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
             user_id: p.user_id,
             hasExplicitTime: !!p.event_time,
           });
+        });
+      }
+
+      // Push cohort start/end date events (ignore si etudiant sans cohorte)
+      if (!studentWithNoCohort) {
+        const cohortsToShow = targetCohortIds && targetCohortIds.length > 0
+          ? (cohorts || []).filter((c: any) => targetCohortIds!.includes(c.id))
+          : (cohorts || []);
+
+        cohortsToShow.forEach((c: any) => {
+          const info = cohortMap.get(c.id);
+          if (!info) return;
+          if (info.start_date) {
+            allEvents.push({
+              id: `cohort-start-${c.id}`,
+              type: "cohort_date",
+              title: `Debut cohorte ${info.name}`,
+              date: new Date(info.start_date + "T00:00:00"),
+              cohort_id: c.id,
+              cohort_name: info.name,
+              formation_id: info.formation_id,
+              formation_name: info.formation_name,
+              hasExplicitTime: false,
+            });
+          }
+          if (info.end_date) {
+            allEvents.push({
+              id: `cohort-end-${c.id}`,
+              type: "cohort_date",
+              title: `Fin cohorte ${info.name}`,
+              date: new Date(info.end_date + "T00:00:00"),
+              cohort_id: c.id,
+              cohort_name: info.name,
+              formation_id: info.formation_id,
+              formation_name: info.formation_name,
+              hasExplicitTime: false,
+            });
+          }
         });
       }
 
