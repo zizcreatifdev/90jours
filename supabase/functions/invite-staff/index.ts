@@ -74,6 +74,10 @@ Deno.serve(async (req) => {
     const existingUser = existingUsers?.users?.find((u: any) => u.email === email);
 
     let userId: string;
+    let emailSent = false;
+    let emailError: string | undefined;
+
+    console.log(`[invite-staff] traitement email=${email} existingUser=${!!existingUser}`);
 
     if (existingUser) {
       userId = existingUser.id;
@@ -89,6 +93,9 @@ Deno.serve(async (req) => {
       if (!existingAssignedRole) {
         // Add role (keep existing student role)
         await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: assignedRole });
+        console.log(`[invite-staff] role ${assignedRole} attribue a user existant ${userId}`);
+      } else {
+        console.log(`[invite-staff] user existant ${userId} a deja le role ${assignedRole}`);
       }
     } else {
       // Nouveau compte : générer le lien d'invitation sans envoyer d'email natif Supabase
@@ -110,31 +117,48 @@ Deno.serve(async (req) => {
       }
 
       userId = linkData.user.id;
+      console.log(`[invite-staff] nouveau user cree id=${userId}`);
 
       // Attribuer le rôle avant l'envoi de l'email
       await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: assignedRole });
+      console.log(`[invite-staff] role ${assignedRole} attribue`);
 
-      // Envoyer l'email via send-email (appel interne service_role).
-      // await obligatoire : le runtime Deno annule les promises non awaited au retour de la Response.
-      // supabaseAdmin envoie Authorization: Bearer <SERVICE_ROLE_KEY>, reconnu par send-email comme appel interne.
+      // Envoyer l'email via fetch direct avec Authorization: Bearer <SERVICE_ROLE_KEY>.
+      // fetch direct garantit que le header est transmis, contrairement a functions.invoke
+      // qui peut ne pas propager la service_role key selon la version de supabase-js.
       // L'action_link ne doit JAMAIS être renvoyé dans la réponse HTTP au client.
+      const actionLink = (linkData as any).properties?.action_link ?? "";
+      console.log(`[invite-staff] envoi email a ${email} action_link_present=${!!actionLink}`);
       try {
-        const emailRes = await supabaseAdmin.functions.invoke("send-email", {
-          body: {
+        const sendRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${serviceRoleKey}`,
+            "apikey": serviceRoleKey,
+          },
+          body: JSON.stringify({
             to: email,
             template: "staff_invite",
             variables: {
               prenom: first_name || "",
               nom: last_name || "",
-              action_link: (linkData as any).properties?.action_link ?? "",
+              action_link: actionLink,
             },
-          },
+          }),
         });
-        if (emailRes.error) {
-          console.error("[invite-staff] send-email erreur:", JSON.stringify(emailRes.error));
+        const sendBody = await sendRes.json().catch(() => ({})) as Record<string, unknown>;
+        console.log(`[invite-staff] send-email status=${sendRes.status} body=${JSON.stringify(sendBody)}`);
+        if (sendRes.ok && sendBody?.ok === true && sendBody?.mode !== "log") {
+          emailSent = true;
+        } else {
+          emailError = sendBody?.error as string | undefined
+            ?? (sendBody?.mode === "log" ? "BREVO_API_KEY non configure" : `HTTP ${sendRes.status}`);
+          console.error(`[invite-staff] email non envoye : ${emailError}`);
         }
       } catch (err: unknown) {
-        console.error("[invite-staff] echec appel send-email:", err instanceof Error ? err.message : String(err));
+        emailError = err instanceof Error ? err.message : String(err);
+        console.error(`[invite-staff] echec fetch send-email: ${emailError}`);
       }
       // L'invitation est considérée réussie même si l'email échoue.
     }
@@ -165,7 +189,7 @@ Deno.serve(async (req) => {
     });
 
     return new Response(
-      JSON.stringify({ success: true, user_id: userId, is_new: !existingUser }),
+      JSON.stringify({ success: true, user_id: userId, is_new: !existingUser, email_sent: emailSent, email_error: emailError }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err: any) {

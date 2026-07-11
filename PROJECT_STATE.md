@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 11 juillet 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: formateurs : toast existant corrige (description precise selon formation assignee ou non)
+**Prompt actuel**: fix final email invitation : fetch direct service_role vers send-email, erreurs remontees, toast conditionnel
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -23,7 +23,7 @@
 | Hooks custom | 10 |
 | Tables Supabase | 34 |
 | Migrations SQL | 57 |
-| Edge Functions | 9 (send-email : 4 templates + isInternalCall service_role bypass + autorisation cross-user admin ; invite-staff : await + Brevo via generateLink ; reset-password : unauthentifié, anti-énumération) |
+| Edge Functions | 9 (send-email : 4 templates + isInternalCall service_role bypass + autorisation cross-user admin ; invite-staff : fetch direct service_role vers send-email, logs traces, email_sent/email_error dans reponse ; reset-password : unauthentifie, anti-enumeration) |
 | CI/CD | GitHub Actions (deploy-functions.yml) |
 | Utilitaires lib | email-suggestion.ts (Levenshtein, 20 domaines) |
 | Tests | 66 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator + 9 EmptyState + 4 task-config) |

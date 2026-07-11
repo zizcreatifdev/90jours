@@ -127,14 +127,22 @@ const FormateurManager = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({
-        title: data.is_new ? "Invitation envoyée !" : "Membre staff ajouté !",
-        description: data.is_new
-          ? `Un email d'invitation a été envoyé à ${form.email}.`
-          : form.formation_id
-            ? `${form.email} a été assigné à la formation.`
-            : `Le rôle staff a été attribué à ${form.email}.`,
-      });
+      if (data.is_new && data.email_sent === false) {
+        toast({
+          title: "Compte créé, email non envoyé",
+          description: `Le compte a été créé pour ${form.email} mais l'email d'invitation n'a pas pu être envoyé${data.email_error ? ` : ${data.email_error}` : ""}.`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: data.is_new ? "Invitation envoyée !" : "Membre staff ajouté !",
+          description: data.is_new
+            ? `Un email d'invitation a été envoyé à ${form.email}.`
+            : form.formation_id
+              ? `${form.email} a été assigné à la formation.`
+              : `Le rôle staff a été attribué à ${form.email}.`,
+        });
+      }
 
       setOpen(false);
       setForm({ email: "", first_name: "", last_name: "", formation_id: "" });
