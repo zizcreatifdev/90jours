@@ -1,8 +1,8 @@
 # PROJECT_STATE.md — État du Projet
 
 **Dernière mise à jour**: 11 juillet 2026
-**Branche active**: `main`
-**Prompt actuel**: calendrier batch 2 : dates cohorte, bouton aujourd'hui, edition evenements, widget prochains evenements, vue liste
+**Branche active**: `claude/elegant-curie-wcw2cl`
+**Prompt actuel**: fix regression selecteur cohorte calendrier (filtre JS comme Sessions, gardes de role, stale closure)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.

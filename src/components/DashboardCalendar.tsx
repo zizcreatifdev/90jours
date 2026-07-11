@@ -301,23 +301,27 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
         </div>
       )}
 
-      {/* Create event dialog (admin/staff) */}
-      <CreateEventDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        cohortIds={cohortIds}
-        role={role}
-        onSaved={refetch}
-      />
-      {/* Edit event dialog (admin/staff) */}
-      <CreateEventDialog
-        open={editOpen}
-        onOpenChange={handleCloseEdit}
-        cohortIds={cohortIds}
-        role={role}
-        onSaved={refetch}
-        editEvent={eventToEdit}
-      />
+      {(role === "admin" || role === "staff") && (
+        <>
+          {/* Create event dialog (admin/staff) */}
+          <CreateEventDialog
+            open={createOpen}
+            onOpenChange={setCreateOpen}
+            cohortIds={cohortIds}
+            role={role}
+            onSaved={refetch}
+          />
+          {/* Edit event dialog (admin/staff) */}
+          <CreateEventDialog
+            open={editOpen}
+            onOpenChange={handleCloseEdit}
+            cohortIds={cohortIds}
+            role={role}
+            onSaved={refetch}
+            editEvent={eventToEdit}
+          />
+        </>
+      )}
       {/* Create personal event dialog (student) */}
       <CreatePersonalEventDialog
         open={createPersonalOpen}
@@ -646,21 +650,25 @@ const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onSaved, editE
       resetValidation();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, editEvent]);
 
   useEffect(() => {
     const fetchCohorts = async () => {
       setCohortsError(false);
-      let query = supabase.from("cohorts").select("id, name, formation:formations(name)").neq("status", "archived");
-      if (cohortIds && cohortIds.length > 0) {
-        query = query.in("id", cohortIds);
-      }
-      const { data, error } = await query;
+      const { data, error } = await supabase
+        .from("cohorts")
+        .select("id, name, formation:formations(name)")
+        .neq("status", "archived");
       if (error) {
         console.error("Erreur chargement cohortes du dialog evenement", error);
         setCohortsError(true);
+        return;
       }
-      if (data) setCohorts(data as { id: string; name: string; formation?: { name: string } | null }[]);
+      const all = (data || []) as { id: string; name: string; formation?: { name: string } | null }[];
+      const filtered = cohortIds && cohortIds.length > 0
+        ? all.filter((c) => cohortIds.includes(c.id))
+        : all;
+      setCohorts(filtered);
     };
     fetchCohorts();
   // eslint-disable-next-line react-hooks/exhaustive-deps
