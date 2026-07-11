@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 11 juillet 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: fix email invitation formateur (await + isInternalCall service_role dans send-email, retrait catch silencieux)
+**Prompt actuel**: formateurs : toast existant corrige (description precise selon formation assignee ou non)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.

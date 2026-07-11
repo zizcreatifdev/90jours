@@ -128,10 +128,12 @@ const FormateurManager = () => {
       if (data?.error) throw new Error(data.error);
 
       toast({
-        title: data.is_new ? "Invitation envoyée !" : "Formateur ajouté !",
+        title: data.is_new ? "Invitation envoyée !" : "Membre staff ajouté !",
         description: data.is_new
           ? `Un email d'invitation a été envoyé à ${form.email}.`
-          : `Le formateur a été assigné à la formation.`,
+          : form.formation_id
+            ? `${form.email} a été assigné à la formation.`
+            : `Le rôle staff a été attribué à ${form.email}.`,
       });
 
       setOpen(false);
