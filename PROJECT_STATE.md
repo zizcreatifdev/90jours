@@ -1,6 +1,6 @@
 # PROJECT_STATE.md — État du Projet
 
-**Dernière mise à jour**: 10 juillet 2026
+**Dernière mise à jour**: 11 juillet 2026
 **Branche active**: `main`
 **Prompt actuel**: accueil - cartes de formation cliquables vers leur page dediee
 
@@ -18,7 +18,7 @@
 
 | Métrique | Valeur |
 |---------|--------|
-| Composants React | 103 |
+| Composants React | 104 |
 | Pages | 15 |
 | Hooks custom | 10 |
 | Tables Supabase | 34 |
@@ -71,6 +71,7 @@
 | Logs d'audit | ✅ Complet | 100% |
 | Paramètres site | ✅ Complet | 100% |
 | Calendrier | ✅ Complet | 100% |
+| Gestion sessions (SessionsManager) | ✅ Complet | 100% |
 | Contrats (templates + signés) | ✅ Complet | 100% |
 | Témoignages (CRUD + reorder + toggle) | ✅ Complet | 100% |
 | Liste d'attente (WaitlistManager) | ✅ Complet | 100% |
@@ -94,6 +95,7 @@
 | Annonces cohorte | ✅ Complet | 100% |
 | Gestion tâches | ✅ Complet | 100% |
 | Calendrier | ✅ Complet | 100% |
+| Gestion sessions (SessionsManager) | ✅ Complet | 100% |
 | Messages officiels formateur | ✅ Complet | 100% |
 
 **Complétion globale**: 100%
@@ -408,3 +410,4 @@
 | formation-page-dediee | 2026-07-05 | Page dediee par formation (/formation/:slug) niveau 1. Nouvelle route publique App.tsx + page FormationPage.tsx : hero bg-navy-deep (lien retour, badge level, titre Fraunces, description, bouton S'inscrire), stats row (3 cartes blanches : duree/sessions/tarif), section "A propos" + deliverable card, section "Sessions disponibles" (anchor #sessions) avec cartes cohortes (header navy/navy-deep selon type, dates, places, prix, CTA /register?cohort=id), Footer reutilise. Bouton S'inscrire hero : 1 session ouverte -> navigate /register?cohort=<id> directement ; 0 ou N sessions -> scroll vers #sessions. Partages Index.tsx mis a jour : shareUrl = ${SITE_URL}/formation/${slug} (fallback SITE_URL si slug absent) sur WhatsApp/Facebook/LinkedIn/Copy. use-cohorts.ts : slug ajoute au SELECT formations + au type CohortRow.formation. build OK, 66/66 tests. | Termine |
 | refonte-couleurs-accueil | 2026-07-03 | Refonte couleurs Index.tsx selon systeme editorial chaleureux. Nouveaux tokens Tailwind/CSS : navy.deep (#001D52) via --navy-deep:219 100% 16% ; accent.hover (#d4b06a) via --accent-hover:40 55% 62%. Fonds de sections corps passes a bg-background (creme #F3EFE2) : root div, "Comment ca marche", "Nos formations", "Temoignages", CTA final (precedemment bg-[#003BA4]). Cartes blanches conservees (cohort cards, step cells, carousel card). Hero + footer : tokens navy/navy-light/navy-deep. CTA final : texte passe text-white/text-white/65 -> text-foreground/text-muted-foreground ; bouton secondaire border-white/25 bg-white/5 text-white -> border-foreground/25 bg-foreground/5 text-foreground ; glow radial retire (effet muet sur fond creme). 9 occurrences #C5A05A centralisees en text-accent/border-accent/bg-accent/bg-accent/40 ; hover:bg-[#d4b06a] -> hover:bg-accent-hover. Inline styles de carte (header couleur, badge couleur) convertis en classes Tailwind. style={{ color }} sur bouton "Lire plus" retire, remplace par text-accent. Zero emoji, zero tiret long, build OK, 66/66 tests. | Termine |
 | cohortes-dates-optionnelles | 2026-07-10 | Rend les dates (start_date, end_date) d'une cohorte optionnelles pour creer des cohortes "sans date fixee" (demarrage quand le groupe est complet, dates fixees plus tard par l'admin). MIGRATION : MIGRATION_COHORT_DATES_OPTIONAL.sql (ALTER TABLE cohorts ALTER COLUMN start_date DROP NOT NULL; ALTER COLUMN end_date DROP NOT NULL) a executer manuellement dans Supabase SQL Editor. TYPES : types.ts + use-cohorts.ts CohortRow : start_date/end_date passes a string|null ; cohorts.Insert : start_date/end_date en string?|null. FORMULAIRE : CohortForm retire la validation required sur start_date, payload convertit chaine vide en null (|| null), texte d'aide "Laissez vide pour une cohorte a date non fixee". AFFICHAGE (6 points) : Index.tsx PublicCohortCard, Register.tsx selecteur cohorte, StudentDashboard.tsx l.533, StudentFormations.tsx l.310, AdminDashboard.tsx l.721, FormationPage.tsx cartes sessions : garde start_date && end_date -> dates, sinon "Demarrage des que le groupe est complet" (ou variante courte selon le contexte). CALCULS (StudentDashboard, StudentFormations) : isArchiveMode et isTerminated conditionnent end_date a !!cohort.end_date; calcul duree/jours gardes par hasDates (bool) -> "-" et "date non fixee" si absent ; filtre actif StudentFormations : !c.end_date || date >= today (cohorte sans date = active). CONTRAT ContractSign.tsx : date_debut/date_fin retournent "" si null -> fillTemplate remplace par "-" (zero "Invalid Date" dans les documents). ATTESTATION StudentAttestation.tsx : fmt(d: string|null) garde null -> "". HEATMAP ActivityHeatmap : early return avec message si !cohortStartDate || !cohortEndDate. TYPES PROPAGATION : PaymentSummaryCard.cohortStartDate: string|null, BadgeCheckContext.cohortStartDate: string|null, StudentProfilePage local type, ActivityHeatmap props. VERIFICATION : grep exhaustif, 0 Invalid Date, 0 NaN, 0 null affiche dans tout le code source. Build OK, 66/66 tests. | Termine |
+| sessions-manager | 2026-07-11 | Nouveau composant SessionsManager.tsx (104e composant) : panneau de gestion des sessions masterclass et recherche pour admin et formateur. Liste paginee visuellement en deux sections "A venir" (tri ascendant) et "Passees" (tri descendant, opacite 70%). Filtres : cohorte et type (Toutes/Masterclass/Recherche). Cartes avec badge type colore (accent pour masterclass, primary pour recherche), icone Video/FlaskConical, titre, date formatee FR (weekday long + heure), duree (masterclass uniquement), cohorte+formation, description line-clamp-2. Boutons Modifier (Pencil) et Supprimer (Trash2 + ConfirmDialog) par carte. Dialog CREATE+EDIT : type selector DESACTIVE en mode edition (changement de table interdit), cohorte requise, titre requis, description optionnelle, datetime-local requis, duree requise uniquement pour masterclass (validation conditionnelle via useFormValidation). Apres chaque mutation : refetch de la liste (sessions apparaissent aussitot dans le calendrier etudiant via RLS existante). Integrations : AdminDashboard onglet "sessions" + TabsContent + DashboardSidebar entry (Video icon) entre Calendrier et Messages ; StaffDashboard onglet "sessions" (branche tab==="sessions") + DashboardSidebar entry idem ; cohortIds passes au composant staff (meme source que le calendrier staff). Calendrier existant et CreateEventDialog intacts. Build OK, 66/66 tests, zero emoji, zero tiret long, Lucide, tokens couleur, TypeScript strict. | Termine |

@@ -27,6 +27,7 @@ import StudentFormations from "@/components/StudentFormations";
 import BriefManager from "@/components/BriefManager";
 import PortfolioManager from "@/components/PortfolioManager";
 import DashboardCalendar from "@/components/DashboardCalendar";
+import SessionsManager from "@/components/SessionsManager";
 
 const StaffDashboard = () => {
   const [searchParams] = useSearchParams();
@@ -522,6 +523,10 @@ const StaffDashboard = () => {
           {tab === "calendar" ? (
             <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
               <DashboardCalendar role="staff" cohortIds={cohorts.map(c => c.id)} />
+            </div>
+          ) : tab === "sessions" ? (
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+              <SessionsManager role="staff" cohortIds={cohorts.map(c => c.id)} />
             </div>
           ) : tab === "tasks" ? (
             <div className="rounded-2xl border border-border bg-card p-6 shadow-card">

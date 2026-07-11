@@ -32,6 +32,7 @@ import {
   MessageSquareQuote,
   MessageSquare,
   ListPlus,
+  Video,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSiteSettings } from "@/hooks/use-site-settings";
@@ -60,6 +61,7 @@ interface SidebarLink {
 const adminLinks: SidebarLink[] = [
   { href: "/admin?tab=overview", label: "Vue d'ensemble", icon: LayoutDashboard },
   { href: "/admin?tab=calendar", label: "Calendrier", icon: CalendarDays },
+  { href: "/admin?tab=sessions", label: "Sessions", icon: Video },
   { href: "/admin?tab=messages", label: "Messages", icon: Megaphone },
   { href: "/admin?tab=formations", label: "Formations", icon: GraduationCap, sectionLabel: "Pédagogie" },
   { href: "/admin?tab=formateurs", label: "Staff", icon: UserCircle },
@@ -83,6 +85,7 @@ const adminLinks: SidebarLink[] = [
 const staffLinks: SidebarLink[] = [
   { href: "/staff", label: "Mes cohortes", icon: LayoutDashboard },
   { href: "/staff?tab=calendar", label: "Calendrier", icon: CalendarDays },
+  { href: "/staff?tab=sessions", label: "Sessions", icon: Video },
   { href: "/staff?tab=messages", label: "Messages", icon: MessageSquare },
   { href: "/staff?tab=tasks", label: "Mes tâches", icon: ClipboardList },
   { href: "/staff?tab=briefs", label: "Briefs", icon: BookOpen },

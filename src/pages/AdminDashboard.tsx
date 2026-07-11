@@ -39,6 +39,7 @@ import AttestationIssuer from "@/components/AttestationIssuer";
 import Pagination from "@/components/ui/Pagination";
 import AttestationTracker from "@/components/attestation/AttestationTracker";
 import DashboardCalendar from "@/components/DashboardCalendar";
+import SessionsManager from "@/components/SessionsManager";
 import AdminMessages from "@/components/AdminMessages";
 import AccountingPanel from "@/components/AccountingPanel";
 import AdminAlertBanner from "@/components/AdminAlertBanner";
@@ -623,6 +624,13 @@ const AdminDashboard = () => {
             <TabsContent value="calendar">
               <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
                 <DashboardCalendar role="admin" />
+              </div>
+            </TabsContent>
+
+            {/* Sessions Tab */}
+            <TabsContent value="sessions">
+              <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+                <SessionsManager role="admin" />
               </div>
             </TabsContent>
 
