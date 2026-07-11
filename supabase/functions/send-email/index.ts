@@ -51,12 +51,13 @@ const APP_URL_FALLBACK = "https://60jours.vercel.app";
 // Adresse de contact publique (affichee dans le footer des emails).
 const CONTACT_EMAIL = "contact@60jours.com";
 
-// Palette 60jours (couleurs en dur car un email ne peut pas lire les CSS vars).
-const NAVY = "#003BA4";
-const GOLD = "#C5A05A";
-const CREAM = "#FBFAF8";
-const INK = "#1F2937";
-const MUTED = "#6B7280";
+// Palette 60jours (couleurs en dur, email ne supporte pas les CSS vars).
+const NIGHT = "#001D52";      // bleu nuit : header, footer, accents forts
+const GOLD = "#C5A05A";       // dore : filet, bouton, badge, liens footer
+const CREAM = "#F3EFE2";      // creme : fond page et encadres
+const BROWN = "#2E2212";      // brun chaud : titres h1, texte bouton
+const BODY_TEXT = "#4a4436";  // texte principal corps
+const MUTED = "#8B8070";      // texte secondaire et footer
 
 interface SendEmailPayload {
   to?: string | { email: string; name?: string };
@@ -77,8 +78,9 @@ const esc = (value: unknown): string =>
   );
 
 /**
- * Enveloppe commune 60jours (structure en tableaux, CSS inline, compatible
- * clients mail). Tout template reutilise ce shell pour un rendu coherent.
+ * Layout commun 60jours.
+ * En-tete bleu nuit + logo centre + filet dore 3px + corps + footer bleu nuit.
+ * Compatible Gmail, Outlook, Apple Mail : tableaux role=presentation, CSS inline, largeurs fixes.
  */
 const layout = (innerHtml: string): string => `<!DOCTYPE html>
 <html lang="fr">
@@ -87,34 +89,31 @@ const layout = (innerHtml: string): string => `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body style="margin:0;padding:0;background-color:${CREAM};">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${CREAM};padding:24px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${CREAM};padding:32px 0;">
     <tr>
       <td align="center">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #ECE7DD;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 20px rgba(0,29,82,0.10);">
           <tr>
-            <td style="background-color:${NAVY};padding:28px 32px;">
-              <table role="presentation" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="vertical-align:middle;">
-                    <img src="https://60jours.com/logos/Logo60jours_blanc.png" alt="60jours" height="40" style="display:block;max-width:160px;height:auto;" />
-                  </td>
-                  <td style="padding-left:12px;">
-                    <span style="font-family:Georgia,'Times New Roman',serif;font-size:18px;font-weight:bold;color:#ffffff;">60jours</span>
-                  </td>
-                </tr>
-              </table>
+            <td style="background-color:${NIGHT};padding:32px 40px;text-align:center;">
+              <img src="https://60jours.com/logos/Logo60jours_blanc.png" alt="60jours" height="48" style="display:inline-block;height:48px;max-width:180px;border:0;" />
             </td>
           </tr>
           <tr>
-            <td style="padding:32px;">
+            <td style="background-color:${GOLD};font-size:0;line-height:0;height:3px;">&nbsp;</td>
+          </tr>
+          <tr>
+            <td style="padding:38px 40px;">
               ${innerHtml}
             </td>
           </tr>
           <tr>
-            <td style="padding:20px 32px;border-top:1px solid #ECE7DD;">
+            <td style="background-color:${NIGHT};padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:bold;line-height:20px;color:#ffffff;">
+                60jours - Formations intensives
+              </p>
               <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:${MUTED};">
-                60jours, formations intensives. Cet email est automatique. Pour nous contacter :
-                <a href="mailto:${CONTACT_EMAIL}" style="color:${MUTED};text-decoration:underline;">${CONTACT_EMAIL}</a>
+                Cet email est automatique. Pour nous contacter :
+                <a href="mailto:${CONTACT_EMAIL}" style="color:${GOLD};text-decoration:none;">${CONTACT_EMAIL}</a>
               </p>
             </td>
           </tr>
@@ -125,17 +124,31 @@ const layout = (innerHtml: string): string => `<!DOCTYPE html>
 </body>
 </html>`;
 
-/** Bouton CTA dore, texte navy (bon contraste, compatible mail). */
+/** Bouton CTA dore, texte brun fonce (contraste WCAG), coins 9px. */
 const ctaButton = (label: string, href: string): string => `
-<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px auto;">
   <tr>
-    <td align="center" style="border-radius:9999px;background-color:${GOLD};">
-      <a href="${esc(href)}" target="_blank" style="display:inline-block;padding:13px 30px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:${NAVY};text-decoration:none;border-radius:9999px;">
+    <td align="center" style="border-radius:9px;background-color:${GOLD};">
+      <a href="${esc(href)}" target="_blank" style="display:inline-block;padding:14px 34px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:${BROWN};text-decoration:none;border-radius:9px;">
         ${esc(label)}
       </a>
     </td>
   </tr>
 </table>`;
+
+/** Encadre creme pour informations secondaires (usage unique, securite, etc.). */
+const infoBox = (html: string): string => `
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:20px 0 0;">
+  <tr>
+    <td style="background-color:${CREAM};border-radius:10px;padding:16px 20px;">
+      <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:${MUTED};">${html}</p>
+    </td>
+  </tr>
+</table>`;
+
+/** Badge court en majuscules dore, centre, au-dessus du titre. */
+const badge = (text: string): string =>
+  `<p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:11px;font-weight:bold;letter-spacing:3px;color:${GOLD};text-align:center;">${text}</p>`;
 
 /**
  * Registre des templates. Chaque template renvoie un sujet + un corps HTML.
@@ -149,21 +162,21 @@ const TEMPLATES: Record<string, (vars: Record<string, string>, appUrl: string) =
     const greeting = prenom ? `Bonjour ${prenom},` : "Bonjour,";
 
     const inner = `
-      <h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:32px;font-weight:bold;color:${NAVY};">
+      ${badge("BIENVENUE")}
+      <h1 style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:32px;font-weight:bold;color:${BROWN};text-align:center;">
         Bienvenue chez 60jours
       </h1>
-      <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
+      <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:${BODY_TEXT};">
         ${greeting}
       </p>
-      <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
-        Nous sommes ravis de vous compter parmi nous. Votre inscription a
-        <strong style="color:${NAVY};">${formation}</strong> est bien enregistrée.
+      <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:${BODY_TEXT};">
+        Nous sommes ravis de vous compter parmi nous. Votre inscription &#224;
+        <strong style="color:${NIGHT};">${formation}</strong> est bien enregistr&#233;e.
       </p>
-      <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
-        Prochaine étape : finaliser votre paiement depuis votre espace étudiant pour
-        confirmer votre place.
+      <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:${BODY_TEXT};">
+        Prochaine &#233;tape : finalisez votre paiement depuis votre espace &#233;tudiant pour confirmer votre place.
       </p>
-      ${ctaButton("Accéder à mon espace de paiement", link)}
+      ${ctaButton("Accéder à mon espace", link)}
       <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:${MUTED};">
         Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br />
         <a href="${esc(link)}" target="_blank" style="color:${GOLD};text-decoration:underline;">${esc(link)}</a>
@@ -184,17 +197,18 @@ const TEMPLATES: Record<string, (vars: Record<string, string>, appUrl: string) =
       : "Votre attestation est disponible";
 
     const inner = `
-      <h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:32px;font-weight:bold;color:${NAVY};">
-        Votre attestation est disponible
+      ${badge("ATTESTATION")}
+      <h1 style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:32px;font-weight:bold;color:${BROWN};text-align:center;">
+        Votre attestation est pr&#234;te
       </h1>
-      <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
+      <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:${BODY_TEXT};">
         ${greeting}
       </p>
-      <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
-        Félicitations ! Votre attestation de réussite${formation ? ` pour la formation <strong style="color:${NAVY};">${formation}</strong>` : ""} vient d'être délivrée.
+      <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:${BODY_TEXT};">
+        F&#233;licitations ! Votre attestation de r&#233;ussite${formation ? ` pour la formation <strong style="color:${NIGHT};">${formation}</strong>` : ""} vient d&#39;&#234;tre d&#233;livr&#233;e.
       </p>
-      <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
-        Vous pouvez la consulter et la télécharger depuis votre espace étudiant.
+      <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:${BODY_TEXT};">
+        Vous pouvez la consulter et la t&#233;l&#233;charger depuis votre espace &#233;tudiant.
       </p>
       ${ctaButton("Voir mon attestation", link)}
       <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:${MUTED};">
@@ -212,26 +226,25 @@ const TEMPLATES: Record<string, (vars: Record<string, string>, appUrl: string) =
     const greeting = prenom ? `Bonjour ${prenom}${nom ? " " + nom : ""},` : "Bonjour,";
 
     const inner = `
-      <h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:32px;font-weight:bold;color:${NAVY};">
-        Bienvenue dans l'équipe 60jours
+      ${badge("INVITATION")}
+      <h1 style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:32px;font-weight:bold;color:${BROWN};text-align:center;">
+        Bienvenue dans l&#39;&#233;quipe
       </h1>
-      <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
+      <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:${BODY_TEXT};">
         ${greeting}
       </p>
-      <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
-        Vous avez été invité à rejoindre l'équipe 60jours en tant que membre du staff.
-        Cliquez sur le bouton ci-dessous pour configurer votre compte et accéder à votre espace.
-      </p>
-      <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
-        Ce lien d'invitation est à usage unique et expire dans 24 heures.
+      <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:${BODY_TEXT};">
+        Vous avez &#233;t&#233; invit&#233; &#224; rejoindre l&#39;&#233;quipe 60jours en tant que membre du staff.
+        Cliquez sur le bouton ci-dessous pour configurer votre compte et acc&#233;der &#224; votre espace.
       </p>
       ${ctaButton("Configurer mon compte", actionLink)}
-      <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:${MUTED};">
-        Si le bouton ne fonctionne pas, demandez à votre administrateur de vous renvoyer une invitation.
+      ${infoBox("Ce lien d&#39;invitation est &#224; usage unique et expire dans 24 heures. Si vous n&#39;&#234;tes pas &#224; l&#39;origine de cette invitation, ignorez cet email.")}
+      <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:${MUTED};">
+        Si le bouton ne fonctionne pas, demandez &#224; votre administrateur de vous renvoyer une invitation.
       </p>`;
 
     return {
-      subject: "Invitation à rejoindre l'équipe 60jours",
+      subject: "Invitation à rejoindre l’équipe 60jours",
       html: layout(inner),
     };
   },
@@ -240,23 +253,21 @@ const TEMPLATES: Record<string, (vars: Record<string, string>, appUrl: string) =
     const link = vars.link || "";
 
     const inner = `
-      <h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:32px;font-weight:bold;color:${NAVY};">
-        Réinitialisation de votre mot de passe
+      ${badge("SECURITE")}
+      <h1 style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:32px;font-weight:bold;color:${BROWN};text-align:center;">
+        R&#233;initialisation du mot de passe
       </h1>
-      <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
-        Nous avons reçu une demande de réinitialisation du mot de passe pour votre compte 60jours.
+      <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:${BODY_TEXT};">
+        Nous avons re&#231;u une demande de r&#233;initialisation du mot de passe pour votre compte 60jours.
       </p>
-      <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
-        Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.
-        Ce lien est valable pendant 1 heure.
+      <p style="margin:0 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.65;color:${BODY_TEXT};">
+        Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe. Ce lien est valable pendant 1 heure.
       </p>
       ${ctaButton("Réinitialiser mon mot de passe", link)}
-      <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:${MUTED};">
-        Si vous n'avez pas demandé cette réinitialisation, ignorez cet email. Votre mot de passe ne sera pas modifié.
-      </p>
-      <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:${MUTED};">
+      ${infoBox("Si vous n&#39;&#234;tes pas &#224; l&#39;origine de cette demande, ignorez cet email. Votre mot de passe ne sera pas modifi&#233;.")}
+      <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:${MUTED};">
         Si le bouton ne fonctionne pas, rendez-vous sur la page de connexion et cliquez sur
-        "Mot de passe oublié" pour obtenir un nouveau lien.
+        &#171;&#160;Mot de passe oubli&#233;&#160;&#187; pour obtenir un nouveau lien.
       </p>`;
 
     return {

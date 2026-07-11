@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 11 juillet 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: fix final email invitation : fetch direct service_role vers send-email, erreurs remontees, toast conditionnel
+**Prompt actuel**: design unifie emails : en-tete bleu nuit #001D52, filet dore 3px, badge majuscule, titre brun, bouton dore 9px, footer bleu nuit, encadre creme ; 4 templates (welcome, attestation, invitation, reset)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
