@@ -54,7 +54,8 @@ const INK = "#1F2937";
 const MUTED = "#6B7280";
 
 interface SendEmailPayload {
-  to: string | { email: string; name?: string };
+  to?: string | { email: string; name?: string };
+  to_user_id?: string;
   template: string;
   variables?: Record<string, string>;
 }
@@ -165,6 +166,39 @@ const TEMPLATES: Record<string, (vars: Record<string, string>, appUrl: string) =
 
     return { subject: "Bienvenue chez 60jours", html: layout(inner) };
   },
+
+  attestation_ready: (vars, appUrl) => {
+    const prenom = esc(vars.prenom || "");
+    const nom = esc(vars.nom || "");
+    const formationRaw = vars.formation || "";
+    const formation = esc(formationRaw);
+    const link = vars.link || `${appUrl}/student`;
+    const greeting = prenom ? `Bonjour ${prenom}${nom ? " " + nom : ""},` : "Bonjour,";
+    const subject = formationRaw
+      ? `Votre attestation est disponible - ${formationRaw}`
+      : "Votre attestation est disponible";
+
+    const inner = `
+      <h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:32px;font-weight:bold;color:${NAVY};">
+        Votre attestation est disponible
+      </h1>
+      <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
+        ${greeting}
+      </p>
+      <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
+        Félicitations ! Votre attestation de réussite${formation ? ` pour la formation <strong style="color:${NAVY};">${formation}</strong>` : ""} vient d'être délivrée.
+      </p>
+      <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
+        Vous pouvez la consulter et la télécharger depuis votre espace étudiant.
+      </p>
+      ${ctaButton("Voir mon attestation", link)}
+      <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:${MUTED};">
+        Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :<br />
+        <a href="${esc(link)}" target="_blank" style="color:${GOLD};text-decoration:underline;">${esc(link)}</a>
+      </p>`;
+
+    return { subject, html: layout(inner) };
+  },
 };
 
 const json = (body: unknown, status: number, corsHeaders: Record<string, string>) =>
@@ -187,26 +221,23 @@ Deno.serve(async (req) => {
 
   try {
     const payload = (await req.json()) as SendEmailPayload;
-    const { to, template, variables } = payload;
+    const { to, to_user_id, template, variables } = payload;
 
-    if (!to || !template) {
-      return json({ ok: false, error: "Champs 'to' et 'template' requis." }, 400, corsHeaders);
+    if (!template || (!to && !to_user_id)) {
+      return json({ ok: false, error: "Champs 'template' et ('to' ou 'to_user_id') requis." }, 400, corsHeaders);
     }
 
-    const recipientEmail = typeof to === "string" ? to : to.email;
-    const recipientName = typeof to === "string" ? undefined : to.name;
-    if (!recipientEmail) {
+    const toEmail = to ? (typeof to === "string" ? to : to.email) : null;
+    const toName = to ? (typeof to === "string" ? undefined : to.name) : undefined;
+    if (!to_user_id && !toEmail) {
       return json({ ok: false, error: "Destinataire invalide." }, 400, corsHeaders);
     }
 
     // ── Securite : verification cote serveur de l'identite de l'appelant ──────
-    // createClient.auth.getUser() fait une requete vers l'API Supabase Auth avec
-    // le JWT fourni. La signature est verifiee par le serveur (pas un simple
-    // decodage de payload), ce qui empeche toute falsification de l'email.
-    // Un appel sans JWT valide retourne user=null -> 401.
-    // Un appel avec un JWT valide mais un email destinataire different -> 403.
-    // Consequence : seul un utilisateur authentifie peut declencher un envoi,
-    // et uniquement vers sa propre adresse (pas d'envoi a des tiers).
+    // getUser() verifie la signature JWT cote serveur (pas un decodage de payload).
+    // Envoi vers sa propre adresse : autorise pour tout utilisateur authentifie.
+    // Envoi vers une autre adresse (ou via to_user_id) : reserve aux admin/super_admin.
+    // Un non-admin ne peut jamais envoyer vers une adresse tierce.
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
@@ -217,8 +248,39 @@ Deno.serve(async (req) => {
     if (!authUser?.email) {
       return json({ ok: false, error: "Non autorisé." }, 401, corsHeaders);
     }
-    if (recipientEmail.toLowerCase() !== authUser.email.toLowerCase()) {
-      return json({ ok: false, error: "Destinataire non autorisé." }, 403, corsHeaders);
+
+    const isSelf = !to_user_id && !!toEmail && toEmail.toLowerCase() === authUser.email.toLowerCase();
+
+    let recipientEmail: string;
+    let recipientName: string | undefined;
+
+    if (!isSelf) {
+      const supabaseAdmin = createClient(
+        Deno.env.get("SUPABASE_URL") ?? "",
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      );
+      const { data: roleRow } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", authUser.id)
+        .in("role", ["admin", "super_admin"])
+        .maybeSingle();
+      if (!roleRow) {
+        return json({ ok: false, error: "Destinataire non autorisé." }, 403, corsHeaders);
+      }
+      if (to_user_id) {
+        const { data: { user: targetUser } } = await supabaseAdmin.auth.admin.getUserById(to_user_id);
+        if (!targetUser?.email) {
+          return json({ ok: false, error: "Destinataire introuvable." }, 400, corsHeaders);
+        }
+        recipientEmail = targetUser.email;
+      } else {
+        recipientEmail = toEmail!;
+        recipientName = toName;
+      }
+    } else {
+      recipientEmail = toEmail!;
+      recipientName = toName;
     }
     // ── Fin verification ───────────────────────────────────────────────────────
 

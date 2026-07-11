@@ -430,6 +430,18 @@ const AttestationIssuer = () => {
       message: "Votre attestation de formation est prete. Vous pouvez la telecharger depuis votre espace.",
       created_by: user.id,
     });
+    const emailStudent = students.find(s => s.user_id === studentId);
+    void supabase.functions.invoke("send-email", {
+      body: {
+        to_user_id: studentId,
+        template: "attestation_ready",
+        variables: {
+          prenom: emailStudent?.first_name || "",
+          nom: emailStudent?.last_name || "",
+          formation: (cohortFullData?.formation as any)?.name || "",
+        },
+      },
+    }).catch(() => undefined);
     await supabase.from("audit_logs").insert({
       performed_by: user.id,
       action: "attestation_issued",
@@ -538,6 +550,20 @@ const AttestationIssuer = () => {
       created_by: user!.id,
     }));
     await supabase.from("notifications").insert(notifRows);
+    const formationName = (cohortFullData?.formation as any)?.name || "";
+    for (const s of eligible) {
+      void supabase.functions.invoke("send-email", {
+        body: {
+          to_user_id: s.user_id,
+          template: "attestation_ready",
+          variables: {
+            prenom: s.first_name || "",
+            nom: s.last_name || "",
+            formation: formationName,
+          },
+        },
+      }).catch(() => undefined);
+    }
     await supabase.from("audit_logs").insert({
       performed_by: user!.id,
       action: "attestation_issued",
