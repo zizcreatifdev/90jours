@@ -6,12 +6,17 @@
  *   - template  : identifiant de template (ex "welcome")
  *   - variables : donnees pour remplir le template (Record<string, string>)
  *
- * Securite : JWT obligatoire (createClient.auth.getUser). L'email du destinataire
- * doit correspondre exactement a l'email de l'utilisateur authentifie. Un visiteur
- * anonyme ou un utilisateur authentifie ciblant une adresse tierce recoit une
- * erreur 401/403 sans qu'aucun email ne soit envoye.
- * La verification est faite par le serveur Supabase (signature JWT verifiee) et
- * non par simple decodage de payload, afin d'eviter toute falsification.
+ * Securite : deux chemins d'autorisation.
+ *   1. Appel interne (edge function serveur) : Authorization = Bearer <SERVICE_ROLE_KEY>.
+ *      La service_role key n'est jamais exposee au navigateur. Autorise a envoyer
+ *      a n'importe quel destinataire valide sans verification JWT utilisateur.
+ *      Utilisé par : invite-staff, reset-password, brief-reminders, payment-reminders.
+ *   2. Appel front (navigateur) : Authorization = Bearer <JWT utilisateur>.
+ *      Auto-envoi (isSelf) : tout utilisateur authentifie.
+ *      Envoi a un tiers : reserve aux admin/super_admin.
+ *      La verification est faite par le serveur Supabase (signature JWT verifiee),
+ *      pas par simple decodage de payload.
+ * Un appel avec un JWT utilisateur non admin ciblant une adresse tierce recoit 403.
  *
  * Envoi :
  *   - Si le secret BREVO_API_KEY est present : envoi via l'API transactionnelle
@@ -294,53 +299,76 @@ Deno.serve(async (req) => {
     }
 
     // ── Securite : verification cote serveur de l'identite de l'appelant ──────
-    // getUser() verifie la signature JWT cote serveur (pas un decodage de payload).
-    // Envoi vers sa propre adresse : autorise pour tout utilisateur authentifie.
-    // Envoi vers une autre adresse (ou via to_user_id) : reserve aux admin/super_admin.
-    // Un non-admin ne peut jamais envoyer vers une adresse tierce.
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } } },
-    );
-    const { data: { user: authUser } } = await supabaseClient.auth.getUser();
+    const SUPABASE_URL_ENV = Deno.env.get("SUPABASE_URL") ?? "";
+    const SUPABASE_ANON_KEY_ENV = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+    const SUPABASE_SERVICE_ROLE_KEY_ENV = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const authorizationHeader = req.headers.get("Authorization") ?? "";
 
-    if (!authUser?.email) {
-      return json({ ok: false, error: "Non autorisé." }, 401, corsHeaders);
-    }
-
-    const isSelf = !to_user_id && !!toEmail && toEmail.toLowerCase() === authUser.email.toLowerCase();
+    // Chemin interne : Authorization = Bearer <SERVICE_ROLE_KEY>.
+    // La service_role key est reservee aux edge functions serveur ; un navigateur
+    // ne peut jamais l'envoyer. Ce chemin bypasse la verification JWT utilisateur.
+    const isInternalCall = !!SUPABASE_SERVICE_ROLE_KEY_ENV &&
+      authorizationHeader === `Bearer ${SUPABASE_SERVICE_ROLE_KEY_ENV}`;
 
     let recipientEmail: string;
     let recipientName: string | undefined;
 
-    if (!isSelf) {
-      const supabaseAdmin = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      );
-      const { data: roleRow } = await supabaseAdmin
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", authUser.id)
-        .in("role", ["admin", "super_admin"])
-        .maybeSingle();
-      if (!roleRow) {
-        return json({ ok: false, error: "Destinataire non autorisé." }, 403, corsHeaders);
-      }
+    if (isInternalCall) {
       if (to_user_id) {
+        const supabaseAdmin = createClient(SUPABASE_URL_ENV, SUPABASE_SERVICE_ROLE_KEY_ENV);
         const { data: { user: targetUser } } = await supabaseAdmin.auth.admin.getUserById(to_user_id);
         if (!targetUser?.email) {
           return json({ ok: false, error: "Destinataire introuvable." }, 400, corsHeaders);
         }
         recipientEmail = targetUser.email;
+      } else if (toEmail) {
+        recipientEmail = toEmail;
+        recipientName = toName;
+      } else {
+        return json({ ok: false, error: "Destinataire invalide." }, 400, corsHeaders);
+      }
+    } else {
+      // Chemin front : JWT utilisateur obligatoire.
+      // getUser() verifie la signature cote serveur (pas un decodage de payload).
+      const supabaseClient = createClient(
+        SUPABASE_URL_ENV,
+        SUPABASE_ANON_KEY_ENV,
+        { global: { headers: { Authorization: authorizationHeader } } },
+      );
+      const { data: { user: authUser } } = await supabaseClient.auth.getUser();
+
+      if (!authUser?.email) {
+        return json({ ok: false, error: "Non autorisé." }, 401, corsHeaders);
+      }
+
+      const isSelf = !to_user_id && !!toEmail && toEmail.toLowerCase() === authUser.email.toLowerCase();
+
+      if (!isSelf) {
+        // Envoi a un tiers : verifie que l'appelant est admin ou super_admin.
+        const supabaseAdmin = createClient(SUPABASE_URL_ENV, SUPABASE_SERVICE_ROLE_KEY_ENV);
+        const { data: roleRow } = await supabaseAdmin
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", authUser.id)
+          .in("role", ["admin", "super_admin"])
+          .maybeSingle();
+        if (!roleRow) {
+          return json({ ok: false, error: "Destinataire non autorisé." }, 403, corsHeaders);
+        }
+        if (to_user_id) {
+          const { data: { user: targetUser } } = await supabaseAdmin.auth.admin.getUserById(to_user_id);
+          if (!targetUser?.email) {
+            return json({ ok: false, error: "Destinataire introuvable." }, 400, corsHeaders);
+          }
+          recipientEmail = targetUser.email;
+        } else {
+          recipientEmail = toEmail!;
+          recipientName = toName;
+        }
       } else {
         recipientEmail = toEmail!;
         recipientName = toName;
       }
-    } else {
-      recipientEmail = toEmail!;
-      recipientName = toName;
     }
     // ── Fin verification ───────────────────────────────────────────────────────
 

@@ -114,20 +114,29 @@ Deno.serve(async (req) => {
       // Attribuer le rôle avant l'envoi de l'email
       await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: assignedRole });
 
-      // Envoyer l'email via Brevo (non bloquant, action_link JAMAIS renvoyé au client)
-      void callerClient.functions.invoke("send-email", {
-        body: {
-          to: email,
-          template: "staff_invite",
-          variables: {
-            prenom: first_name || "",
-            nom: last_name || "",
-            action_link: (linkData as any).properties?.action_link ?? "",
+      // Envoyer l'email via send-email (appel interne service_role).
+      // await obligatoire : le runtime Deno annule les promises non awaited au retour de la Response.
+      // supabaseAdmin envoie Authorization: Bearer <SERVICE_ROLE_KEY>, reconnu par send-email comme appel interne.
+      // L'action_link ne doit JAMAIS être renvoyé dans la réponse HTTP au client.
+      try {
+        const emailRes = await supabaseAdmin.functions.invoke("send-email", {
+          body: {
+            to: email,
+            template: "staff_invite",
+            variables: {
+              prenom: first_name || "",
+              nom: last_name || "",
+              action_link: (linkData as any).properties?.action_link ?? "",
+            },
           },
-        },
-      }).catch((err: unknown) => {
-        console.error("[invite-staff] echec envoi email invitation:", err instanceof Error ? err.message : String(err));
-      });
+        });
+        if (emailRes.error) {
+          console.error("[invite-staff] send-email erreur:", JSON.stringify(emailRes.error));
+        }
+      } catch (err: unknown) {
+        console.error("[invite-staff] echec appel send-email:", err instanceof Error ? err.message : String(err));
+      }
+      // L'invitation est considérée réussie même si l'email échoue.
     }
 
     // Link staff to formation only if formation_id provided
