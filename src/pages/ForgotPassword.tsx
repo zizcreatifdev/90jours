@@ -6,12 +6,10 @@ import RequiredLabel from "@/components/ui/required-label";
 import FieldError from "@/components/ui/field-error";
 import { useFormValidation, isValidEmail } from "@/hooks/use-form-validation";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 import { Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
 
 const ForgotPassword = () => {
-  const { toast } = useToast();
   const { settings } = useSiteSettings();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,21 +30,13 @@ const ForgotPassword = () => {
     if (!validateAll()) return;
     setLoading(true);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
+    // Appel vers la nouvelle edge function reset-password (non authentifiée).
+    // Retourne toujours ok:true côté serveur (anti-énumération).
+    await supabase.functions.invoke("reset-password", { body: { email } }).catch(() => undefined);
 
     setLoading(false);
-
-    if (error) {
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      setSent(true);
-    }
+    // Afficher toujours le même message, que l'email existe ou non (anti-énumération).
+    setSent(true);
   };
 
   return (
@@ -115,8 +105,9 @@ const ForgotPassword = () => {
                 Email envoyé !
               </h1>
               <p className="mb-6 text-sm text-muted-foreground">
-                Un lien de réinitialisation a été envoyé à{" "}
-                <span className="font-medium text-foreground">{email}</span>.
+                Si un compte existe pour{" "}
+                <span className="font-medium text-foreground">{email}</span>,
+                {" "}un lien de réinitialisation a été envoyé.
                 Vérifiez votre boîte mail et vos spams.
               </p>
               <Button

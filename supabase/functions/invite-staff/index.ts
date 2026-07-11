@@ -49,7 +49,10 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Accès réservé aux super admins" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { email, formation_id, first_name, last_name } = await req.json();
+    const body = await req.json();
+    const { email, formation_id, first_name, last_name } = body;
+    // role param réservé pour le futur rôle assistant (DB enum non encore étendu)
+    const assignedRole = "staff";
 
     if (!email) {
       return new Response(JSON.stringify({ error: "Email requis" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -75,36 +78,56 @@ Deno.serve(async (req) => {
     if (existingUser) {
       userId = existingUser.id;
 
-      // Check if user already has staff role
-      const { data: existingStaffRole } = await supabaseAdmin
+      // Check if user already has the assigned role
+      const { data: existingAssignedRole } = await supabaseAdmin
         .from("user_roles")
         .select("id")
         .eq("user_id", userId)
-        .eq("role", "staff")
+        .eq("role", assignedRole)
         .maybeSingle();
 
-      if (!existingStaffRole) {
-        // Add staff role (keep existing student role)
-        await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "staff" });
+      if (!existingAssignedRole) {
+        // Add role (keep existing student role)
+        await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: assignedRole });
       }
     } else {
-      // Invite new user via email
-      const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-        data: {
-          first_name: first_name || "",
-          last_name: last_name || "",
+      // Nouveau compte : générer le lien d'invitation sans envoyer d'email natif Supabase
+      const inviteOrigin = req.headers.get("origin") || supabaseUrl.replace(".supabase.co", ".vercel.app");
+      const { data: linkData, error: inviteError } = await supabaseAdmin.auth.admin.generateLink({
+        type: "invite",
+        email,
+        options: {
+          data: { first_name: first_name || "", last_name: last_name || "" },
+          redirectTo: `${inviteOrigin}/setup-account`,
         },
-        redirectTo: `${req.headers.get("origin") || supabaseUrl.replace('.supabase.co', '.vercel.app')}/setup-account`,
       });
 
-      if (inviteError) {
-        return new Response(JSON.stringify({ error: inviteError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (inviteError || !linkData) {
+        return new Response(
+          JSON.stringify({ error: inviteError?.message ?? "Erreur lors de la création de l'invitation" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
-      userId = inviteData.user.id;
+      userId = linkData.user.id;
 
-      // Add staff role (user already has student role from trigger)
-      await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: "staff" });
+      // Attribuer le rôle avant l'envoi de l'email
+      await supabaseAdmin.from("user_roles").insert({ user_id: userId, role: assignedRole });
+
+      // Envoyer l'email via Brevo (non bloquant, action_link JAMAIS renvoyé au client)
+      void callerClient.functions.invoke("send-email", {
+        body: {
+          to: email,
+          template: "staff_invite",
+          variables: {
+            prenom: first_name || "",
+            nom: last_name || "",
+            action_link: (linkData as any).properties?.action_link ?? "",
+          },
+        },
+      }).catch((err: unknown) => {
+        console.error("[invite-staff] echec envoi email invitation:", err instanceof Error ? err.message : String(err));
+      });
     }
 
     // Link staff to formation only if formation_id provided

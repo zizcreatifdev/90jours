@@ -15,6 +15,10 @@ verify_jwt = false
 [functions.get-vapid-key]
 verify_jwt = false
 
+# Réinitialisation de mot de passe via Brevo (non authentifiée, anti-énumération).
+[functions.reset-password]
+verify_jwt = false
+
 # Email transactionnel generique (mode log sans BREVO_API_KEY, envoi reel sinon).
 # verify_jwt = false : obligatoire pour les requetes OPTIONS (CORS preflight) que
 # les navigateurs envoient SANS header Authorization. Si verify_jwt = true, le

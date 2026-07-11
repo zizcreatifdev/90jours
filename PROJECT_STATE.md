@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 11 juillet 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: email attestation_ready (template + autorisation admin cross-user + declenchement AttestationIssuer)
+**Prompt actuel**: migration emails invitation staff + reset password vers Brevo (generateLink + send-email, anti-enumeration)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -23,7 +23,7 @@
 | Hooks custom | 10 |
 | Tables Supabase | 34 |
 | Migrations SQL | 57 |
-| Edge Functions | 8 (send-email : 2 templates, autorisation cross-user admin) |
+| Edge Functions | 9 (send-email : 4 templates + autorisation cross-user admin ; invite-staff : Brevo via generateLink ; reset-password : nouvelle, unauthentifié, anti-énumération) |
 | CI/CD | GitHub Actions (deploy-functions.yml) |
 | Utilitaires lib | email-suggestion.ts (Levenshtein, 20 domaines) |
 | Tests | 66 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator + 9 EmptyState + 4 task-config) |

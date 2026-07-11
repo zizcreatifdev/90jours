@@ -199,6 +199,66 @@ const TEMPLATES: Record<string, (vars: Record<string, string>, appUrl: string) =
 
     return { subject, html: layout(inner) };
   },
+
+  staff_invite: (vars, _appUrl) => {
+    const prenom = esc(vars.prenom || "");
+    const nom = esc(vars.nom || "");
+    const actionLink = vars.action_link || "";
+    const greeting = prenom ? `Bonjour ${prenom}${nom ? " " + nom : ""},` : "Bonjour,";
+
+    const inner = `
+      <h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:32px;font-weight:bold;color:${NAVY};">
+        Bienvenue dans l'équipe 60jours
+      </h1>
+      <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
+        ${greeting}
+      </p>
+      <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
+        Vous avez été invité à rejoindre l'équipe 60jours en tant que membre du staff.
+        Cliquez sur le bouton ci-dessous pour configurer votre compte et accéder à votre espace.
+      </p>
+      <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
+        Ce lien d'invitation est à usage unique et expire dans 24 heures.
+      </p>
+      ${ctaButton("Configurer mon compte", actionLink)}
+      <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:${MUTED};">
+        Si le bouton ne fonctionne pas, demandez à votre administrateur de vous renvoyer une invitation.
+      </p>`;
+
+    return {
+      subject: "Invitation à rejoindre l'équipe 60jours",
+      html: layout(inner),
+    };
+  },
+
+  password_reset: (vars, _appUrl) => {
+    const link = vars.link || "";
+
+    const inner = `
+      <h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:32px;font-weight:bold;color:${NAVY};">
+        Réinitialisation de votre mot de passe
+      </h1>
+      <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
+        Nous avons reçu une demande de réinitialisation du mot de passe pour votre compte 60jours.
+      </p>
+      <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:${INK};">
+        Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.
+        Ce lien est valable pendant 1 heure.
+      </p>
+      ${ctaButton("Réinitialiser mon mot de passe", link)}
+      <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:${MUTED};">
+        Si vous n'avez pas demandé cette réinitialisation, ignorez cet email. Votre mot de passe ne sera pas modifié.
+      </p>
+      <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:${MUTED};">
+        Si le bouton ne fonctionne pas, rendez-vous sur la page de connexion et cliquez sur
+        "Mot de passe oublié" pour obtenir un nouveau lien.
+      </p>`;
+
+    return {
+      subject: "Réinitialisation de votre mot de passe 60jours",
+      html: layout(inner),
+    };
+  },
 };
 
 const json = (body: unknown, status: number, corsHeaders: Record<string, string>) =>
