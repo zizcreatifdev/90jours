@@ -11,8 +11,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Plus, Video, FlaskConical, Calendar, Clock, Users } from "lucide-react";
+import { Pencil, Trash2, Plus, Calendar, Clock, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EVENT_TYPE_STYLES } from "@/lib/calendar-event-styles";
 
 interface SessionsManagerProps {
   role: "admin" | "staff";
@@ -37,10 +38,6 @@ interface CohortOption {
   formation_name: string | null;
 }
 
-const SESSION_TYPE_LABELS: Record<string, string> = {
-  masterclass: "Masterclass",
-  research: "Recherche",
-};
 
 const formatDateTimeFR = (iso: string): string => {
   const d = new Date(iso);
@@ -103,7 +100,8 @@ const SessionsManager = ({ role, cohortIds }: SessionsManagerProps) => {
     try {
       const { data: cohorts, error: cohortsError } = await supabase
         .from("cohorts")
-        .select("id, name, formation_id, formation:formations(id, name)");
+        .select("id, name, formation_id, formation:formations(id, name)")
+        .neq("status", "archived");
       if (cohortsError) throw cohortsError;
 
       const cohortMap = new Map<string, CohortOption>();
@@ -295,25 +293,19 @@ const SessionsManager = ({ role, cohortIds }: SessionsManagerProps) => {
     .filter((s) => new Date(s.scheduled_at) < now)
     .sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
 
-  const SessionCard = ({ s }: { s: SessionRow }) => (
+  const SessionCard = ({ s }: { s: SessionRow }) => {
+    const style = EVENT_TYPE_STYLES[s.type] ?? EVENT_TYPE_STYLES["masterclass"];
+    const TypeIcon = style.Icon;
+    return (
     <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2 min-w-0">
           <Badge
-            className={cn(
-              "shrink-0 text-xs font-semibold",
-              s.type === "masterclass"
-                ? "bg-accent/15 text-accent border-accent/30"
-                : "bg-primary/10 text-primary border-primary/20",
-            )}
+            className={cn("shrink-0 text-xs font-semibold", style.bg, style.text, style.border)}
             variant="outline"
           >
-            {s.type === "masterclass" ? (
-              <Video className="h-3 w-3 mr-1" />
-            ) : (
-              <FlaskConical className="h-3 w-3 mr-1" />
-            )}
-            {SESSION_TYPE_LABELS[s.type]}
+            <TypeIcon className="h-3 w-3 mr-1" />
+            {style.label}
           </Badge>
           <span className="text-sm font-semibold text-foreground truncate">{s.title}</span>
         </div>
@@ -368,6 +360,7 @@ const SessionsManager = ({ role, cohortIds }: SessionsManagerProps) => {
       )}
     </div>
   );
+  };
 
   return (
     <div className="space-y-6">

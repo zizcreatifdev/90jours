@@ -10,7 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarDays, BookOpen, Search as SearchIcon, Plus, Loader2, Clock, Bookmark } from "lucide-react";
+import { useFormValidation } from "@/hooks/use-form-validation";
+import { EVENT_TYPE_STYLES } from "@/lib/calendar-event-styles";
+import { cn } from "@/lib/utils";
+import { CalendarDays, Plus, Loader2, Clock, X, AlertCircle } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -19,22 +22,14 @@ interface DashboardCalendarProps {
   cohortIds?: string[];
 }
 
-const EVENT_COLORS: Record<string, { bg: string; text: string; dot: string; label: string }> = {
-  brief: { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-700 dark:text-blue-300", dot: "bg-blue-500", label: "Brief" },
-  masterclass: { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-700 dark:text-purple-300", dot: "bg-purple-500", label: "Masterclass" },
-  research: { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-300", dot: "bg-amber-500", label: "Recherche" },
-  personal: { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500", label: "Personnel" },
-};
-
 const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
   const [formationFilter, setFormationFilter] = useState("all");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [createOpen, setCreateOpen] = useState(false);
   const [createPersonalOpen, setCreatePersonalOpen] = useState(false);
   const [typeFilter, setTypeFilter] = useState<Set<string>>(
-    () => new Set(Object.keys(EVENT_COLORS))
+    () => new Set(Object.keys(EVENT_TYPE_STYLES))
   );
-  const { user } = useAuth();
 
   const toggleType = (type: string) => {
     setTypeFilter((prev) => {
@@ -46,7 +41,7 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
   };
   const { toast } = useToast();
 
-  const { events, loading, formations, refetch } = useCalendarEvents({
+  const { events, loading, hasError, formations, refetch } = useCalendarEvents({
     cohortIds,
     formationFilter: role === "admin" ? formationFilter : undefined,
     role,
@@ -57,7 +52,6 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
     [events, typeFilter, role]
   );
 
-  // Events for selected date
   const selectedEvents = useMemo(() => {
     if (!selectedDate) return [];
     return filteredEvents
@@ -65,7 +59,6 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
       .sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [filteredEvents, selectedDate]);
 
-  // Dates that have events (for calendar dots)
   const eventDates = useMemo(() => {
     const map = new Map<string, Set<string>>();
     filteredEvents.forEach((e) => {
@@ -116,23 +109,31 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
         </div>
       </div>
 
+      {hasError && (
+        <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          Impossible de charger certains evenements du calendrier.
+        </div>
+      )}
+
       {role === "student" && (
         <div className="flex flex-wrap gap-2">
-          {Object.entries(EVENT_COLORS).map(([type, colors]) => {
+          {Object.entries(EVENT_TYPE_STYLES).map(([type, style]) => {
             const active = typeFilter.has(type);
             return (
               <button
                 key={type}
                 onClick={() => toggleType(type)}
                 aria-pressed={active}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border transition-all ${
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 text-xs font-semibold border transition-all min-h-[44px]",
                   active
-                    ? `${colors.bg} ${colors.text} border-transparent`
+                    ? cn(style.bg, style.text, "border-transparent")
                     : "bg-card text-muted-foreground border-border opacity-40"
-                }`}
+                )}
               >
-                <div className={`h-2 w-2 rounded-full ${active ? colors.dot : "bg-muted-foreground"}`} />
-                {colors.label}
+                <div className={cn("h-2 w-2 rounded-full", active ? style.dot : "bg-muted-foreground")} />
+                {style.label}
               </button>
             );
           })}
@@ -163,7 +164,7 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
                     {types && (
                       <div className="absolute -bottom-1 flex gap-0.5">
                         {Array.from(types).map((t) => (
-                          <div key={t} className={`h-1 w-1 rounded-full ${EVENT_COLORS[t]?.dot || "bg-muted-foreground"}`} />
+                          <div key={t} className={cn("h-1 w-1 rounded-full", EVENT_TYPE_STYLES[t]?.dot ?? "bg-muted-foreground")} />
                         ))}
                       </div>
                     )}
@@ -172,15 +173,15 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
               },
             }}
           />
-          {/* Legend (hidden for student : chips above serve as legend) */}
+          {/* Legend (student uses chips above as legend) */}
           {role !== "student" && (
             <div className="mt-3 flex flex-wrap gap-3 px-2">
-              {Object.entries(EVENT_COLORS)
+              {Object.entries(EVENT_TYPE_STYLES)
                 .filter(([key]) => key !== "personal")
-                .map(([key, val]) => (
+                .map(([key, style]) => (
                   <div key={key} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <div className={`h-2 w-2 rounded-full ${val.dot}`} />
-                    {val.label}
+                    <div className={cn("h-2 w-2 rounded-full", style.dot)} />
+                    {style.label}
                   </div>
                 ))}
             </div>
@@ -212,7 +213,7 @@ const DashboardCalendar = ({ role, cohortIds }: DashboardCalendarProps) => {
 };
 
 const EventCard = ({ event, role, onDeleted }: { event: CalendarEvent; role: string; onDeleted: () => void }) => {
-  const colors = EVENT_COLORS[event.type] ?? EVENT_COLORS["brief"];
+  const style = EVENT_TYPE_STYLES[event.type] ?? EVENT_TYPE_STYLES["brief"];
   const { toast } = useToast();
   const [deleting, setDeleting] = useState(false);
 
@@ -238,16 +239,23 @@ const EventCard = ({ event, role, onDeleted }: { event: CalendarEvent; role: str
     setDeleting(false);
   };
 
+  const TypeIcon = style.Icon;
+
   return (
     <div
-      className={`rounded-xl p-3 ${colors.bg}${isPersonal ? " border border-dashed border-emerald-300 dark:border-emerald-700" : ""}${event.isScheduled ? " opacity-60 border border-dashed border-blue-400 dark:border-blue-600" : ""}`}
+      className={cn(
+        "rounded-xl p-3",
+        style.bg,
+        isPersonal && cn("border border-dashed", style.border),
+        event.isScheduled && "opacity-60 border border-dashed border-primary/30"
+      )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            {isPersonal && <Bookmark className={`h-3 w-3 shrink-0 ${colors.text}`} />}
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${colors.text} ${colors.bg}`}>
-              {colors.label}
+            <TypeIcon className={cn("h-3 w-3 shrink-0", style.text)} />
+            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-semibold", style.text, style.bg)}>
+              {style.label}
             </span>
             {event.isScheduled && (
               <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
@@ -261,11 +269,11 @@ const EventCard = ({ event, role, onDeleted }: { event: CalendarEvent; role: str
               <span className="text-[10px] text-muted-foreground">• {event.formation_name}</span>
             )}
           </div>
-          <p className={`mt-1 text-sm font-medium ${colors.text}`}>{event.title}</p>
+          <p className={cn("mt-1 text-sm font-medium", style.text)}>{event.title}</p>
           {event.description && (
             <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{event.description}</p>
           )}
-          {(!isPersonal || event.hasExplicitTime) && (
+          {event.hasExplicitTime && (
             <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
               <Clock className="h-3 w-3" />
               {format(event.date, "HH:mm", { locale: fr })}
@@ -278,9 +286,9 @@ const EventCard = ({ event, role, onDeleted }: { event: CalendarEvent; role: str
             onClick={handleDelete}
             disabled={deleting}
             aria-label="Supprimer l'evenement"
-            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-xs text-muted-foreground hover:text-destructive transition-colors"
+            className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-muted-foreground hover:text-destructive transition-colors"
           >
-            {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : "×"}
+            {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-4 w-4" />}
           </button>
         )}
       </div>
@@ -288,7 +296,6 @@ const EventCard = ({ event, role, onDeleted }: { event: CalendarEvent; role: str
   );
 };
 
-// Dialog de creation d'evenement personnel pour les etudiants
 interface CreatePersonalEventDialogProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -399,7 +406,6 @@ const CreatePersonalEventDialog = ({ open, onOpenChange, onCreated }: CreatePers
   );
 };
 
-// Create event dialog for staff/admin
 interface CreateEventDialogProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -419,29 +425,59 @@ const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onCreated }: C
   const [cohortId, setCohortId] = useState("");
   const [saving, setSaving] = useState(false);
   const [cohorts, setCohorts] = useState<{ id: string; name: string; formation?: { name: string } | null }[]>([]);
+  const [cohortsError, setCohortsError] = useState(false);
 
-  // Fetch cohorts for selector
+  const { showError, handleBlur, isValid, validateAll, reset: resetValidation } = useFormValidation(
+    { cohortId, title, scheduledAt },
+    {
+      cohortId: { required: "La cohorte est requise." },
+      title: { required: "Le titre est requis." },
+      scheduledAt: { required: "La date et l'heure sont requises." },
+    }
+  );
+
+  useEffect(() => {
+    if (open) {
+      setType("masterclass");
+      setTitle("");
+      setDescription("");
+      setScheduledAt("");
+      setDuration("60");
+      setCohortId("");
+      setCohortsError(false);
+      resetValidation();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   useEffect(() => {
     const fetchCohorts = async () => {
-      let query = supabase.from("cohorts").select("id, name, formation:formations(name)").eq("status", "active");
+      setCohortsError(false);
+      let query = supabase.from("cohorts").select("id, name, formation:formations(name)").neq("status", "archived");
       if (cohortIds && cohortIds.length > 0) {
         query = query.in("id", cohortIds);
       }
-      const { data } = await query;
-      if (data) setCohorts(data as any);
+      const { data, error } = await query;
+      if (error) {
+        console.error("Erreur chargement cohortes du dialog evenement", error);
+        setCohortsError(true);
+      }
+      if (data) setCohorts(data as { id: string; name: string; formation?: { name: string } | null }[]);
     };
     fetchCohorts();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cohortIds?.join(",")]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !cohortId || !scheduledAt) return;
+    if (!validateAll()) return;
+    if (!user) return;
     setSaving(true);
 
     const table = type === "masterclass" ? "masterclass_sessions" : "research_sessions";
-    const payload: any = {
-      title,
-      description: description || null,
+    const payload: Record<string, unknown> = {
+      title: title.trim(),
+      description: description.trim() || null,
       scheduled_at: scheduledAt,
       cohort_id: cohortId,
       created_by: user.id,
@@ -454,9 +490,6 @@ const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onCreated }: C
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Evenement cree !" });
-      setTitle("");
-      setDescription("");
-      setScheduledAt("");
       onOpenChange(false);
       onCreated();
     }
@@ -476,7 +509,7 @@ const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onCreated }: C
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div>
             <Label>Type</Label>
-            <Select value={type} onValueChange={(v: any) => setType(v)}>
+            <Select value={type} onValueChange={(v) => setType(v as "masterclass" | "research")}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="masterclass">Masterclass</SelectItem>
@@ -484,28 +517,61 @@ const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onCreated }: C
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label>Cohorte</Label>
+          <div className="space-y-1.5">
+            <Label>Cohorte <span className="text-destructive">*</span></Label>
+            {cohortsError && (
+              <p className="text-xs text-destructive">Impossible de charger les cohortes.</p>
+            )}
             <Select value={cohortId} onValueChange={setCohortId}>
-              <SelectTrigger><SelectValue placeholder="Selectionner une cohorte" /></SelectTrigger>
+              <SelectTrigger
+                className={cn(showError("cohortId") && "border-destructive")}
+                onBlur={() => handleBlur("cohortId")}
+              >
+                <SelectValue placeholder="Selectionner une cohorte" />
+              </SelectTrigger>
               <SelectContent>
                 {cohorts.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>Cohorte {c.name}{c.formation ? ` (${c.formation.name})` : ""}</SelectItem>
+                  <SelectItem key={c.id} value={c.id}>
+                    Cohorte {c.name}{c.formation ? ` (${c.formation.name})` : ""}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {showError("cohortId") && (
+              <p className="text-xs text-destructive">{showError("cohortId")}</p>
+            )}
           </div>
-          <div>
-            <Label>Titre</Label>
-            <Input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre de l'evenement" />
+          <div className="space-y-1.5">
+            <Label>Titre <span className="text-destructive">*</span></Label>
+            <Input
+              required
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={() => handleBlur("title")}
+              placeholder="Titre de l'evenement"
+              className={cn(showError("title") && "border-destructive")}
+            />
+            {showError("title") && (
+              <p className="text-xs text-destructive">{showError("title")}</p>
+            )}
           </div>
           <div>
             <Label>Description</Label>
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Description (optionnel)" rows={2} />
           </div>
-          <div>
-            <Label>Date et heure</Label>
-            <Input type="datetime-local" required value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} />
+          <div className="space-y-1.5">
+            <Label>Date et heure <span className="text-destructive">*</span></Label>
+            <Input
+              type="datetime-local"
+              required
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+              onBlur={() => handleBlur("scheduledAt")}
+              className={cn(showError("scheduledAt") && "border-destructive")}
+            />
+            {showError("scheduledAt") && (
+              <p className="text-xs text-destructive">{showError("scheduledAt")}</p>
+            )}
           </div>
           {type === "masterclass" && (
             <div>
@@ -513,7 +579,7 @@ const CreateEventDialog = ({ open, onOpenChange, cohortIds, role, onCreated }: C
               <Input type="number" min="15" max="480" value={duration} onChange={(e) => setDuration(e.target.value)} />
             </div>
           )}
-          <Button type="submit" disabled={saving} className="w-full">
+          <Button type="submit" disabled={saving || !isValid} className="w-full">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
             Creer
           </Button>

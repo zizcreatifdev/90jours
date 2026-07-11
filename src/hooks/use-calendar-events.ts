@@ -28,17 +28,24 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
   const { user } = useAuth();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const [formations, setFormations] = useState<{ id: string; name: string }[]>([]);
 
   const fetchEvents = async () => {
     setLoading(true);
+    setHasError(false);
+    let anyError = false;
     try {
       const allEvents: CalendarEvent[] = [];
 
       // Fetch cohorts with formation info for labeling
-      const { data: cohorts } = await supabase
+      const { data: cohorts, error: cohortsError } = await supabase
         .from("cohorts")
         .select("id, name, formation_id, formation:formations(id, name)");
+      if (cohortsError) {
+        console.error("Erreur chargement cohortes du calendrier", cohortsError);
+        anyError = true;
+      }
 
       const cohortMap = new Map<string, { name: string; formation_id: string | null; formation_name: string | null }>();
       const formationSet = new Map<string, string>();
@@ -76,7 +83,11 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
         if (targetCohortIds && targetCohortIds.length > 0) {
           briefsQuery = briefsQuery.in("cohort_id", targetCohortIds);
         }
-        const { data: briefs } = await briefsQuery;
+        const { data: briefs, error: briefsError } = await briefsQuery;
+        if (briefsError) {
+          console.error("Erreur chargement briefs du calendrier", briefsError);
+          anyError = true;
+        }
 
         (briefs || []).forEach((b: any) => {
           const info = cohortMap.get(b.cohort_id);
@@ -94,6 +105,7 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
             formation_id: info?.formation_id,
             formation_name: info?.formation_name,
             isScheduled: !isPublished,
+            hasExplicitTime: false,
           });
         });
       }
@@ -104,7 +116,11 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
         if (targetCohortIds && targetCohortIds.length > 0) {
           mcQuery = mcQuery.in("cohort_id", targetCohortIds);
         }
-        const { data: masterclasses } = await mcQuery;
+        const { data: masterclasses, error: masterclassesError } = await mcQuery;
+        if (masterclassesError) {
+          console.error("Erreur chargement masterclasses du calendrier", masterclassesError);
+          anyError = true;
+        }
 
         (masterclasses || []).forEach((m: any) => {
           const info = cohortMap.get(m.cohort_id);
@@ -119,6 +135,7 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
             formation_id: info?.formation_id,
             formation_name: info?.formation_name,
             duration_minutes: m.duration_minutes,
+            hasExplicitTime: true,
           });
         });
       }
@@ -129,7 +146,11 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
         if (targetCohortIds && targetCohortIds.length > 0) {
           rsQuery = rsQuery.in("cohort_id", targetCohortIds);
         }
-        const { data: researchSessions } = await rsQuery;
+        const { data: researchSessions, error: researchError } = await rsQuery;
+        if (researchError) {
+          console.error("Erreur chargement sessions de recherche du calendrier", researchError);
+          anyError = true;
+        }
 
         (researchSessions || []).forEach((r: any) => {
           const info = cohortMap.get(r.cohort_id);
@@ -143,16 +164,21 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
             cohort_name: info?.name,
             formation_id: info?.formation_id,
             formation_name: info?.formation_name,
+            hasExplicitTime: true,
           });
         });
       }
 
       // Fetch personal events (student only, RLS garantit que seul le proprietaire les voit)
       if (role === "student" && user) {
-        const { data: personalEvts } = await supabase
+        const { data: personalEvts, error: personalError } = await supabase
           .from("personal_events")
           .select("id, title, description, event_date, event_time, user_id")
           .eq("user_id", user.id);
+        if (personalError) {
+          console.error("Erreur chargement evenements personnels du calendrier", personalError);
+          anyError = true;
+        }
 
         (personalEvts || []).forEach((p: any) => {
           const dateStr = p.event_time
@@ -171,8 +197,10 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
       }
 
       setEvents(allEvents);
+      setHasError(anyError);
     } catch (err) {
       console.error("Erreur de chargement du calendrier", err);
+      setHasError(true);
     } finally {
       setLoading(false);
     }
@@ -183,5 +211,5 @@ export function useCalendarEvents({ cohortIds, formationFilter, role }: UseCalen
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cohortIds?.join(","), formationFilter, user?.id]);
 
-  return { events, loading, formations, refetch: fetchEvents };
+  return { events, loading, hasError, formations, refetch: fetchEvents };
 }

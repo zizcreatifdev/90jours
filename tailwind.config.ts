@@ -69,6 +69,8 @@ export default {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
         },
+        "calendar-brief": "hsl(var(--calendar-brief))",
+        "calendar-personal": "hsl(var(--calendar-personal))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

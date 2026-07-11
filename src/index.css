@@ -58,6 +58,10 @@
     --warning: 38 70% 48%;
     --warning-foreground: 34 44% 13%;
 
+    /* Calendar event type tokens */
+    --calendar-brief: 262 22% 48%;
+    --calendar-personal: 152 22% 42%;
+
     /* Glass tokens */
     --glass-bg: 0 0% 100% / 0.6;
     --glass-border: 0 0% 100% / 0.3;
@@ -103,6 +107,10 @@
     --sidebar-accent-foreground: 40 20% 95%;
     --sidebar-border: 220 20% 15%;
     --sidebar-ring: 39 48% 56%;
+
+    /* Calendar event type tokens dark */
+    --calendar-brief: 262 28% 68%;
+    --calendar-personal: 152 28% 62%;
 
     /* Glass tokens dark */
     --glass-bg: 220 25% 12% / 0.5;
