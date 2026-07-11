@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -98,12 +98,13 @@ const SessionsManager = ({ role, cohortIds }: SessionsManagerProps) => {
     },
   );
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const { data: cohorts } = await supabase
+      const { data: cohorts, error: cohortsError } = await supabase
         .from("cohorts")
         .select("id, name, formation_id, formation:formations(id, name)");
+      if (cohortsError) throw cohortsError;
 
       const cohortMap = new Map<string, CohortOption>();
       (cohorts || []).forEach((c: any) => {
@@ -185,11 +186,12 @@ const SessionsManager = ({ role, cohortIds }: SessionsManagerProps) => {
     } finally {
       setLoading(false);
     }
-  }, [cohortIds]);
+  };
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cohortIds?.join(",")]); // dependance primitive stable : evite la boucle infinie quand cohortIds est recalcule en JSX
 
   const openCreate = () => {
     setEditSession(null);
