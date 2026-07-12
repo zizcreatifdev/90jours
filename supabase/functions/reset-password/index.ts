@@ -153,7 +153,8 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    const redirectTo = `${allowedOrigin}/reset-password`;
+    const appUrl = Deno.env.get("APP_URL") || "https://60jours.com";
+    const redirectTo = `${appUrl}/reset-password`;
 
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: "recovery",
@@ -177,7 +178,11 @@ Deno.serve(async (req) => {
       return success;
     }
 
-    const { subject, html } = renderEmail(actionLink);
+    // Encoder l'action_link en base64url pour le passer via la page intermediaire
+    // /reinitialisation, qui protege le lien a usage unique contre les scanners d'emails.
+    const encodedToken = btoa(actionLink).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    const emailLink = `${appUrl}/reinitialisation?token=${encodedToken}`;
+    const { subject, html } = renderEmail(emailLink);
     const fromEmail = Deno.env.get("EMAIL_FROM") || FROM_EMAIL_FALLBACK;
     const replyToEmail = Deno.env.get("EMAIL_REPLY_TO") || REPLY_TO_EMAIL_FALLBACK;
 

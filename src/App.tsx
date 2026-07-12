@@ -17,6 +17,8 @@ const StaffDashboard  = React.lazy(() => import("./pages/StaffDashboard"));
 const StudentDashboard = React.lazy(() => import("./pages/StudentDashboard"));
 const ProfilePage     = React.lazy(() => import("./pages/ProfilePage"));
 const SetupAccount    = React.lazy(() => import("./pages/SetupAccount"));
+const InvitationLanding = React.lazy(() => import("./pages/InvitationLanding"));
+const ResetPasswordLanding = React.lazy(() => import("./pages/ResetPasswordLanding"));
 const ForgotPassword  = React.lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword   = React.lazy(() => import("./pages/ResetPassword"));
 const ContractSign   = React.lazy(() => import("./pages/ContractSign"));
@@ -50,6 +52,8 @@ const App = () => (
                 <Route path="/onboarding" element={<ProtectedRoute requiredRole="student"><Onboarding /></ProtectedRoute>} />
                 <Route path="/formation/:slug" element={<FormationPage />} />
                 <Route path="/setup-account" element={<SetupAccount />} />
+                <Route path="/invitation" element={<InvitationLanding />} />
+                <Route path="/reinitialisation" element={<ResetPasswordLanding />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="*" element={<NotFound />} />

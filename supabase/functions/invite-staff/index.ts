@@ -99,13 +99,15 @@ Deno.serve(async (req) => {
       }
     } else {
       // Nouveau compte : générer le lien d'invitation sans envoyer d'email natif Supabase
-      const inviteOrigin = req.headers.get("origin") || supabaseUrl.replace(".supabase.co", ".vercel.app");
+      // redirectTo fixe via APP_URL (variable d'env provisionnee) plutot que l'origin de
+      // la requete, qui peut etre absent ou incorrect selon le contexte d'appel.
+      const appUrl = Deno.env.get("APP_URL") || "https://60jours.com";
       const { data: linkData, error: inviteError } = await supabaseAdmin.auth.admin.generateLink({
         type: "invite",
         email,
         options: {
           data: { first_name: first_name || "", last_name: last_name || "" },
-          redirectTo: `${inviteOrigin}/setup-account`,
+          redirectTo: `${appUrl}/setup-account`,
         },
       });
 
@@ -129,6 +131,14 @@ Deno.serve(async (req) => {
       // L'action_link ne doit JAMAIS être renvoyé dans la réponse HTTP au client.
       const actionLink = (linkData as any).properties?.action_link ?? "";
       console.log(`[invite-staff] envoi email a ${email} action_link_present=${!!actionLink}`);
+      // La page /invitation est une page intermediaire qui protege l'action_link a usage
+      // unique contre les scanners d'emails (Outlook SafeLinks, Gmail, etc.) qui pre-visitent
+      // les liens et consommeraient le token avant le clic humain.
+      // L'action_link est encode en base64url pour le passer en query param sans alteration.
+      // La page /invitation ne consomme PAS le lien (juste du HTML) ; seul le clic humain
+      // sur le bouton declenche window.location.href = actionLink (dechiffre cote client).
+      const encodedToken = btoa(actionLink).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      const invitationPageUrl = `${appUrl}/invitation?token=${encodedToken}`;
       try {
         const sendRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
           method: "POST",
@@ -143,7 +153,7 @@ Deno.serve(async (req) => {
             variables: {
               prenom: first_name || "",
               nom: last_name || "",
-              action_link: actionLink,
+              action_link: invitationPageUrl,
             },
           }),
         });
