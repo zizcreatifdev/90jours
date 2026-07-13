@@ -1,8 +1,8 @@
 # PROJECT_STATE.md — État du Projet
 
-**Dernière mise à jour**: 12 juillet 2026
+**Dernière mise à jour**: 13 juillet 2026
 **Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: invitation fiable : redirectTo via APP_URL (pas origin header), pages intermediaires /invitation et /reinitialisation anti-scanner (base64url decode + bouton JS), reset-password utilise /reinitialisation
+**Prompt actuel**: role assistant : operationnel sans financier, dashboard dedie /assistant, invitation avec choix de role (staff/assistant), attestations reservees super_admin (front + DB)
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -19,11 +19,11 @@
 | Métrique | Valeur |
 |---------|--------|
 | Composants React | 104 |
-| Pages | 17 |
+| Pages | 18 |
 | Hooks custom | 10 |
 | Tables Supabase | 34 |
-| Migrations SQL | 57 |
-| Edge Functions | 9 (send-email : 4 templates + isInternalCall service_role bypass + autorisation cross-user admin ; invite-staff : fetch direct service_role vers send-email, APP_URL pour redirectTo, encode action_link -> /invitation?token=, email_sent/email_error ; reset-password : APP_URL pour redirectTo, encode action_link -> /reinitialisation?token=, anti-enumeration) |
+| Migrations SQL | 57 + MIGRATION_ROLE_ASSISTANT.sql (a executer manuellement en 2 parties) |
+| Edge Functions | 9 (invite-staff : accepte role staff|assistant, valide cote serveur ; autres inchangees) |
 | CI/CD | GitHub Actions (deploy-functions.yml) |
 | Utilitaires lib | email-suggestion.ts (Levenshtein, 20 domaines) |
 | Tests | 66 (1 placeholder + 8 ProtectedRoute + 10 validate-url + 9 AuthContext + 10 export-csv + 16 PasswordStrengthIndicator + 9 EmptyState + 4 task-config) |

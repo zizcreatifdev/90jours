@@ -17,6 +17,7 @@ interface Formateur {
   user_id: string;
   first_name: string;
   last_name: string;
+  role: string;
   formations: { id: string; name: string; formation_id: string; staff_formation_id: string }[];
 }
 
@@ -28,6 +29,7 @@ const FormateurManager = () => {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [inviteRole, setInviteRole] = useState<"staff" | "assistant">("staff");
   const [form, setForm] = useState({ email: "", first_name: "", last_name: "", formation_id: "" });
 
   const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
@@ -49,13 +51,14 @@ const FormateurManager = () => {
     const { data: formationsData } = await supabase.from("formations").select("id, name").order("name");
     if (formationsData) setFormations(formationsData);
 
-    // Fetch all users with staff role
+    // Fetch all users with staff or assistant role
     const { data: staffRoles } = await supabase
       .from("user_roles")
-      .select("user_id")
-      .eq("role", "staff");
+      .select("user_id, role")
+      .in("role", ["staff", "assistant"]);
 
     const staffUserIds = staffRoles?.map((r: any) => r.user_id) || [];
+    const roleByUserId = new Map<string, string>((staffRoles || []).map((r: any) => [r.user_id, r.role]));
 
     if (staffUserIds.length > 0) {
       // Fetch staff_formations
@@ -67,7 +70,7 @@ const FormateurManager = () => {
       // Build map with all staff users
       const userMap = new Map<string, Formateur>();
       for (const uid of staffUserIds) {
-        userMap.set(uid, { user_id: uid, first_name: "", last_name: "", formations: [] });
+        userMap.set(uid, { user_id: uid, first_name: "", last_name: "", role: roleByUserId.get(uid) || "staff", formations: [] });
       }
 
       for (const sf of (staffFormations || []) as any[]) {
@@ -118,8 +121,9 @@ const FormateurManager = () => {
         email: form.email,
         first_name: form.first_name,
         last_name: form.last_name,
+        role: inviteRole,
       };
-      if (form.formation_id) {
+      if (inviteRole === "staff" && form.formation_id) {
         body.formation_id = form.formation_id;
       }
       const { data, error } = await supabase.functions.invoke("invite-staff", { body });
@@ -127,6 +131,7 @@ const FormateurManager = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
+      const roleLabel = inviteRole === "assistant" ? "assistant" : "formateur";
       if (data.is_new && data.email_sent === false) {
         toast({
           title: "Compte créé, email non envoyé",
@@ -135,16 +140,17 @@ const FormateurManager = () => {
         });
       } else {
         toast({
-          title: data.is_new ? "Invitation envoyée !" : "Membre staff ajouté !",
+          title: data.is_new ? `Invitation ${roleLabel} envoyée !` : `${inviteRole === "assistant" ? "Assistant" : "Membre staff"} ajouté !`,
           description: data.is_new
             ? `Un email d'invitation a été envoyé à ${form.email}.`
-            : form.formation_id
+            : inviteRole === "staff" && form.formation_id
               ? `${form.email} a été assigné à la formation.`
-              : `Le rôle staff a été attribué à ${form.email}.`,
+              : `Le rôle ${roleLabel} a été attribué à ${form.email}.`,
         });
       }
 
       setOpen(false);
+      setInviteRole("staff");
       setForm({ email: "", first_name: "", last_name: "", formation_id: "" });
       reset();
       fetchData();
@@ -215,13 +221,28 @@ const FormateurManager = () => {
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle className="font-display">Inviter un membre staff</DialogTitle>
+              <DialogTitle className="font-display">Inviter un membre de l'equipe</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleInvite} className="space-y-4 pt-2">
+              <div>
+                <Label>Role</Label>
+                <Select value={inviteRole} onValueChange={v => { setInviteRole(v as "staff" | "assistant"); setForm(f => ({ ...f, formation_id: "" })); }}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="staff">Formateur (staff)</SelectItem>
+                    <SelectItem value="assistant">Assistant operationnel</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {inviteRole === "assistant"
+                    ? "Acces operationnel complet (cohortes, briefs, portfolios, sessions). Aucun acces financier ni emission d'attestation."
+                    : "Formateur lie a une formation. Acces aux cohortes de sa formation."}
+                </p>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <RequiredLabel htmlFor="inv-first" required>Prénom</RequiredLabel>
-                  <Input id="inv-first" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} onBlur={() => handleBlur("first_name")} aria-invalid={!!showError("first_name")} placeholder="Prénom" />
+                  <RequiredLabel htmlFor="inv-first" required>Prenom</RequiredLabel>
+                  <Input id="inv-first" value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} onBlur={() => handleBlur("first_name")} aria-invalid={!!showError("first_name")} placeholder="Prenom" />
                   <FieldError message={showError("first_name")} />
                 </div>
                 <div>
@@ -232,23 +253,22 @@ const FormateurManager = () => {
               </div>
               <div>
                 <RequiredLabel htmlFor="inv-email" required>Email</RequiredLabel>
-                <Input id="inv-email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} onBlur={() => handleBlur("email")} aria-invalid={!!showError("email")} placeholder="staff@email.com" />
+                <Input id="inv-email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} onBlur={() => handleBlur("email")} aria-invalid={!!showError("email")} placeholder="membre@email.com" />
                 <FieldError message={showError("email")} />
               </div>
-              <div>
-                <Label>Formation à assigner <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
-                <Select value={form.formation_id} onValueChange={v => setForm({ ...form, formation_id: v })}>
-                  <SelectTrigger><SelectValue placeholder="Aucune (assistant uniquement)" /></SelectTrigger>
-                  <SelectContent>
-                    {formations.map(f => (
-                      <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Sans formation assignée, le membre sera ajouté comme assistant. Avec une formation, il sera formateur pour celle-ci.
-              </p>
+              {inviteRole === "staff" && (
+                <div>
+                  <Label>Formation a assigner <span className="text-muted-foreground font-normal">(optionnel)</span></Label>
+                  <Select value={form.formation_id} onValueChange={v => setForm({ ...form, formation_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Aucune" /></SelectTrigger>
+                    <SelectContent>
+                      {formations.map(f => (
+                        <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <Button type="submit" disabled={saving || !isValid} className="w-full">
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
                 Inviter
@@ -276,7 +296,7 @@ const FormateurManager = () => {
                       {f.first_name || "En attente"} {f.last_name || ""}
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Staff, {f.formations.length > 0 ? "Formateur" : "Assistant"}
+                      {f.role === "assistant" ? "Assistant" : f.formations.length > 0 ? "Formateur" : "Staff"}
                     </p>
                   </div>
                 </div>

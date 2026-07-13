@@ -260,7 +260,8 @@ async function storePdf(
 // ── Component ──────────────────────────────────────────────────────────────────
 
 const AttestationIssuer = () => {
-  const { user, isOwner } = useAuth();
+  const { user, isOwner, activeRole } = useAuth();
+  const isSuperAdmin = activeRole === "super_admin";
   const { toast } = useToast();
   const { cohorts } = useCohorts();
   const [selectedCohort, setSelectedCohort] = useState<string>("");
@@ -736,7 +737,7 @@ const AttestationIssuer = () => {
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-3 mb-4">
-            {eligibleCount > 0 && (
+            {eligibleCount > 0 && isSuperAdmin && (
               <ConfirmDialog
                 trigger={
                   <Button disabled={issuing === "all" || exportProgress !== null} className="gap-2">
@@ -876,7 +877,7 @@ const AttestationIssuer = () => {
                                 onConfirm={() => handleRevoke(s.user_id)}
                               />
                             )
-                          ) : canIssue ? (
+                          ) : canIssue && isSuperAdmin ? (
                             <Button
                               size="sm"
                               variant="outline"

@@ -19,6 +19,7 @@ const ProfilePage     = React.lazy(() => import("./pages/ProfilePage"));
 const SetupAccount    = React.lazy(() => import("./pages/SetupAccount"));
 const InvitationLanding = React.lazy(() => import("./pages/InvitationLanding"));
 const ResetPasswordLanding = React.lazy(() => import("./pages/ResetPasswordLanding"));
+const AssistantDashboard = React.lazy(() => import("./pages/AssistantDashboard"));
 const ForgotPassword  = React.lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword   = React.lazy(() => import("./pages/ResetPassword"));
 const ContractSign   = React.lazy(() => import("./pages/ContractSign"));
@@ -44,6 +45,7 @@ const App = () => (
                 <Route path="/register" element={<Register />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/admin" element={<ProtectedRoute requiredRole="super_admin"><AdminDashboard /></ProtectedRoute>} />
+                <Route path="/assistant" element={<ProtectedRoute requiredRole="assistant"><AssistantDashboard /></ProtectedRoute>} />
                 <Route path="/staff" element={<ProtectedRoute requiredRole="staff"><StaffDashboard /></ProtectedRoute>} />
                 <Route path="/student" element={<ProtectedRoute requiredRole="student"><StudentDashboard /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />

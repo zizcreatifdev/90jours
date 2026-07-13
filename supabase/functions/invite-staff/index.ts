@@ -51,8 +51,11 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { email, formation_id, first_name, last_name } = body;
-    // role param réservé pour le futur rôle assistant (DB enum non encore étendu)
-    const assignedRole = "staff";
+    const roleParam = typeof body.role === "string" ? body.role : "staff";
+    if (roleParam !== "staff" && roleParam !== "assistant") {
+      return new Response(JSON.stringify({ error: "Role invalide. Valeurs acceptees : staff, assistant." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const assignedRole = roleParam as "staff" | "assistant";
 
     if (!email) {
       return new Response(JSON.stringify({ error: "Email requis" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });

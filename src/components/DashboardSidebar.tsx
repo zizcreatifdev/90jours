@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   Users,
   LogOut,
-  HelpCircle,
   BookOpen,
   GraduationCap,
   Megaphone,
@@ -19,7 +18,6 @@ import {
   Upload,
   UserCircle,
   Settings,
-  Menu,
   Award,
   CalendarDays,
   ChevronsLeft,
@@ -82,6 +80,23 @@ const adminLinks: SidebarLink[] = [
   { href: "/admin?tab=settings", label: "Paramètres", icon: Settings },
 ];
 
+const assistantLinks: SidebarLink[] = [
+  { href: "/assistant?tab=overview", label: "Vue d'ensemble", icon: LayoutDashboard },
+  { href: "/assistant?tab=calendar", label: "Calendrier", icon: CalendarDays },
+  { href: "/assistant?tab=sessions", label: "Sessions", icon: Video },
+  { href: "/assistant?tab=messages", label: "Messages", icon: Megaphone },
+  { href: "/assistant?tab=formations", label: "Formations", icon: GraduationCap, sectionLabel: "Pedagogie" },
+  { href: "/assistant?tab=tasks", label: "Taches", icon: ListTodo },
+  { href: "/assistant?tab=cohorts", label: "Cohortes", icon: BookOpen },
+  { href: "/assistant?tab=briefs", label: "Briefs", icon: ClipboardList },
+  { href: "/assistant?tab=categories", label: "Categories", icon: Tag },
+  { href: "/assistant?tab=waitlist", label: "Liste d'attente", icon: ListPlus, sectionLabel: "Admin" },
+  { href: "/assistant?tab=portfolios", label: "Portfolios", icon: Briefcase },
+  { href: "/assistant?tab=attestations", label: "Attestations", icon: Award },
+  { href: "/assistant?tab=contracts", label: "Contrats", icon: FileSignature },
+  { href: "/assistant?tab=testimonials", label: "Temoignages", icon: MessageSquareQuote },
+];
+
 const staffLinks: SidebarLink[] = [
   { href: "/staff", label: "Mes cohortes", icon: LayoutDashboard },
   { href: "/staff?tab=calendar", label: "Calendrier", icon: CalendarDays },
@@ -107,7 +122,7 @@ const studentLinks: SidebarLink[] = [
 ];
 
 interface DashboardSidebarProps {
-  role: "admin" | "staff" | "student";
+  role: "admin" | "assistant" | "staff" | "student";
   mobileOpen?: boolean;
   onMobileOpenChange?: (open: boolean) => void;
 }
@@ -261,7 +276,7 @@ const SidebarNav = ({
               <button
                 aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount > 99 ? "99+" : unreadCount} non lues` : ""}`}
                 onClick={() => {
-                  const path = role === "admin" ? "/admin" : role === "staff" ? "/staff" : "/student";
+                  const path = role === "admin" ? "/admin" : role === "assistant" ? "/assistant" : role === "staff" ? "/staff" : "/student";
                   navigate(path);
                   onNavigate?.();
                 }}
@@ -342,7 +357,11 @@ const OWNER_ONLY_TABS = new Set(["accounting", "audit", "settings"]);
 
 const DashboardSidebar = ({ role, mobileOpen, onMobileOpenChange }: DashboardSidebarProps) => {
   const { isOwner } = useAuth();
-  const baseLinks = role === "admin" ? adminLinks : role === "staff" ? staffLinks : studentLinks;
+  const baseLinks =
+    role === "admin" ? adminLinks
+    : role === "assistant" ? assistantLinks
+    : role === "staff" ? staffLinks
+    : studentLinks;
   const links =
     role === "admin" && !isOwner
       ? baseLinks.filter((link) => {

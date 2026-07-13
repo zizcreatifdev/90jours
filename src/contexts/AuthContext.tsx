@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
-type AppRole = "super_admin" | "staff" | "student";
+type AppRole = "super_admin" | "assistant" | "staff" | "student";
 
 interface AuthContextType {
   user: User | null;
@@ -33,7 +33,7 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 // Priority order for default active role
-const rolePriority: AppRole[] = ["super_admin", "staff", "student"];
+const rolePriority: AppRole[] = ["super_admin", "assistant", "staff", "student"];
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);

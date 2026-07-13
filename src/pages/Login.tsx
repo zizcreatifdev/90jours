@@ -40,9 +40,10 @@ const Login = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-        const role = roles?.[0]?.role;
-        if (role === "super_admin") navigate("/admin");
-        else if (role === "staff") navigate("/staff");
+        const roleList = (roles || []).map((r: any) => r.role as string);
+        if (roleList.includes("super_admin")) navigate("/admin");
+        else if (roleList.includes("assistant")) navigate("/assistant");
+        else if (roleList.includes("staff")) navigate("/staff");
         else navigate("/student");
       }
     }
