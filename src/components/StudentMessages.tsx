@@ -124,15 +124,15 @@ const StudentMessages = ({ cohortId, formationId, isArchived }: StudentMessagesP
     }
 
     // Add super admins as fallback "Administration" option
-    const { data: admins } = await supabase
-      .from("profiles")
-      .select("user_id, first_name, last_name")
+    const { data: adminRoles } = await supabase
+      .from("user_roles")
+      .select("user_id")
       .eq("role", "super_admin");
 
-    (admins || []).forEach((a: any) => {
-      const alreadyAdded = list.some(r => r.id === a.user_id);
+    (adminRoles || []).forEach((row: any) => {
+      const alreadyAdded = list.some(r => r.id === row.user_id);
       if (!alreadyAdded) {
-        list.push({ id: a.user_id, label: "Administration" });
+        list.push({ id: row.user_id, label: "Administration" });
       }
     });
 

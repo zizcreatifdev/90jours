@@ -1,8 +1,8 @@
 # PROJECT_STATE.md — État du Projet
 
-**Dernière mise à jour**: 13 juillet 2026
-**Branche active**: `claude/elegant-curie-wcw2cl`
-**Prompt actuel**: role assistant : operationnel sans financier, dashboard dedie /assistant, invitation avec choix de role (staff/assistant), attestations reservees super_admin (front + DB)
+**Dernière mise à jour**: 27 juillet 2026
+**Branche active**: `main`
+**Prompt actuel**: fix p0 prelancement : greeting TDZ dashboard etudiant, guard contrat PGRST116, messagerie etudiante table admins
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.
@@ -120,8 +120,8 @@
 | **Validation email + suggestion fautes de frappe** | ✅ Complet | 100% |
 
 **Complétion globale**: 100%
-**Bugs connus**: 5 bugs corriges le 01/07/2026 (H1/M1/M6/M11/H2). B1 : /student/:id restreint super_admin+staff. B2 : lien attestation corrige (?tab=attestation). B3 : toast apres notifications. B4 : filtre destinataires fantomes. B5 : garde race condition portfolio. B6 : labels session vs persistee. B7 : bouton Actualiser. B12 : nettoyage cle localStorage orpheline.
-**Prochaines étapes**: Améliorer UX mobile
+**Bugs connus**: 5 bugs corriges le 01/07/2026 (H1/M1/M6/M11/H2). B1 : /student/:id restreint super_admin+staff. B2 : lien attestation corrige (?tab=attestation). B3 : toast apres notifications. B4 : filtre destinataires fantomes. B5 : garde race condition portfolio. B6 : labels session vs persistee. B7 : bouton Actualiser. B12 : nettoyage cle localStorage orpheline. **P0 corriges 27/07/2026** : P0-1 greeting() TDZ (convertie en function declaration hoistee) ; P0-2 PGRST116 guard contrat (.limit(1) ajoute + error capture fail-secure dans StudentDashboard.tsx et use-onboarding-state.ts) ; P0-3 messagerie etudiante (requete admins corrigee de profiles.eq("role") vers user_roles.eq("role")).
+**Prochaines étapes**: Corriger bugs P1/P2 de l'audit pre-lancement
 
 ---
 

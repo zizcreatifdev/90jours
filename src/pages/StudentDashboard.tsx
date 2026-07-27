@@ -171,32 +171,33 @@ const StudentDashboard = () => {
           const formationId = cohort.formation_id;
           let templateFound = false;
           if (formationId) {
-            const { data } = await supabase
+            const { data, error } = await supabase
               .from("contract_templates")
               .select("id")
               .eq("is_active", true)
               .eq("formation_id", formationId)
+              .limit(1)
               .maybeSingle();
-            if (data) templateFound = true;
+            if (error || data) templateFound = true;
           }
           if (!templateFound) {
-            const { data } = await supabase
+            const { data, error } = await supabase
               .from("contract_templates")
               .select("id")
               .eq("is_active", true)
               .is("formation_id", null)
               .limit(1)
               .maybeSingle();
-            if (data) templateFound = true;
+            if (error || data) templateFound = true;
           }
           if (templateFound) {
-            const { data: sc } = await supabase
+            const { data: sc, error: scError } = await supabase
               .from("student_contracts")
               .select("signed_at")
               .eq("user_id", user.id)
               .eq("cohort_id", cohort.id)
               .maybeSingle();
-            if (!sc?.signed_at) {
+            if (scError || !sc?.signed_at) {
               navigate(`/onboarding?cohort_id=${cohort.id}`);
               return;
             }
@@ -425,12 +426,12 @@ const StudentDashboard = () => {
     !searchRes || r.title.toLowerCase().includes(searchRes.toLowerCase())
   );
 
-  const greeting = () => {
+  function greeting() {
     const h = new Date().getHours();
     if (h < 12) return "Bonjour";
     if (h < 18) return "Bon après-midi";
     return "Bonsoir";
-  };
+  }
 
   const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "";
 

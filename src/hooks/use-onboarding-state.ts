@@ -76,34 +76,35 @@ export const useOnboardingState = (cohortId: string): OnboardingState => {
       // 3. Active template check (formation-specific first, then global)
       let templateFound = false;
       if (formationId) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("contract_templates")
           .select("id")
           .eq("is_active", true)
           .eq("formation_id", formationId)
+          .limit(1)
           .maybeSingle();
-        if (data) templateFound = true;
+        if (error || data) templateFound = true;
       }
       if (!templateFound) {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from("contract_templates")
           .select("id")
           .eq("is_active", true)
           .is("formation_id", null)
           .limit(1)
           .maybeSingle();
-        if (data) templateFound = true;
+        if (error || data) templateFound = true;
       }
       setHasActiveTemplate(templateFound);
 
       // 4. Student contract signed status
-      const { data: contractData } = await supabase
+      const { data: contractData, error: contractError } = await supabase
         .from("student_contracts")
         .select("signed_at")
         .eq("user_id", user.id)
         .eq("cohort_id", cohortId)
         .maybeSingle();
-      setContractSigned(!!(contractData?.signed_at));
+      setContractSigned(!contractError && !!(contractData?.signed_at));
 
       setLoading(false);
     };
