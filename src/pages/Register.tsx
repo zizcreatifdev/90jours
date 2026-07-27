@@ -34,6 +34,7 @@ const Register = () => {
   const [waitlistOpen, setWaitlistOpen] = useState(false);
   const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [roleChecked, setRoleChecked] = useState(false);
 
   // Fetch formations where current user is staff
   useEffect(() => {
@@ -47,13 +48,17 @@ const Register = () => {
 
   // Bloquer l'inscription si l'utilisateur connecte est super_admin
   useEffect(() => {
-    if (!user) return;
+    if (!user) { setRoleChecked(true); return; }
+    setRoleChecked(false);
     supabase.from("user_roles")
       .select("role")
       .eq("user_id", user.id)
       .eq("role", "super_admin")
       .maybeSingle()
-      .then(({ data }) => { if (data) setIsSuperAdmin(true); });
+      .then(({ data }) => {
+        if (data) setIsSuperAdmin(true);
+        setRoleChecked(true);
+      });
   }, [user]);
 
   // Fix URL bypass: if cohort from URL is full, clear selection and open waitlist
@@ -232,6 +237,18 @@ const Register = () => {
   };
 
   const showWaitlistOnly = aucuneCohorteOuverte || toutesPleines;
+
+  if (user && !roleChecked) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-accent" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (isSuperAdmin) {
     return (

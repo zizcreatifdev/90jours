@@ -2,7 +2,17 @@
 
 **Dernière mise à jour**: 27 juillet 2026
 **Branche active**: `main`
-**Prompt actuel**: fix p0 prelancement : greeting TDZ dashboard etudiant, guard contrat PGRST116, messagerie etudiante table admins
+**Prompt actuel**: fix p1 prelancement : securite push (roles), export paiements, ordre delete-user + suppression staff complete, race condition register
+
+### Corrections P1 appliquées
+
+- **P1-1 (SECURITE) — send-push-notification** : ajout vérification de rôle (super_admin/staff/assistant) ou appel interne service_role. Remplacement `getClaims()` déprécié par `getUser()`. CORS dynamique (whitelist) au lieu de `*`. Pattern isInternalCall identique à send-email.
+- **P1-2 — PaymentManager.tsx:517** : correction variable `selectedFormation` (inexistante) par `selectedCohortData` (déclarée ligne 124). Eliminait le crash au survol du résumé de paiement.
+- **P1-3 — delete-user** : suppression auth en premier (fail-fast, retryable), puis purge des tables de données avec logs non bloquants (helper `purge`). Ordre précédent laissait des données orphelines si `deleteUser` échouait après la purge. Ajout purge complète pour comptes staff (staff_payments, resources nullify, announcements nullify, staff_formations, messages).
+- **P1-4 — Register.tsx** : correction race condition détection super_admin. Ajout état `roleChecked`, spinner bloquant tant que la vérification DB n'est pas résolue. Empêche l'affichage momentané du formulaire à un super_admin connecté.
+- **P1-5 (REPORTÉ)** : cap 1000 utilisateurs sur list-user-emails et invite-staff — non pertinent pour la première cohorte.
+
+> **Rappel déploiement** : redéployer manuellement `send-push-notification` et `delete-user` sur le Dashboard Supabase (les edge functions ne se déploient pas automatiquement depuis git push).
 
 > 🚧 **Migration Supabase en cours** — préparation du passage vers une nouvelle
 > instance Supabase (base vierge) rebrandée « 60 jours » sur les seeds.

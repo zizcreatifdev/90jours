@@ -72,54 +72,53 @@ Deno.serve(async (req) => {
       .select("role")
       .eq("user_id", user_id);
 
-    // Step 1 : child tables (attestation_actions before attestations)
-    await supabaseAdmin.from("attestation_actions").delete().eq("user_id", user_id);
-    await supabaseAdmin.from("attestations").delete().eq("user_id", user_id);
+    // Step 1 : delete auth user FIRST.
+    // If this fails nothing else has been touched, the operation is retryable.
+    // On success, CASCADE removes enrollments, student_badges, student_contracts, personal_events.
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
+    if (deleteError) {
+      console.error("[delete-user] auth.admin.deleteUser error:", deleteError.message);
+      return new Response(JSON.stringify({ error: deleteError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
-    // Staff tasks : comments first, then tasks
-    await supabaseAdmin.from("staff_task_comments").delete().eq("author_id", user_id);
-    await supabaseAdmin.from("staff_tasks").delete().eq("assigned_to", user_id);
+    // Step 2 : purge data tables.
+    // Auth is already gone; each step is logged on error but does not abort.
+    const purge = async (label: string, op: () => Promise<{ error: any }>) => {
+      const { error } = await op();
+      if (error) console.error(`[delete-user] purge ${label}:`, error.message);
+    };
 
-    // Step 2 : independent data tables
-    await supabaseAdmin.from("brief_submissions").delete().eq("user_id", user_id);
-    await supabaseAdmin.from("portfolios").delete().eq("user_id", user_id);
-    await supabaseAdmin.from("payments").delete().eq("user_id", user_id);
-    await supabaseAdmin.from("push_subscriptions").delete().eq("user_id", user_id);
-    await supabaseAdmin.from("promo_code_usage").delete().eq("user_id", user_id);
-    await supabaseAdmin.from("seen_announcements").delete().eq("user_id", user_id);
+    await purge("attestation_actions", () => supabaseAdmin.from("attestation_actions").delete().eq("user_id", user_id));
+    await purge("attestations", () => supabaseAdmin.from("attestations").delete().eq("user_id", user_id));
+    await purge("staff_task_comments", () => supabaseAdmin.from("staff_task_comments").delete().eq("author_id", user_id));
+    await purge("staff_tasks", () => supabaseAdmin.from("staff_tasks").delete().eq("assigned_to", user_id));
+    await purge("brief_submissions", () => supabaseAdmin.from("brief_submissions").delete().eq("user_id", user_id));
+    await purge("portfolios", () => supabaseAdmin.from("portfolios").delete().eq("user_id", user_id));
+    await purge("payments", () => supabaseAdmin.from("payments").delete().eq("user_id", user_id));
+    await purge("push_subscriptions", () => supabaseAdmin.from("push_subscriptions").delete().eq("user_id", user_id));
+    await purge("promo_code_usage", () => supabaseAdmin.from("promo_code_usage").delete().eq("user_id", user_id));
+    await purge("seen_announcements", () => supabaseAdmin.from("seen_announcements").delete().eq("user_id", user_id));
 
-    // Messages : supprimer d'abord toutes les replies qui referencent un message
-    // envoye OU recu par cet utilisateur, puis les messages eux-memes.
+    // Messages : delete replies referencing this user's messages first, then the messages.
     const { data: userMessages } = await supabaseAdmin
       .from("messages")
       .select("id")
       .or(`sender_id.eq.${user_id},recipient_id.eq.${user_id}`);
     if (userMessages && userMessages.length > 0) {
       const msgIds = userMessages.map((m: any) => m.id);
-      await supabaseAdmin.from("messages").delete().in("parent_id", msgIds);
+      await purge("messages(replies)", () => supabaseAdmin.from("messages").delete().in("parent_id", msgIds));
     }
-    await supabaseAdmin.from("messages").delete().eq("sender_id", user_id);
-    await supabaseAdmin.from("messages").delete().eq("recipient_id", user_id);
+    await purge("messages(sender)", () => supabaseAdmin.from("messages").delete().eq("sender_id", user_id));
+    await purge("messages(recipient)", () => supabaseAdmin.from("messages").delete().eq("recipient_id", user_id));
+    await purge("staff_payments", () => supabaseAdmin.from("staff_payments").delete().eq("staff_user_id", user_id));
+    await purge("resources(nullify)", () => supabaseAdmin.from("resources").update({ uploaded_by: null }).eq("uploaded_by", user_id));
+    await purge("announcements(nullify)", () => supabaseAdmin.from("announcements").update({ author_id: null }).eq("author_id", user_id));
+    await purge("staff_formations", () => supabaseAdmin.from("staff_formations").delete().eq("user_id", user_id));
+    await purge("notifications", () => supabaseAdmin.from("notifications").delete().eq("user_id", user_id));
+    await purge("user_roles", () => supabaseAdmin.from("user_roles").delete().eq("user_id", user_id));
+    await purge("profiles", () => supabaseAdmin.from("profiles").delete().eq("user_id", user_id));
 
-    await supabaseAdmin.from("staff_payments").delete().eq("staff_user_id", user_id);
-
-    // Step 3 : nullify FK references that are not CASCADE (resources.uploaded_by, announcements.author_id)
-    await supabaseAdmin.from("resources").update({ uploaded_by: null }).eq("uploaded_by", user_id);
-    await supabaseAdmin.from("announcements").update({ author_id: null }).eq("author_id", user_id);
-
-    // Step 4 : profile-level data (already handled previously, preserved order)
-    await supabaseAdmin.from("staff_formations").delete().eq("user_id", user_id);
-    await supabaseAdmin.from("notifications").delete().eq("user_id", user_id);
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", user_id);
-    await supabaseAdmin.from("profiles").delete().eq("user_id", user_id);
-
-    // Step 5 : delete auth user (CASCADE handles enrollments, student_badges, student_contracts, personal_events)
-    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
-    if (deleteError) {
-      return new Response(JSON.stringify({ error: deleteError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-    }
-
-    // Step 6 : audit log (target_user_id is now gone from auth, but UUID is still valid as a record)
+    // Step 3 : audit log (target_user_id is now gone from auth, but UUID is still valid as a record)
     await supabaseAdmin.from("audit_logs").insert({
       performed_by: caller.id,
       action: "user_deleted",

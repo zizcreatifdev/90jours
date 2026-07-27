@@ -514,9 +514,9 @@ const PaymentManager = () => {
                       placeholder="Ex: 20000"
                       min={1}
                     />
-                    {selectedFormation && paymentType && (
+                    {selectedCohortData && paymentType && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        Montant attendu pour ce type : {expectedAmount(paymentType, selectedFormation).toLocaleString("fr-FR")} FCFA (modifiable).
+                        Montant attendu pour ce type : {expectedAmount(paymentType, selectedCohortData).toLocaleString("fr-FR")} FCFA (modifiable).
                       </p>
                     )}
                     <FieldError message={showError("customAmount")} />
