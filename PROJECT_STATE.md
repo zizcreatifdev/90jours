@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 27 juillet 2026
 **Branche active**: `main`
-**Prompt actuel**: fix p1 prelancement : securite push (roles), export paiements, ordre delete-user + suppression staff complete, race condition register
+**Prompt actuel**: fix urgent : validation nom signature contrat tolerante (casse, espaces, accents) - inscriptions debloquees
 
 ### Corrections P1 appliquées
 
@@ -11,6 +11,14 @@
 - **P1-3 — delete-user** : suppression auth en premier (fail-fast, retryable), puis purge des tables de données avec logs non bloquants (helper `purge`). Ordre précédent laissait des données orphelines si `deleteUser` échouait après la purge. Ajout purge complète pour comptes staff (staff_payments, resources nullify, announcements nullify, staff_formations, messages).
 - **P1-4 — Register.tsx** : correction race condition détection super_admin. Ajout état `roleChecked`, spinner bloquant tant que la vérification DB n'est pas résolue. Empêche l'affichage momentané du formulaire à un super_admin connecté.
 - **P1-5 (REPORTÉ)** : cap 1000 utilisateurs sur list-user-emails et invite-staff — non pertinent pour la première cohorte.
+
+### Correction urgente : validation nom contrat (ContractSign.tsx)
+
+- **Problème** : comparaison stricte `sigName.trim().toLowerCase() !== expectedName.toLowerCase()` rejetait les espaces doubles, espaces insecables et variantes d'accents (ex. "Ndèye" vs "Ndeye").
+- **Correction** : ajout de `normalizeName()` appliquee symetriquement sur les deux chaines avant comparaison. Normalise : espaces Unicode non standards -> espace, decomposition NFD + suppression diacritiques, trim, espaces multiples -> un seul, minuscules.
+- **Cas desormais acceptes** : "NDEYE ASTOU NDIAYE", " Ndeye  Astou Ndiaye ", "Ndèye astou Ndiaye", "ndéye ASTOU ndiaye".
+- **Controle maintenu** : "Aminata Diallo" != "Ndeye Ndiaye" -> toujours rejeté.
+- Aucun autre endroit dans la codebase ne fait ce type de comparaison nom-saisi/nom-profil.
 
 > **Rappel déploiement** : redéployer manuellement `send-push-notification` et `delete-user` sur le Dashboard Supabase (les edge functions ne se déploient pas automatiquement depuis git push).
 

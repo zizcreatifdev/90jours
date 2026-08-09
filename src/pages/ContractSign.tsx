@@ -20,6 +20,18 @@ const fillTemplate = (html: string, vars: Record<string, string>): string =>
     html
   );
 
+// Normalise un nom avant comparaison : espaces insecables -> espace, NFD + suppression
+// diacritiques, trim, espaces multiples -> un seul, minuscules.
+// Appliquee des deux cotes (saisi et attendu) pour une comparaison tolerante.
+const normalizeName = (name: string): string =>
+  name
+    .replace(/[     ​]/g, " ")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface CohortRow {
@@ -247,10 +259,10 @@ const ContractSign = () => {
     if (!user || !cohortId || !contractHtml) return;
 
     const expectedName = `${profile?.first_name || ""} ${profile?.last_name || ""}`.trim();
-    if (sigName.trim().toLowerCase() !== expectedName.toLowerCase()) {
+    if (normalizeName(sigName) !== normalizeName(expectedName)) {
       toast({
         title: "Nom incorrect",
-        description: `Veuillez saisir exactement : ${expectedName}`,
+        description: `Veuillez saisir votre nom complet : ${expectedName} (la casse et les espaces ne sont pas determinants)`,
         variant: "destructive",
       });
       return;
@@ -487,13 +499,13 @@ const ContractSign = () => {
                   onChange={e => setSigName(e.target.value)}
                   disabled={!accepted}
                   placeholder={fullName || "Prenom Nom"}
-                  aria-invalid={accepted && sigName.trim() !== "" && sigName.trim().toLowerCase() !== fullName.toLowerCase()}
+                  aria-invalid={accepted && sigName.trim() !== "" && normalizeName(sigName) !== normalizeName(fullName)}
                   className={cn(!accepted && "opacity-40")}
                 />
-                {accepted && sigName.trim() !== "" && sigName.trim().toLowerCase() !== fullName.toLowerCase() && (
-                  <FieldError message={`Doit correspondre a : ${fullName}`} />
+                {accepted && sigName.trim() !== "" && normalizeName(sigName) !== normalizeName(fullName) && (
+                  <FieldError message={`Saisissez : ${fullName} (la casse et les espaces ne sont pas determinants)`} />
                 )}
-                {accepted && sigName.trim().toLowerCase() === fullName.toLowerCase() && sigName.trim() !== "" && (
+                {accepted && normalizeName(sigName) === normalizeName(fullName) && sigName.trim() !== "" && (
                   <p className="text-xs text-green-600 dark:text-green-400">Signature valide</p>
                 )}
               </div>
