@@ -55,7 +55,7 @@ interface TemplateRow {
   content: string;
 }
 
-type LoadError = "no-cohort" | "no-template";
+type LoadError = "no-cohort" | "no-template" | "template-error";
 
 // ── Ecran d'erreur generique ──────────────────────────────────────────────────
 
@@ -150,6 +150,7 @@ const ContractSign = () => {
       // (formation-specifique d'abord, puis generique), avec .limit(1) sur les deux
       // requetes pour eviter PGRST116 si plusieurs templates actifs existent.
       let template: TemplateRow | null = null;
+      let tplNetworkError = false;
       if (c.formation_id) {
         const { data, error: tplErr1 } = await supabase
           .from("contract_templates")
@@ -159,10 +160,14 @@ const ContractSign = () => {
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
-        if (tplErr1) console.error("[ContractSign] template (formation) error:", tplErr1.code, tplErr1.message);
-        template = data as TemplateRow | null;
+        if (tplErr1) {
+          console.error("[ContractSign] template (formation) error:", tplErr1.code, tplErr1.message);
+          tplNetworkError = true;
+        } else {
+          template = data as TemplateRow | null;
+        }
       }
-      if (!template) {
+      if (!template && !tplNetworkError) {
         const { data, error: tplErr2 } = await supabase
           .from("contract_templates")
           .select("id, content")
@@ -170,8 +175,18 @@ const ContractSign = () => {
           .is("formation_id", null)
           .limit(1)
           .maybeSingle();
-        if (tplErr2) console.error("[ContractSign] template (generic) error:", tplErr2.code, tplErr2.message);
-        template = data as TemplateRow | null;
+        if (tplErr2) {
+          console.error("[ContractSign] template (generic) error:", tplErr2.code, tplErr2.message);
+          tplNetworkError = true;
+        } else {
+          template = data as TemplateRow | null;
+        }
+      }
+
+      if (tplNetworkError) {
+        setLoadError("template-error");
+        setLoading(false);
+        return;
       }
 
       if (!template) {
@@ -357,6 +372,17 @@ const ContractSign = () => {
       <ContractErrorScreen
         title="Impossible de charger le contrat"
         message="Impossible de charger les informations de cette cohorte. Verifiez votre connexion et reessayez."
+        onAction={() => window.location.reload()}
+        actionLabel="Reessayer"
+      />
+    );
+  }
+
+  if (!loading && loadError === "template-error") {
+    return (
+      <ContractErrorScreen
+        title="Impossible de charger le contrat"
+        message="Une erreur reseau empeche le chargement de votre contrat. Verifiez votre connexion internet et reessayez."
         onAction={() => window.location.reload()}
         actionLabel="Reessayer"
       />

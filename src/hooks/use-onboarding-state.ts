@@ -5,19 +5,23 @@ import { useAuth } from "@/contexts/AuthContext";
 export interface OnboardingState {
   loading: boolean;
   hasActiveTemplate: boolean;
+  templateCheckError: boolean;
   contractSigned: boolean;
   hasAvatar: boolean;
   avatarUrl: string | null;
   cohortStartDate: string | null;
   registrationFee: number;
   formationName: string | null;
+  refetch: () => void;
 }
 
 export const useOnboardingState = (cohortId: string): OnboardingState => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [hasActiveTemplate, setHasActiveTemplate] = useState(false);
+  const [templateCheckError, setTemplateCheckError] = useState(false);
   const [contractSigned, setContractSigned] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [hasAvatar, setHasAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [cohortStartDate, setCohortStartDate] = useState<string | null>(null);
@@ -32,6 +36,7 @@ export const useOnboardingState = (cohortId: string): OnboardingState => {
 
     const check = async () => {
       setLoading(true);
+      setTemplateCheckError(false);
 
       // 0. Profile avatar
       const { data: profileData } = await supabase
@@ -74,7 +79,10 @@ export const useOnboardingState = (cohortId: string): OnboardingState => {
       }
 
       // 3. Active template check (formation-specific first, then global)
+      // Network error != "template found": treating error as true would set hasActiveTemplate=true
+      // and send the student to /contract-sign, which would also fail and redirect back here (loop).
       let templateFound = false;
+      let tplNetworkError = false;
       if (formationId) {
         const { data, error } = await supabase
           .from("contract_templates")
@@ -83,9 +91,13 @@ export const useOnboardingState = (cohortId: string): OnboardingState => {
           .eq("formation_id", formationId)
           .limit(1)
           .maybeSingle();
-        if (error || data) templateFound = true;
+        if (error) {
+          tplNetworkError = true;
+        } else if (data) {
+          templateFound = true;
+        }
       }
-      if (!templateFound) {
+      if (!templateFound && !tplNetworkError) {
         const { data, error } = await supabase
           .from("contract_templates")
           .select("id")
@@ -93,9 +105,14 @@ export const useOnboardingState = (cohortId: string): OnboardingState => {
           .is("formation_id", null)
           .limit(1)
           .maybeSingle();
-        if (error || data) templateFound = true;
+        if (error) {
+          tplNetworkError = true;
+        } else if (data) {
+          templateFound = true;
+        }
       }
       setHasActiveTemplate(templateFound);
+      setTemplateCheckError(tplNetworkError);
 
       // 4. Student contract signed status
       const { data: contractData, error: contractError } = await supabase
@@ -110,7 +127,7 @@ export const useOnboardingState = (cohortId: string): OnboardingState => {
     };
 
     check();
-  }, [user?.id, cohortId]);
+  }, [user?.id, cohortId, retryCount]);
 
-  return { loading, hasActiveTemplate, contractSigned, hasAvatar, avatarUrl, cohortStartDate, registrationFee, formationName };
+  return { loading, hasActiveTemplate, templateCheckError, contractSigned, hasAvatar, avatarUrl, cohortStartDate, registrationFee, formationName, refetch: () => setRetryCount(c => c + 1) };
 };

@@ -10,6 +10,8 @@ import {
   ArrowRight,
   Camera,
   User,
+  AlertCircle,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -74,12 +76,14 @@ const Onboarding = () => {
   const {
     loading,
     hasActiveTemplate,
+    templateCheckError,
     contractSigned,
     hasAvatar,
     avatarUrl,
     cohortStartDate,
     registrationFee,
     formationName,
+    refetch,
   } = useOnboardingState(cohortId);
 
   const { settings } = useSiteSettings();
@@ -92,10 +96,11 @@ const Onboarding = () => {
 
   useEffect(() => {
     if (loading || !cohortId) return;
+    if (templateCheckError) return;
     if (photoStepDone && (!hasActiveTemplate || contractSigned)) {
       navigate("/student", { replace: true });
     }
-  }, [loading, cohortId, photoStepDone, hasActiveTemplate, contractSigned, navigate]);
+  }, [loading, cohortId, photoStepDone, hasActiveTemplate, templateCheckError, contractSigned, navigate]);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     let file = e.target.files?.[0];
@@ -446,13 +451,29 @@ const Onboarding = () => {
                   <p className="text-sm text-muted-foreground">
                     Disponible après ajout de votre photo de profil.
                   </p>
+                ) : templateCheckError ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm text-destructive">
+                      <AlertCircle className="h-4 w-4 shrink-0" />
+                      Impossible de verifier votre contrat. Verifiez votre connexion internet.
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={refetch}
+                      disabled={loading}
+                      className="gap-2 w-full min-h-[44px]"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      Reessayer
+                    </Button>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     <p className="text-sm text-muted-foreground">
                       Votre contrat de formation doit être signé avant d'accéder à votre espace étudiant.
                     </p>
                     <Link to={`/contract-sign?cohort_id=${cohortId}`}>
-                      <Button className="gap-2">
+                      <Button className="gap-2 min-h-[44px]">
                         <FileSignature className="h-4 w-4" />
                         Lire et signer le contrat
                       </Button>

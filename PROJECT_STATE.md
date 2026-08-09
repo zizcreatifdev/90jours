@@ -1,8 +1,8 @@
 # PROJECT_STATE.md — État du Projet
 
-**Dernière mise à jour**: 27 juillet 2026
+**Dernière mise à jour**: 9 août 2026
 **Branche active**: `main`
-**Prompt actuel**: fix urgent : validation nom signature contrat tolerante (casse, espaces, accents) - inscriptions debloquees
+**Prompt actuel**: fix B1 : boucle onboarding/contrat sur erreur reseau
 
 ### Corrections P1 appliquées
 
@@ -19,6 +19,18 @@
 - **Cas desormais acceptes** : "NDEYE ASTOU NDIAYE", " Ndeye  Astou Ndiaye ", "Ndèye astou Ndiaye", "ndéye ASTOU ndiaye".
 - **Controle maintenu** : "Aminata Diallo" != "Ndeye Ndiaye" -> toujours rejeté.
 - Aucun autre endroit dans la codebase ne fait ce type de comparaison nom-saisi/nom-profil.
+
+### Fix B1 : boucle onboarding/contrat sur erreur réseau (use-onboarding-state.ts + Onboarding.tsx + ContractSign.tsx)
+
+- **Problème** : `if (error || data) templateFound = true` dans use-onboarding-state.ts traitait une erreur réseau comme "template trouvé". Cela mettait `hasActiveTemplate=true`, Onboarding affichait le bouton "Lire et signer", ContractSign échouait aussi → "Retour à l'onboarding" → boucle.
+- **Correction (3 états)** : distinguer `templateFound` (data non null), `absent confirmé` (data null, pas d'erreur), `erreur réseau` (error non null). Sur erreur réseau, `hasActiveTemplate` reste `false`, `templateCheckError=true`.
+- **Interface OnboardingState** : ajout `templateCheckError: boolean` et `refetch: () => void` (incrémente `retryCount` pour re-lancer le `useEffect`).
+- **Onboarding.tsx redirect guard** : `if (templateCheckError) return` dans le useEffect de redirection. Aucune redirection (ni vers /student = faille, ni vers /contract-sign = boucle) si l'état du template est incertain.
+- **Onboarding.tsx carte contrat** : nouvelle branche `templateCheckError` dans la section contrat : message d'erreur + bouton "Reessayer" (min-h-[44px], tactile). Pendant le retry, le spinner pleine page s'affiche (`loading=true`).
+- **ContractSign.tsx** : ajout `"template-error"` dans `LoadError`. Les requêtes template distinguent erreur (tplNetworkError=true, loadError="template-error", écran "Reessayer" via reload) de résultat null confirmé (loadError="no-template", écran "Contactez l'administration"). Plus de retour automatique vers /onboarding sur erreur réseau.
+- **Scénario 1** (réseau OK + template existe) : parcours inchangé, `hasActiveTemplate=true`, `templateCheckError=false`, bouton "Lire et signer" affiché.
+- **Scénario 2** (réseau OK + pas de template) : `hasActiveTemplate=false`, `templateCheckError=false`, redirect vers /student si photo faite (sécurité P0-2 préservée : le template est confirmé absent).
+- **Scénario 3** (erreur réseau) : `templateCheckError=true`, `hasActiveTemplate=false`, aucune redirection, carte contrat affiche "Impossible de verifier votre contrat" + bouton "Reessayer". Aucun accès au dashboard sans contrat.
 
 > **Rappel déploiement** : redéployer manuellement `send-push-notification` et `delete-user` sur le Dashboard Supabase (les edge functions ne se déploient pas automatiquement depuis git push).
 
