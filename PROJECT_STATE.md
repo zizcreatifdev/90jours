@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 9 août 2026
 **Branche active**: `main`
-**Prompt actuel**: fix B1 : boucle onboarding/contrat sur erreur reseau
+**Prompt actuel**: fix inscription robuste (compte fantome, enrollment idempotent)
 
 ### Corrections P1 appliquées
 
@@ -19,6 +19,17 @@
 - **Cas desormais acceptes** : "NDEYE ASTOU NDIAYE", " Ndeye  Astou Ndiaye ", "Ndèye astou Ndiaye", "ndéye ASTOU ndiaye".
 - **Controle maintenu** : "Aminata Diallo" != "Ndeye Ndiaye" -> toujours rejeté.
 - Aucun autre endroit dans la codebase ne fait ce type de comparaison nom-saisi/nom-profil.
+
+### Fix inscription robuste : compte fantôme + enrollment idempotent (Register.tsx)
+
+- **Problème** : `signUp` réussit → enrollment insert échoue → au retry, `signUp` renvoie "User already registered" → throw → toast opaque → étudiant bloqué avec compte sans inscription.
+- **Gestion "already registered"** : si `authError.message` contient "already registered" ou `authError.code === "user_already_exists"`, ne pas throw. Tenter `signInWithPassword` avec les credentials saisis :
+  - Succès : `userId` = utilisateur connecté, le flux enrollment reprend normalement.
+  - Echec (mauvais mot de passe) : toast "Un compte existe deja avec cet email. Connectez-vous depuis la page de connexion pour finaliser votre inscription."
+- **Idempotence enrollment** : avant l'INSERT, vérifier via `.maybeSingle()` si un enrollment `(user_id, cohort_id)` existe déjà. Si oui : skip insert, continuer vers redirect. Si non : insérer normalement.
+- **Message enrollment failed** : si l'insert échoue vraiment, toast explicite "Inscription non finalisee. Votre compte a ete cree. Reessayez pour completer votre inscription." + return (le retry passera par le chemin signIn).
+- **Chemin nominal inchangé** : signUp réussit + session → enrollment créé → redirect. Chemin staff (user déjà connecté) inchangé.
+- **Sécurité** : signInWithPassword utilise uniquement les credentials saisis dans le formulaire par l'utilisateur. Jamais de connexion sans mot de passe correct.
 
 ### Fix B1 : boucle onboarding/contrat sur erreur réseau (use-onboarding-state.ts + Onboarding.tsx + ContractSign.tsx)
 

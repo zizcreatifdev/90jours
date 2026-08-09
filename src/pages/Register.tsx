@@ -148,19 +148,43 @@ const Register = () => {
             data: { first_name: formData.firstName, last_name: formData.lastName },
           },
         });
-        if (authError) throw authError;
-        userId = authData.user?.id;
 
-        // Si Supabase retourne un utilisateur sans session, la confirmation par email
-        // est activee : l'inscription ne peut pas se poursuivre tant que l'email
-        // n'est pas confirme. On informe l'etudiant au lieu de le rediriger en silence.
-        if (authData.user && !authData.session) {
-          toast({
-            title: "Verifiez votre email",
-            description: "Un lien de confirmation a ete envoye a " + formData.email + ". Cliquez dessus pour activer votre compte, puis revenez vous inscrire.",
+        if (authError) {
+          // "User already registered" means signUp succeeded before but enrollment
+          // failed afterward. Attempt sign-in with the supplied credentials to
+          // recover the session and resume the enrollment flow.
+          const isAlreadyExists =
+            authError.message?.toLowerCase().includes("already registered") ||
+            (authError as any).code === "user_already_exists";
+
+          if (!isAlreadyExists) throw authError;
+
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email: formData.email,
+            password: formData.password,
           });
-          setSubmitting(false);
-          return;
+
+          if (signInError || !signInData.session) {
+            toast({
+              title: "Un compte existe deja avec cet email",
+              description: "Connectez-vous depuis la page de connexion pour finaliser votre inscription.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          userId = signInData.session.user.id;
+        } else {
+          userId = authData.user?.id;
+
+          // Confirm email ON: Supabase returned user but no session.
+          if (authData.user && !authData.session) {
+            toast({
+              title: "Verifiez votre email",
+              description: "Un lien de confirmation a ete envoye a " + formData.email + ". Cliquez dessus pour activer votre compte, puis revenez vous inscrire.",
+            });
+            return;
+          }
         }
       }
 
@@ -171,12 +195,31 @@ const Register = () => {
         await supabase.from("profiles").update({ phone: formData.phone }).eq("user_id", userId);
       }
 
-      const { error: enrollError } = await supabase.from("enrollments").insert({
-        user_id: userId,
-        cohort_id: selectedCohort,
-        motivation: formData.motivation || null,
-      });
-      if (enrollError) throw enrollError;
+      // Idempotence: if enrollment already exists (retry after a previous
+      // signUp-succeeded-but-enrollment-failed failure), skip insert and
+      // proceed directly to redirect without creating a duplicate.
+      const { data: existingEnrollment } = await supabase
+        .from("enrollments")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("cohort_id", selectedCohort)
+        .maybeSingle();
+
+      if (!existingEnrollment) {
+        const { error: enrollError } = await supabase.from("enrollments").insert({
+          user_id: userId,
+          cohort_id: selectedCohort,
+          motivation: formData.motivation || null,
+        });
+        if (enrollError) {
+          toast({
+            title: "Inscription non finalisee",
+            description: "Votre compte a ete cree. Reessayez pour completer votre inscription.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
 
       // Pour un utilisateur existant (staff qui s'inscrit comme etudiant) :
       // le trigger DB n'ayant pas ete declenche, on insere le role student.
