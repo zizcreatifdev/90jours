@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 9 août 2026
 **Branche active**: `main`
-**Prompt actuel**: fix inscription robuste (compte fantome, enrollment idempotent)
+**Prompt actuel**: ux paiement : bouton declarer visible sur le dashboard etudiant (mobile)
 
 ### Corrections P1 appliquées
 
@@ -30,6 +30,15 @@
 - **Message enrollment failed** : si l'insert échoue vraiment, toast explicite "Inscription non finalisee. Votre compte a ete cree. Reessayez pour completer votre inscription." + return (le retry passera par le chemin signIn).
 - **Chemin nominal inchangé** : signUp réussit + session → enrollment créé → redirect. Chemin staff (user déjà connecté) inchangé.
 - **Sécurité** : signInWithPassword utilise uniquement les credentials saisis dans le formulaire par l'utilisateur. Jamais de connexion sans mot de passe correct.
+
+### UX paiement : bouton "Declarer un paiement" visible sur le dashboard etudiant (PaymentSummaryCard.tsx)
+
+- **Problème** : sur mobile, la sidebar est cachée derrière un hamburger. L'onglet "Paiements" (seul endroit avec le formulaire de déclaration) est inaccessible sans l'ouvrir. Le dashboard par défaut affichait `PaymentSummaryCard` avec seulement un petit lien "Voir mes paiements" — aucun bouton de déclaration.
+- **Correction** : dans `PaymentSummaryCard`, ajout d'un bouton "Declarer un paiement" (doré `bg-accent text-white`, `min-h-[44px]`, full width, séparé par un `border-t`) affiché uniquement quand `!allPaid` (`remaining > 0`). Le bouton redirige vers `/student?tab=payments` où le formulaire complet existe déjà.
+- **Condition cohérente** : si `remaining > 0`, au moins une tranche est ouverte (mathématiquement équivalent à `declareOptions.length > 0` dans StudentPaymentStatus). Le bouton disparait exactement quand tout est payé, identique au comportement de l'onglet paiements.
+- **Lien secondaire** : le lien existant "Voir mes paiements" devient "Voir le detail" quand `!allPaid`, conservant sa fonction de navigation vers le détail complet.
+- **Mobile** : le bouton est entièrement accessible depuis le dashboard sans ouvrir la sidebar.
+- **Onglet paiements** : strictement inchangé (StudentPaymentStatus, StudentDashboard non modifiés).
 
 ### Fix B1 : boucle onboarding/contrat sur erreur réseau (use-onboarding-state.ts + Onboarding.tsx + ContractSign.tsx)
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { addDays, differenceInDays, format, parseISO } from "date-fns";
 import { fr } from "date-fns/locale";
-import { CheckCircle2, AlertCircle, Clock, CreditCard, ArrowRight } from "lucide-react";
+import { CheckCircle2, AlertCircle, Clock, CreditCard, ArrowRight, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchStudentDiscount } from "@/lib/student-discount";
@@ -211,10 +211,22 @@ const PaymentSummaryCard = ({ cohortId, cohortStartDate, formationId }: Props) =
           to="/student?tab=payments"
           className="flex shrink-0 items-center gap-1.5 rounded-xl border border-border bg-secondary px-3 py-2 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
         >
-          Voir mes paiements
+          {allPaid ? "Voir mes paiements" : "Voir le detail"}
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
+
+      {!allPaid && (
+        <div className="mt-3 pt-3 border-t border-border">
+          <Link
+            to="/student?tab=payments"
+            className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent/90"
+          >
+            <Plus className="h-4 w-4 shrink-0" />
+            Declarer un paiement
+          </Link>
+        </div>
+      )}
     </div>
   );
 };
