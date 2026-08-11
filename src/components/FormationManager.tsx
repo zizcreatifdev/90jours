@@ -17,6 +17,7 @@ interface Formation {
   id: string;
   name: string;
   slug: string;
+  level: string;
   description: string | null;
   deliverable_label: string;
   deliverable_description: string | null;
@@ -43,17 +44,18 @@ interface Formation {
 const emptyForm = {
   name: "",
   slug: "",
+  level: "Debutant",
   description: "",
   duration_days: 60,
   total_price: 50000,
   registration_fee: 10000,
   tranche_1_amount: 20000,
   tranche_2_amount: 20000,
-  deliverable_label: "Portfolio",
+  deliverable_label: "",
   deliverable_description: "",
   attestation_title: "",
   attestation_body: "",
-  attestation_color: "#1a1a2e",
+  attestation_color: "#003BA4",
   is_active: true,
   pitch: "",
   learn_intro: "",
@@ -73,6 +75,7 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
       ? {
           name: formation.name,
           slug: formation.slug,
+          level: formation.level,
           description: formation.description || "",
           duration_days: formation.duration_days,
           total_price: formation.total_price,
@@ -83,7 +86,7 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
           deliverable_description: formation.deliverable_description || "",
           attestation_title: formation.attestation_title || "",
           attestation_body: formation.attestation_body || "",
-          attestation_color: formation.attestation_color || "#1a1a2e",
+          attestation_color: formation.attestation_color || "#003BA4",
           is_active: formation.is_active,
           pitch: formation.pitch || "",
           learn_intro: formation.learn_intro || "",
@@ -189,6 +192,19 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
             <FieldError message={showError("slug")} />
           </div>
           <div>
+            <Label htmlFor="flevel">Niveau</Label>
+            <select
+              id="flevel"
+              value={form.level}
+              onChange={e => setForm({ ...form, level: e.target.value })}
+              className="min-h-[44px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <option value="Debutant">Debutant</option>
+              <option value="Intermediaire">Intermediaire</option>
+              <option value="Avance">Avance</option>
+            </select>
+          </div>
+          <div>
             <Label htmlFor="fdesc">Description</Label>
             <Textarea id="fdesc" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Decrivez cette formation..." rows={2} />
           </div>
@@ -271,8 +287,9 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
             <h4 className="font-display text-sm font-semibold mb-3">Livrable de fin de formation</h4>
             <div>
               <RequiredLabel htmlFor="dlabel" required>Nom du livrable</RequiredLabel>
-              <Input id="dlabel" value={form.deliverable_label} onChange={e => setForm({ ...form, deliverable_label: e.target.value })} onBlur={() => handleBlur("deliverable_label")} aria-invalid={!!showError("deliverable_label")} placeholder="Portfolio, Showreel, Projet..." />
+              <Input id="dlabel" value={form.deliverable_label} onChange={e => setForm({ ...form, deliverable_label: e.target.value })} onBlur={() => handleBlur("deliverable_label")} aria-invalid={!!showError("deliverable_label")} placeholder="Portfolio, Showreel, Dossier, Presentation..." />
               <FieldError message={showError("deliverable_label")} />
+              <p className="mt-1 text-xs text-muted-foreground">Le livrable attendu en fin de formation. Apparait sur la page publique et sur l'attestation. Adaptez-le a chaque formation (ex : Portfolio, Showreel, Note de synthese).</p>
             </div>
             <div className="mt-2">
               <Label htmlFor="ddesc">Instructions pour l'etudiant</Label>
@@ -309,7 +326,7 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
             <div className="space-y-3">
               <div>
                 <Label htmlFor="fpitch">Accroche (pitch)</Label>
-                <Textarea id="fpitch" value={form.pitch} onChange={e => setForm({ ...form, pitch: e.target.value })} placeholder="En 90 jours, vous passez de curieux a professionnel..." rows={2} />
+                <Textarea id="fpitch" value={form.pitch} onChange={e => setForm({ ...form, pitch: e.target.value })} placeholder="Decrivez en 2-3 phrases ce que cette formation apporte et a qui elle s'adresse." rows={2} />
               </div>
               <div>
                 <Label htmlFor="flearnintro">Intro "Ce que vous allez maitriser"</Label>
@@ -317,23 +334,23 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
               </div>
               <div>
                 <Label htmlFor="flearnpts">Points d'apprentissage (une ligne par point)</Label>
-                <Textarea id="flearnpts" value={form.learn_points_raw} onChange={e => setForm({ ...form, learn_points_raw: e.target.value })} placeholder={"Les fondamentaux du design\nLes outils professionnels"} rows={5} />
+                <Textarea id="flearnpts" value={form.learn_points_raw} onChange={e => setForm({ ...form, learn_points_raw: e.target.value })} placeholder={"Competence cle 1\nCompetence cle 2\nCompetence cle 3"} rows={5} />
               </div>
               <div>
                 <Label htmlFor="flearnconc">Conclusion apprentissage</Label>
-                <Input id="flearnconc" value={form.learn_conclusion} onChange={e => setForm({ ...form, learn_conclusion: e.target.value })} placeholder="Chaque module alterne theorie et projets pratiques." />
+                <Input id="flearnconc" value={form.learn_conclusion} onChange={e => setForm({ ...form, learn_conclusion: e.target.value })} placeholder="Phrase de cloture : comment se deroule la progression." />
               </div>
               <div>
                 <Label htmlFor="ftarget">A qui s'adresse cette formation</Label>
-                <Textarea id="ftarget" value={form.target_audience} onChange={e => setForm({ ...form, target_audience: e.target.value })} placeholder="Debutants, autodidactes, reconversions..." rows={3} />
+                <Textarea id="ftarget" value={form.target_audience} onChange={e => setForm({ ...form, target_audience: e.target.value })} placeholder="Decrivez le profil ideal : niveau, motivation, objectif." rows={3} />
               </div>
               <div>
                 <Label htmlFor="fmethod">La methode</Label>
-                <Textarea id="fmethod" value={form.method_description} onChange={e => setForm({ ...form, method_description: e.target.value })} placeholder="Notre methode repose sur l'apprentissage par la pratique..." rows={3} />
+                <Textarea id="fmethod" value={form.method_description} onChange={e => setForm({ ...form, method_description: e.target.value })} placeholder="Decrivez comment la formation fonctionne : rythme, suivi, format des cours." rows={3} />
               </div>
               <div>
                 <Label htmlFor="fwhyus">Pourquoi nous (une ligne par point)</Label>
-                <Textarea id="fwhyus" value={form.why_us_points_raw} onChange={e => setForm({ ...form, why_us_points_raw: e.target.value })} placeholder={"Une pedagogie bienveillante\nDes formateurs praticiens"} rows={5} />
+                <Textarea id="fwhyus" value={form.why_us_points_raw} onChange={e => setForm({ ...form, why_us_points_raw: e.target.value })} placeholder={"Argument distinctif 1\nArgument distinctif 2\nArgument distinctif 3"} rows={5} />
               </div>
             </div>
           </div>
@@ -357,7 +374,7 @@ const FormationManager = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("formations")
-      .select("id, name, slug, description, deliverable_label, deliverable_description, attestation_title, attestation_body, attestation_logo_url, attestation_color, duration_days, is_active, created_at, total_price, registration_fee, tranche_1_amount, tranche_2_amount, pitch, learn_intro, learn_points, learn_conclusion, target_audience, method_description, why_us_points")
+      .select("id, name, slug, level, description, deliverable_label, deliverable_description, attestation_title, attestation_body, attestation_logo_url, attestation_color, duration_days, is_active, created_at, total_price, registration_fee, tranche_1_amount, tranche_2_amount, pitch, learn_intro, learn_points, learn_conclusion, target_audience, method_description, why_us_points")
       .order("created_at", { ascending: true });
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
@@ -400,7 +417,7 @@ const FormationManager = () => {
             <div key={f.id} className="rounded-2xl border border-border bg-card p-5 shadow-card">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: f.attestation_color || "#1a1a2e" }}>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ backgroundColor: f.attestation_color || "#003BA4" }}>
                     <BookOpen className="h-5 w-5 text-white" />
                   </div>
                   <div>
@@ -426,14 +443,19 @@ const FormationManager = () => {
               {f.description && <p className="mt-2 text-sm text-muted-foreground">{f.description}</p>}
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
+                  {f.level}
+                </span>
+                <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
                   {f.duration_days} jours
                 </span>
                 <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
                   {f.total_price.toLocaleString("fr-FR")} FCFA
                 </span>
-                <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
-                  Livrable : {f.deliverable_label}
-                </span>
+                {f.deliverable_label && (
+                  <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
+                    Livrable : {f.deliverable_label}
+                  </span>
+                )}
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold ${f.is_active ? "bg-accent/10 text-accent" : "bg-muted text-muted-foreground"}`}>
                   {f.is_active ? "Active" : "Inactive"}
                 </span>

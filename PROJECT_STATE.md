@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 11 août 2026
 **Branche active**: `main`
-**Prompt actuel**: fix layout : page formation centree (conteneur principal), fin du vide a droite
+**Prompt actuel**: admin formations : champ niveau editable, defauts corriges (livrable, couleur charte), placeholders de guidage
 
 ### Corrections P1 appliquées
 
@@ -78,6 +78,13 @@
   4. **La methode** : fond `bg-navy-deep` texte blanc, icone Layers (section sombre contrastante)
   5. **Pourquoi choisir 60jours** : fond creme, grille 2 colonnes avec cartes numerotées
 - **FormationManager.tsx** : 7 champs ajoutés a l'interface `Formation`, a `emptyForm`, a l'init `form` en edition (les tableaux jsonb convertis en texte multi-lignes via `.join("\n")`), au SELECT query, et au JSX (section "Contenu editorial"). `handleSubmit` destructure `learn_points_raw` et `why_us_points_raw`, convertit via `toArray()` (split par `\n`, trim, filter vides, null si vide).
+
+### Admin : FormationManager complet (niveau, defauts, placeholders) (FormationManager.tsx)
+
+- **Correction 1 - Champ niveau editable** : ajout de `level: string` a l'interface `Formation`, `level: "Debutant"` dans `emptyForm`, `level: formation.level` dans l'init en edition, `level` dans le SELECT query. JSX : `<select>` natif avec 3 options (Debutant, Intermediaire, Avance), `min-h-[44px]`, classes ring/focus conformes a shadcn. Positionne apres slug, avant description. Le niveau s'affiche aussi comme premier badge sur la carte de liste admin.
+- **Correction 2 - deliverable_label non trompeur** : defaut change de `"Portfolio"` a `""` (vide). Placeholder mis a jour : "Portfolio, Showreel, Dossier, Presentation...". Note d'aide ajoutee sous le champ (xs, muted-foreground) : "Le livrable attendu en fin de formation. Apparait sur la page publique et sur l'attestation. Adaptez-le a chaque formation.". Sur la carte de liste, le badge "Livrable : ..." est conditionnel (n'apparait que si deliverable_label non vide).
+- **Correction 3 - attestation_color conforme charte** : defaut change de `"#1a1a2e"` a `"#003BA4"` (bleu royal, charte). Fallback en edition egalement mis a jour. Fallback couleur de l'icone sur la carte de liste : `#1a1a2e` -> `#003BA4`.
+- **Correction 4 - Placeholders editoriaux generiques** : tous les placeholders de la section "Contenu editorial" sont desormais des indications de guidage neutrales, non specifiques a graphisme. Aucun contenu graphisme pre-rempli dans le formulaire de creation.
 
 ### Admin : champ duree (duration_days) editable dans FormationManager (FormationManager.tsx)
 
