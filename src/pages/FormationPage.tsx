@@ -189,6 +189,11 @@ const FormationPage = () => {
                   {formation.total_price.toLocaleString("fr-FR")}{" "}
                   <span className="text-sm font-normal text-muted-foreground">FCFA</span>
                 </p>
+                {formation.registration_fee > 0 && formation.registration_fee < formation.total_price && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    dont {formation.registration_fee.toLocaleString("fr-FR")} d'inscription
+                  </p>
+                )}
               </div>
             </div>
           </div>

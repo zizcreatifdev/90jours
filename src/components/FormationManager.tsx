@@ -27,6 +27,10 @@ interface Formation {
   duration_days: number;
   is_active: boolean;
   created_at: string;
+  total_price: number;
+  registration_fee: number;
+  tranche_1_amount: number;
+  tranche_2_amount: number;
   pitch: string | null;
   learn_intro: string | null;
   learn_points: string[] | null;
@@ -41,6 +45,10 @@ const emptyForm = {
   slug: "",
   description: "",
   duration_days: 60,
+  total_price: 50000,
+  registration_fee: 10000,
+  tranche_1_amount: 20000,
+  tranche_2_amount: 20000,
   deliverable_label: "Portfolio",
   deliverable_description: "",
   attestation_title: "",
@@ -67,6 +75,10 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
           slug: formation.slug,
           description: formation.description || "",
           duration_days: formation.duration_days,
+          total_price: formation.total_price,
+          registration_fee: formation.registration_fee,
+          tranche_1_amount: formation.tranche_1_amount,
+          tranche_2_amount: formation.tranche_2_amount,
           deliverable_label: formation.deliverable_label,
           deliverable_description: formation.deliverable_description || "",
           attestation_title: formation.attestation_title || "",
@@ -83,6 +95,8 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
         }
       : { ...emptyForm }
   );
+
+  const priceCheckOk = form.registration_fee + form.tranche_1_amount + form.tranche_2_amount === form.total_price;
 
   const { showError, handleBlur, isValid, validateAll, reset } = useFormValidation(
     {
@@ -112,6 +126,7 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateAll()) return;
+    if (!priceCheckOk) return;
     setSaving(true);
     try {
       const { learn_points_raw, why_us_points_raw, ...formRest } = form;
@@ -191,6 +206,68 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
           </div>
 
           <div className="border-t border-border pt-4">
+            <h4 className="font-display text-sm font-semibold mb-3">Tarification</h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="ftotal">Prix total (FCFA)</Label>
+                <Input
+                  id="ftotal"
+                  type="number"
+                  min={0}
+                  value={form.total_price}
+                  onChange={e => setForm({ ...form, total_price: Math.max(0, parseInt(e.target.value) || 0) })}
+                  className="min-h-[44px]"
+                  placeholder="60000"
+                />
+              </div>
+              <div>
+                <Label htmlFor="freg">Frais d'inscription (FCFA)</Label>
+                <Input
+                  id="freg"
+                  type="number"
+                  min={0}
+                  value={form.registration_fee}
+                  onChange={e => setForm({ ...form, registration_fee: Math.max(0, parseInt(e.target.value) || 0) })}
+                  className="min-h-[44px]"
+                  placeholder="10000"
+                />
+              </div>
+              <div>
+                <Label htmlFor="ftr1">Tranche 1 (FCFA)</Label>
+                <Input
+                  id="ftr1"
+                  type="number"
+                  min={0}
+                  value={form.tranche_1_amount}
+                  onChange={e => setForm({ ...form, tranche_1_amount: Math.max(0, parseInt(e.target.value) || 0) })}
+                  className="min-h-[44px]"
+                  placeholder="25000"
+                />
+              </div>
+              <div>
+                <Label htmlFor="ftr2">Tranche 2 (FCFA)</Label>
+                <Input
+                  id="ftr2"
+                  type="number"
+                  min={0}
+                  value={form.tranche_2_amount}
+                  onChange={e => setForm({ ...form, tranche_2_amount: Math.max(0, parseInt(e.target.value) || 0) })}
+                  className="min-h-[44px]"
+                  placeholder="25000"
+                />
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Somme verifiee : inscription + tranche 1 + tranche 2 = prix total
+            </p>
+            {!priceCheckOk && (
+              <div className="mt-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                Incohérence : {form.registration_fee.toLocaleString("fr-FR")} + {form.tranche_1_amount.toLocaleString("fr-FR")} + {form.tranche_2_amount.toLocaleString("fr-FR")} = {(form.registration_fee + form.tranche_1_amount + form.tranche_2_amount).toLocaleString("fr-FR")} FCFA, attendu {form.total_price.toLocaleString("fr-FR")} FCFA. Corriger avant d'enregistrer.
+              </div>
+            )}
+          </div>
+
+          <div className="border-t border-border pt-4">
             <h4 className="font-display text-sm font-semibold mb-3">Livrable de fin de formation</h4>
             <div>
               <RequiredLabel htmlFor="dlabel" required>Nom du livrable</RequiredLabel>
@@ -261,7 +338,7 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
             </div>
           </div>
 
-          <Button type="submit" disabled={saving || !isValid} className="w-full">
+          <Button type="submit" disabled={saving || !isValid || !priceCheckOk} className="w-full">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {formation ? "Enregistrer" : "Creer"}
           </Button>
@@ -280,7 +357,7 @@ const FormationManager = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("formations")
-      .select("id, name, slug, description, deliverable_label, deliverable_description, attestation_title, attestation_body, attestation_logo_url, attestation_color, duration_days, is_active, created_at, pitch, learn_intro, learn_points, learn_conclusion, target_audience, method_description, why_us_points")
+      .select("id, name, slug, description, deliverable_label, deliverable_description, attestation_title, attestation_body, attestation_logo_url, attestation_color, duration_days, is_active, created_at, total_price, registration_fee, tranche_1_amount, tranche_2_amount, pitch, learn_intro, learn_points, learn_conclusion, target_audience, method_description, why_us_points")
       .order("created_at", { ascending: true });
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
@@ -350,6 +427,9 @@ const FormationManager = () => {
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
                   {f.duration_days} jours
+                </span>
+                <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
+                  {f.total_price.toLocaleString("fr-FR")} FCFA
                 </span>
                 <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
                   Livrable : {f.deliverable_label}

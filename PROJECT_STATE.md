@@ -31,6 +31,15 @@
 - **Chemin nominal inchangé** : signUp réussit + session → enrollment créé → redirect. Chemin staff (user déjà connecté) inchangé.
 - **Sécurité** : signInWithPassword utilise uniquement les credentials saisis dans le formulaire par l'utilisateur. Jamais de connexion sans mot de passe correct.
 
+### Prix formation : correction donnee graphisme + champs tarification editables en admin (FormationManager.tsx + FormationPage.tsx)
+
+- **Cause du bug** : `FormationPage.tsx:189` affichait `formation.total_price` (table `formations`), valeur incorrecte = 25 000 FCFA. Corriger `cohorts.total_price` dans l'admin n'avait aucun effet car les deux tables sont independantes pour ce champ.
+- **Migration SQL** (`supabase/migrations/20260811130000_fix_graphisme_prix.sql`) : corrige graphisme avec `total_price=60000, registration_fee=10000, tranche_1_amount=25000, tranche_2_amount=25000`. Satisfait la contrainte CHECK `formations_tranches_sum_check` : 10000+25000+25000=60000. A executer manuellement via Supabase Dashboard SQL Editor.
+- **FormationManager.tsx** : ajout des 4 champs prix a l'interface `Formation`, `emptyForm` (defaults coherents : 10000+20000+20000=50000), init form en edition, SELECT query, payload. Section "Tarification" avec 4 inputs number (grille 2 colonnes, `min-h-[44px]`). Validation CHECK en temps reel : avertissement rouge si `inscription + tranche_1 + tranche_2 != total_price` ; bouton "Enregistrer" desactive tant que incoherent. Badge prix visible sur la carte de la liste.
+- **FormationPage.tsx** : dans la stats row "Tarif", ajout d'une ligne "dont X d'inscription" sous le prix total, conditionnelle (`registration_fee > 0 && < total_price`). Affiche la structure du prix aux prospects.
+- **Paiements** : inchanges. `StudentPaymentStatus` et `PaymentManager` lisent `cohorts.total_price` en priorite, pas `formations.total_price`. Aucun risque de regression.
+- **Recommandation source de verite** : `formations.total_price` = prix catalogue (affiché sur la page publique et dans FormationManager). `cohorts.total_price` = prix de session (peut differer par promotion ou early-bird, utilise pour les paiements). Ces deux sources peuvent diverger intentionnellement. Pour eviter la confusion a l'avenir : apres creation d'une cohorte, verifier que `cohorts.total_price` reflete bien le prix de cette session ; si les prix catalogue et session doivent toujours etre identiques, envisager de supprimer le champ `cohorts.total_price` et lire toujours depuis `formations`. Pour l'instant, les deux coexistent avec des roles distincts.
+
 ### Fix layout : page formation centree, fin du vide a droite (FormationPage.tsx)
 
 - **Cause** : dans chaque section de FormationPage, les divs de contenu (`max-w-2xl`, `max-w-3xl`) n'avaient PAS de `mx-auto`. Le `container mx-auto` centrait bien le conteneur de section (pleine largeur), mais l'absence de `mx-auto` sur les blocs de contenu internes les laissait collés a gauche. Sur un ecran 1440px, le texte occupait les ~720px de gauche laissant ~720px vides a droite.
