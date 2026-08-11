@@ -24,6 +24,7 @@ interface Formation {
   attestation_body: string | null;
   attestation_logo_url: string | null;
   attestation_color: string | null;
+  duration_days: number;
   is_active: boolean;
   created_at: string;
 }
@@ -32,6 +33,7 @@ const emptyForm = {
   name: "",
   slug: "",
   description: "",
+  duration_days: 60,
   deliverable_label: "Portfolio",
   deliverable_description: "",
   attestation_title: "",
@@ -50,6 +52,7 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
           name: formation.name,
           slug: formation.slug,
           description: formation.description || "",
+          duration_days: formation.duration_days,
           deliverable_label: formation.deliverable_label,
           deliverable_description: formation.deliverable_description || "",
           attestation_title: formation.attestation_title || "",
@@ -140,6 +143,18 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
             <Label htmlFor="fdesc">Description</Label>
             <Textarea id="fdesc" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Decrivez cette formation..." rows={2} />
           </div>
+          <div>
+            <RequiredLabel htmlFor="fdays" required>Duree (jours)</RequiredLabel>
+            <Input
+              id="fdays"
+              type="number"
+              min={1}
+              value={form.duration_days}
+              onChange={e => setForm({ ...form, duration_days: Math.max(1, parseInt(e.target.value) || 1) })}
+              className="min-h-[44px]"
+              placeholder="60"
+            />
+          </div>
 
           <div className="border-t border-border pt-4">
             <h4 className="font-display text-sm font-semibold mb-3">Livrable de fin de formation</h4>
@@ -197,7 +212,7 @@ const FormationManager = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("formations")
-      .select("id, name, slug, description, deliverable_label, deliverable_description, attestation_title, attestation_body, attestation_logo_url, attestation_color, is_active, created_at")
+      .select("id, name, slug, description, deliverable_label, deliverable_description, attestation_title, attestation_body, attestation_logo_url, attestation_color, duration_days, is_active, created_at")
       .order("created_at", { ascending: true });
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
@@ -265,6 +280,9 @@ const FormationManager = () => {
               </div>
               {f.description && <p className="mt-2 text-sm text-muted-foreground">{f.description}</p>}
               <div className="mt-3 flex flex-wrap gap-2">
+                <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
+                  {f.duration_days} jours
+                </span>
                 <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
                   Livrable : {f.deliverable_label}
                 </span>

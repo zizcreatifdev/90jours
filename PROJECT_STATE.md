@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 9 août 2026
 **Branche active**: `main`
-**Prompt actuel**: ux paiement : bouton declarer visible sur le dashboard etudiant (mobile)
+**Prompt actuel**: admin : champ duree (duration_days) editable dans le formulaire des formations
 
 ### Corrections P1 appliquées
 
@@ -30,6 +30,19 @@
 - **Message enrollment failed** : si l'insert échoue vraiment, toast explicite "Inscription non finalisee. Votre compte a ete cree. Reessayez pour completer votre inscription." + return (le retry passera par le chemin signIn).
 - **Chemin nominal inchangé** : signUp réussit + session → enrollment créé → redirect. Chemin staff (user déjà connecté) inchangé.
 - **Sécurité** : signInWithPassword utilise uniquement les credentials saisis dans le formulaire par l'utilisateur. Jamais de connexion sans mot de passe correct.
+
+### Admin : champ duree (duration_days) editable dans FormationManager (FormationManager.tsx)
+
+- **Problème** : `FormationManager` ne lisait pas `duration_days` depuis la BDD (absent du SELECT), ne l'affichait pas dans le formulaire, et ne l'incluait pas dans le payload de save. La durée d'une formation ne pouvait être corrigée que par SQL direct.
+- **Interface `Formation`** : ajout de `duration_days: number`.
+- **`emptyForm`** : ajout `duration_days: 60` (valeur par défaut cohérente avec la marque).
+- **State `form` en édition** : ajout `duration_days: formation.duration_days` dans l'initialisation - le champ se pré-remplit avec la valeur actuelle à l'ouverture du dialog.
+- **Payload create/update** : inclus automatiquement via `{ ...form }`.
+- **`fetchFormations` SELECT** : ajout de `duration_days` dans la liste de colonnes.
+- **Formulaire JSX** : ajout d'un `<input type="number" min={1}>` "Duree (jours)", `min-h-[44px]`, avec `parseInt` protégé contre les valeurs invalides (`Math.max(1, parseInt(...) || 1)`). Positionné entre Description et le bloc Livrable.
+- **Carte de liste** : badge "X jours" ajouté avant "Livrable" pour visibilité directe sans ouvrir le dialog.
+- **Page publique** : `FormationPage.tsx:164` lit `formation.duration_days` tel quel - reflétera la valeur corrigée en base dès la sauvegarde.
+- **Correctif BDD requis** : corriger `duration_days = 30` sur la formation "graphisme" via l'interface admin ou SQL : `UPDATE formations SET duration_days = 60 WHERE slug = 'graphisme';`
 
 ### UX paiement : bouton "Declarer un paiement" visible sur le dashboard etudiant (PaymentSummaryCard.tsx)
 
