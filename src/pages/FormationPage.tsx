@@ -124,7 +124,7 @@ const FormationPage = () => {
             Toutes les formations
           </Link>
 
-          <div className="max-w-2xl">
+          <div className="max-w-2xl mx-auto">
             <span className="inline-block rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-accent">
               {formation.level}
             </span>
@@ -198,7 +198,7 @@ const FormationPage = () => {
       {/* A propos */}
       <section className="bg-background pb-12">
         <div className="container mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="max-w-2xl">
+          <div className="max-w-2xl mx-auto">
             <h2 className="mb-4 font-display text-2xl font-bold text-foreground">A propos de cette formation</h2>
             {formation.description && (
               <p className="text-base leading-relaxed text-muted-foreground">{formation.description}</p>
@@ -222,7 +222,7 @@ const FormationPage = () => {
       {formation.pitch && (
         <section className="bg-background pb-4">
           <div className="container mx-auto px-6 sm:px-8 lg:px-12">
-            <p className="max-w-2xl text-lg font-medium leading-relaxed text-foreground border-l-4 border-accent pl-5">
+            <p className="max-w-2xl mx-auto text-lg font-medium leading-relaxed text-foreground border-l-4 border-accent pl-5">
               {formation.pitch}
             </p>
           </div>
@@ -233,7 +233,7 @@ const FormationPage = () => {
       {(formation.learn_intro || (formation.learn_points && formation.learn_points.length > 0)) && (
         <section className="bg-white py-14">
           <div className="container mx-auto px-6 sm:px-8 lg:px-12">
-            <div className="max-w-2xl">
+            <div className="max-w-2xl mx-auto">
               <h2 className="mb-2 font-display text-2xl font-bold text-foreground">Ce que vous allez maitriser</h2>
               {formation.learn_intro && (
                 <p className="mb-6 text-base text-muted-foreground">{formation.learn_intro}</p>
@@ -262,7 +262,7 @@ const FormationPage = () => {
       {formation.target_audience && (
         <section className="bg-background py-14">
           <div className="container mx-auto px-6 sm:px-8 lg:px-12">
-            <div className="max-w-2xl">
+            <div className="max-w-2xl mx-auto">
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
                   <Users className="h-5 w-5 text-accent" />
@@ -279,7 +279,7 @@ const FormationPage = () => {
       {formation.method_description && (
         <section className="bg-navy-deep py-16 text-white">
           <div className="container mx-auto px-6 sm:px-8 lg:px-12">
-            <div className="max-w-2xl">
+            <div className="max-w-2xl mx-auto">
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
                   <Layers className="h-5 w-5 text-accent" />
@@ -297,7 +297,7 @@ const FormationPage = () => {
         <section className="bg-background py-14">
           <div className="container mx-auto px-6 sm:px-8 lg:px-12">
             <h2 className="mb-8 font-display text-2xl font-bold text-foreground">Pourquoi choisir 60jours</h2>
-            <div className="grid gap-4 sm:grid-cols-2 max-w-3xl">
+            <div className="grid gap-4 sm:grid-cols-2 max-w-3xl mx-auto">
               {formation.why_us_points.map((point, i) => (
                 <div key={i} className="flex items-start gap-3 rounded-xl border border-border bg-white p-4 shadow-card">
                   <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-white text-xs font-bold">

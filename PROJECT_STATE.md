@@ -2,7 +2,7 @@
 
 **Dernière mise à jour**: 11 août 2026
 **Branche active**: `main`
-**Prompt actuel**: page formation : contenu editorial pilote par donnees (5 sections)
+**Prompt actuel**: fix layout : page formation centree (conteneur principal), fin du vide a droite
 
 ### Corrections P1 appliquées
 
@@ -30,6 +30,21 @@
 - **Message enrollment failed** : si l'insert échoue vraiment, toast explicite "Inscription non finalisee. Votre compte a ete cree. Reessayez pour completer votre inscription." + return (le retry passera par le chemin signIn).
 - **Chemin nominal inchangé** : signUp réussit + session → enrollment créé → redirect. Chemin staff (user déjà connecté) inchangé.
 - **Sécurité** : signInWithPassword utilise uniquement les credentials saisis dans le formulaire par l'utilisateur. Jamais de connexion sans mot de passe correct.
+
+### Fix layout : page formation centree, fin du vide a droite (FormationPage.tsx)
+
+- **Cause** : dans chaque section de FormationPage, les divs de contenu (`max-w-2xl`, `max-w-3xl`) n'avaient PAS de `mx-auto`. Le `container mx-auto` centrait bien le conteneur de section (pleine largeur), mais l'absence de `mx-auto` sur les blocs de contenu internes les laissait collés a gauche. Sur un ecran 1440px, le texte occupait les ~720px de gauche laissant ~720px vides a droite.
+- **Diagnostic** : In Index.tsx, les blocs de texte utilisent `mx-auto max-w-xl` ou remplissent la largeur en grille. In FormationPage, 7 blocs `max-w-2xl` / `max-w-3xl` manquaient de `mx-auto`.
+- **Correction** (layout uniquement, 7 lignes modifiees) : ajout de `mx-auto` sur :
+  - Hero : `<div className="max-w-2xl mx-auto">`
+  - "A propos" : `<div className="max-w-2xl mx-auto">`
+  - Pitch : `<p className="max-w-2xl mx-auto ...">`
+  - "Ce que vous allez maitriser" : `<div className="max-w-2xl mx-auto">`
+  - "A qui s'adresse" : `<div className="max-w-2xl mx-auto">`
+  - "La methode" : `<div className="max-w-2xl mx-auto">`
+  - "Pourquoi 60jours" : `<div className="grid gap-4 sm:grid-cols-2 max-w-3xl mx-auto">`
+- **Resultat** : tous les blocs de contenu sont centres dans leur section ; marges egales gauche et droite ; fonds pleine-largeur (hero navy, methode navy-deep) inchanges ; mobile inchange (max-w-2xl > largeur mobile donc mx-auto n'affecte pas les petits ecrans).
+- **Cohérence** : meme pattern que Index.tsx (`mx-auto` sur les blocs `max-w-`). Aucun changement de couleur ni de contenu.
 
 ### Page formation : contenu editorial pilote par donnees (FormationPage.tsx + FormationManager.tsx)
 
