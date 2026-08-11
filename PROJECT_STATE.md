@@ -31,6 +31,17 @@
 - **Chemin nominal inchangé** : signUp réussit + session → enrollment créé → redirect. Chemin staff (user déjà connecté) inchangé.
 - **Sécurité** : signInWithPassword utilise uniquement les credentials saisis dans le formulaire par l'utilisateur. Jamais de connexion sans mot de passe correct.
 
+### Split formations graphisme : perfectionnement (renomme) + initiation (nouvelle) + redirect ancien slug
+
+- **Approche** : Approche A (la plus sure). L''UUID de la formation graphisme est conserve. Tous les FK existants (cohorts.formation_id, attestations.formation_id, portfolios.formation_id, staff_formations.formation_id) restent valides automatiquement. Aucune donnee etudiante touchee.
+- **Migration SQL** (`supabase/migrations/20260811140000_split_graphisme_formations.sql`) : contient 2 operations :
+  - 1A : `UPDATE formations SET name='Graphisme Perfectionnement', slug='graphisme-perfectionnement' WHERE slug='graphisme'` - conserve UUID, contenu editorial intact.
+  - 1B : `INSERT INTO formations` pour "Graphisme Initiation", slug='graphisme-initiation', level='Debutant', duration_days=60, total_price=25000, registration_fee=10000, tranche_1_amount=7500, tranche_2_amount=7500 (satisfait CHECK: 10000+7500+7500=25000). Contenu editorial complet inclus (pitch, learn_intro, learn_points jsonb, learn_conclusion, target_audience, method_description, why_us_points jsonb).
+  - **MIGRATION MANUELLE REQUISE** : executer via Supabase Dashboard SQL Editor.
+- **App.tsx** : ajout de `Navigate` a l''import react-router-dom. Route de redirection `/formation/graphisme` -> `/formation/graphisme-perfectionnement` (replace) inseree AVANT la route dynamique `/formation/:slug`. Les anciens liens WhatsApp/bookmarks continuent de fonctionner.
+- **Donnees etudiantes** : AUCUNE modification. Enrollments, payments, student_contracts, attestations, briefs restent rattaches a la cohorte (cohort_id inchange). La cohorte perfectionnement pointe toujours sur le meme UUID de formation (renomme, pas supprime).
+- **Noms de colonnes utilises pour le contenu** : `pitch` (text), `learn_intro` (text), `learn_points` (jsonb array), `learn_conclusion` (text), `target_audience` (text), `method_description` (text), `why_us_points` (jsonb array).
+
 ### Prix formation : correction donnee graphisme + champs tarification editables en admin (FormationManager.tsx + FormationPage.tsx)
 
 - **Cause du bug** : `FormationPage.tsx:189` affichait `formation.total_price` (table `formations`), valeur incorrecte = 25 000 FCFA. Corriger `cohorts.total_price` dans l'admin n'avait aucun effet car les deux tables sont independantes pour ce champ.
