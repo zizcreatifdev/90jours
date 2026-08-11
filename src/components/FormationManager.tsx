@@ -27,6 +27,13 @@ interface Formation {
   duration_days: number;
   is_active: boolean;
   created_at: string;
+  pitch: string | null;
+  learn_intro: string | null;
+  learn_points: string[] | null;
+  learn_conclusion: string | null;
+  target_audience: string | null;
+  method_description: string | null;
+  why_us_points: string[] | null;
 }
 
 const emptyForm = {
@@ -40,6 +47,13 @@ const emptyForm = {
   attestation_body: "",
   attestation_color: "#1a1a2e",
   is_active: true,
+  pitch: "",
+  learn_intro: "",
+  learn_points_raw: "",
+  learn_conclusion: "",
+  target_audience: "",
+  method_description: "",
+  why_us_points_raw: "",
 };
 
 const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved: () => void }) => {
@@ -59,6 +73,13 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
           attestation_body: formation.attestation_body || "",
           attestation_color: formation.attestation_color || "#1a1a2e",
           is_active: formation.is_active,
+          pitch: formation.pitch || "",
+          learn_intro: formation.learn_intro || "",
+          learn_points_raw: (Array.isArray(formation.learn_points) ? formation.learn_points : []).join("\n"),
+          learn_conclusion: formation.learn_conclusion || "",
+          target_audience: formation.target_audience || "",
+          method_description: formation.method_description || "",
+          why_us_points_raw: (Array.isArray(formation.why_us_points) ? formation.why_us_points : []).join("\n"),
         }
       : { ...emptyForm }
   );
@@ -83,14 +104,27 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
   const generateSlug = (name: string) =>
     name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
+  const toArray = (raw: string): string[] | null => {
+    const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
+    return lines.length > 0 ? lines : null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateAll()) return;
     setSaving(true);
     try {
+      const { learn_points_raw, why_us_points_raw, ...formRest } = form;
       const payload = {
-        ...form,
+        ...formRest,
         slug: form.slug || generateSlug(form.name),
+        pitch: form.pitch.trim() || null,
+        learn_intro: form.learn_intro.trim() || null,
+        learn_points: toArray(learn_points_raw),
+        learn_conclusion: form.learn_conclusion.trim() || null,
+        target_audience: form.target_audience.trim() || null,
+        method_description: form.method_description.trim() || null,
+        why_us_points: toArray(why_us_points_raw),
       };
       if (formation) {
         const { error } = await supabase.from("formations").update(payload).eq("id", formation.id);
@@ -193,6 +227,40 @@ const FormationForm = ({ formation, onSaved }: { formation?: Formation; onSaved:
             <Label>Formation active</Label>
           </div>
 
+          <div className="border-t border-border pt-4">
+            <h4 className="font-display text-sm font-semibold mb-3">Contenu editorial (page publique)</h4>
+            <div className="space-y-3">
+              <div>
+                <Label htmlFor="fpitch">Accroche (pitch)</Label>
+                <Textarea id="fpitch" value={form.pitch} onChange={e => setForm({ ...form, pitch: e.target.value })} placeholder="En 90 jours, vous passez de curieux a professionnel..." rows={2} />
+              </div>
+              <div>
+                <Label htmlFor="flearnintro">Intro "Ce que vous allez maitriser"</Label>
+                <Input id="flearnintro" value={form.learn_intro} onChange={e => setForm({ ...form, learn_intro: e.target.value })} placeholder="A l'issue de la formation, vous maitrisez :" />
+              </div>
+              <div>
+                <Label htmlFor="flearnpts">Points d'apprentissage (une ligne par point)</Label>
+                <Textarea id="flearnpts" value={form.learn_points_raw} onChange={e => setForm({ ...form, learn_points_raw: e.target.value })} placeholder={"Les fondamentaux du design\nLes outils professionnels"} rows={5} />
+              </div>
+              <div>
+                <Label htmlFor="flearnconc">Conclusion apprentissage</Label>
+                <Input id="flearnconc" value={form.learn_conclusion} onChange={e => setForm({ ...form, learn_conclusion: e.target.value })} placeholder="Chaque module alterne theorie et projets pratiques." />
+              </div>
+              <div>
+                <Label htmlFor="ftarget">A qui s'adresse cette formation</Label>
+                <Textarea id="ftarget" value={form.target_audience} onChange={e => setForm({ ...form, target_audience: e.target.value })} placeholder="Debutants, autodidactes, reconversions..." rows={3} />
+              </div>
+              <div>
+                <Label htmlFor="fmethod">La methode</Label>
+                <Textarea id="fmethod" value={form.method_description} onChange={e => setForm({ ...form, method_description: e.target.value })} placeholder="Notre methode repose sur l'apprentissage par la pratique..." rows={3} />
+              </div>
+              <div>
+                <Label htmlFor="fwhyus">Pourquoi nous (une ligne par point)</Label>
+                <Textarea id="fwhyus" value={form.why_us_points_raw} onChange={e => setForm({ ...form, why_us_points_raw: e.target.value })} placeholder={"Une pedagogie bienveillante\nDes formateurs praticiens"} rows={5} />
+              </div>
+            </div>
+          </div>
+
           <Button type="submit" disabled={saving || !isValid} className="w-full">
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {formation ? "Enregistrer" : "Creer"}
@@ -212,7 +280,7 @@ const FormationManager = () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("formations")
-      .select("id, name, slug, description, deliverable_label, deliverable_description, attestation_title, attestation_body, attestation_logo_url, attestation_color, duration_days, is_active, created_at")
+      .select("id, name, slug, description, deliverable_label, deliverable_description, attestation_title, attestation_body, attestation_logo_url, attestation_color, duration_days, is_active, created_at, pitch, learn_intro, learn_points, learn_conclusion, target_audience, method_description, why_us_points")
       .order("created_at", { ascending: true });
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });

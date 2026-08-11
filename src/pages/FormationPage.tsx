@@ -2,11 +2,19 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
-import { ArrowLeft, ArrowRight, Banknote, CalendarDays, Clock } from "lucide-react";
+import { ArrowLeft, ArrowRight, Banknote, CalendarDays, Check, Clock, Layers, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Footer from "@/components/Footer";
 
-type FormationRow = Database["public"]["Tables"]["formations"]["Row"];
+type FormationRow = Database["public"]["Tables"]["formations"]["Row"] & {
+  pitch?: string | null;
+  learn_intro?: string | null;
+  learn_points?: string[] | null;
+  learn_conclusion?: string | null;
+  target_audience?: string | null;
+  method_description?: string | null;
+  why_us_points?: string[] | null;
+};
 
 interface FormationCohort {
   id: string;
@@ -209,6 +217,99 @@ const FormationPage = () => {
           </div>
         </div>
       </section>
+
+      {/* Pitch */}
+      {formation.pitch && (
+        <section className="bg-background pb-4">
+          <div className="container mx-auto px-6 sm:px-8 lg:px-12">
+            <p className="max-w-2xl text-lg font-medium leading-relaxed text-foreground border-l-4 border-accent pl-5">
+              {formation.pitch}
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* Ce que vous allez maitriser */}
+      {(formation.learn_intro || (formation.learn_points && formation.learn_points.length > 0)) && (
+        <section className="bg-white py-14">
+          <div className="container mx-auto px-6 sm:px-8 lg:px-12">
+            <div className="max-w-2xl">
+              <h2 className="mb-2 font-display text-2xl font-bold text-foreground">Ce que vous allez maitriser</h2>
+              {formation.learn_intro && (
+                <p className="mb-6 text-base text-muted-foreground">{formation.learn_intro}</p>
+              )}
+              {formation.learn_points && formation.learn_points.length > 0 && (
+                <ul className="space-y-3">
+                  {formation.learn_points.map((point, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10">
+                        <Check className="h-3 w-3 text-accent" />
+                      </span>
+                      <span className="text-sm leading-relaxed text-foreground">{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {formation.learn_conclusion && (
+                <p className="mt-6 text-sm italic text-muted-foreground">{formation.learn_conclusion}</p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* A qui s'adresse cette formation */}
+      {formation.target_audience && (
+        <section className="bg-background py-14">
+          <div className="container mx-auto px-6 sm:px-8 lg:px-12">
+            <div className="max-w-2xl">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
+                  <Users className="h-5 w-5 text-accent" />
+                </div>
+                <h2 className="font-display text-2xl font-bold text-foreground">A qui s'adresse cette formation</h2>
+              </div>
+              <p className="text-base leading-relaxed text-muted-foreground">{formation.target_audience}</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* La methode */}
+      {formation.method_description && (
+        <section className="bg-navy-deep py-16 text-white">
+          <div className="container mx-auto px-6 sm:px-8 lg:px-12">
+            <div className="max-w-2xl">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
+                  <Layers className="h-5 w-5 text-accent" />
+                </div>
+                <h2 className="font-display text-2xl font-bold text-white">La methode</h2>
+              </div>
+              <p className="text-base leading-relaxed text-white/80">{formation.method_description}</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Pourquoi 60jours */}
+      {formation.why_us_points && formation.why_us_points.length > 0 && (
+        <section className="bg-background py-14">
+          <div className="container mx-auto px-6 sm:px-8 lg:px-12">
+            <h2 className="mb-8 font-display text-2xl font-bold text-foreground">Pourquoi choisir 60jours</h2>
+            <div className="grid gap-4 sm:grid-cols-2 max-w-3xl">
+              {formation.why_us_points.map((point, i) => (
+                <div key={i} className="flex items-start gap-3 rounded-xl border border-border bg-white p-4 shadow-card">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent text-white text-xs font-bold">
+                    {i + 1}
+                  </span>
+                  <p className="text-sm leading-relaxed text-foreground">{point}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Sessions disponibles */}
       <section id="sessions" className="bg-background pb-24 pt-4">

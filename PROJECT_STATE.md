@@ -1,8 +1,8 @@
 # PROJECT_STATE.md — État du Projet
 
-**Dernière mise à jour**: 9 août 2026
+**Dernière mise à jour**: 11 août 2026
 **Branche active**: `main`
-**Prompt actuel**: admin : champ duree (duration_days) editable dans le formulaire des formations
+**Prompt actuel**: page formation : contenu editorial pilote par donnees (5 sections)
 
 ### Corrections P1 appliquées
 
@@ -30,6 +30,19 @@
 - **Message enrollment failed** : si l'insert échoue vraiment, toast explicite "Inscription non finalisee. Votre compte a ete cree. Reessayez pour completer votre inscription." + return (le retry passera par le chemin signIn).
 - **Chemin nominal inchangé** : signUp réussit + session → enrollment créé → redirect. Chemin staff (user déjà connecté) inchangé.
 - **Sécurité** : signInWithPassword utilise uniquement les credentials saisis dans le formulaire par l'utilisateur. Jamais de connexion sans mot de passe correct.
+
+### Page formation : contenu editorial pilote par donnees (FormationPage.tsx + FormationManager.tsx)
+
+- **Objectif** : transformer la page publique `/formation/:slug` en argumentaire de vente avec 5 sections editoriales, pilotees par des donnees BDD (Option B) pour que chaque formation ait son propre contenu.
+- **Migration SQL** : `supabase/migrations/20260811100000_formation_editorial_fields.sql` — ajoute 7 colonnes a `formations` : `pitch text`, `learn_intro text`, `learn_points jsonb`, `learn_conclusion text`, `target_audience text`, `method_description text`, `why_us_points jsonb`. Pre-remplit la formation "graphisme" avec le contenu editorial complet.
+- **Migration manuelle requise** : executer la migration via le Dashboard Supabase SQL Editor ou `supabase db push`.
+- **FormationPage.tsx** : type etendu (`FormationRow & { editorial fields... }`), import de `Check`, `Layers`, `Users` depuis lucide-react. 5 nouvelles sections conditionnelles (n'apparaissent que si le champ est non-null) entre "A propos" et "Sessions disponibles" :
+  1. **Pitch** : bloc accroche avec bordure gauche dorée (`border-l-4 border-accent`)
+  2. **Ce que vous allez maitriser** : fond blanc, liste avec puces rondes accent + coche, intro + conclusion optionnelles
+  3. **A qui s'adresse** : fond creme, icone Users, paragraphe
+  4. **La methode** : fond `bg-navy-deep` texte blanc, icone Layers (section sombre contrastante)
+  5. **Pourquoi choisir 60jours** : fond creme, grille 2 colonnes avec cartes numerotées
+- **FormationManager.tsx** : 7 champs ajoutés a l'interface `Formation`, a `emptyForm`, a l'init `form` en edition (les tableaux jsonb convertis en texte multi-lignes via `.join("\n")`), au SELECT query, et au JSX (section "Contenu editorial"). `handleSubmit` destructure `learn_points_raw` et `why_us_points_raw`, convertit via `toArray()` (split par `\n`, trim, filter vides, null si vide).
 
 ### Admin : champ duree (duration_days) editable dans FormationManager (FormationManager.tsx)
 
